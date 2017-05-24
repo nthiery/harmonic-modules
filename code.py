@@ -7,7 +7,7 @@ class Subspace:
     INPUT:
 
     - ``generators`` -- a list of vectors in some ambient vector space `V`
-    - ``operators`` -- a list of linear endomorphism `V`
+    - ``operators`` -- a list of linear endomorphism `V` (default: ``[]``)
 
     Return the smallest subspace of `V` containing ``generators`` and
     stable under the action of the operators.
