@@ -1,3 +1,5 @@
+import functools
+
 class Subspace:
     """
     Construct a subspace from generators and linear operators
@@ -19,6 +21,7 @@ class Subspace:
         sage: F.dimension()
         1
 
+        sage: B = E.basis()
         sage: F = Subspace([B[1]-B[2], B[2]-B[4], B[1]-B[4]])
         sage: F.dimension()
         2
@@ -39,6 +42,8 @@ class Subspace:
         [ 0  0  0  1  1]
 
 
+        sage: S = SymmetricGroup(4)
+        sage: A = S.algebra(QQ)
         sage: F = Subspace([A.one()], [functools.partial(operator.mul, A.jucys_murphy(i)) for i in range(1,4)])
         sage: F.dimension()
         4
@@ -48,14 +53,15 @@ class Subspace:
         [0 0 0 1 1 0]
         [0 0 0 0 0 1]
 
-        sage: S = SymmetricGroup(4)
-        sage: A = S.algebra(QQ)
-        sage: P = Partitions(4)
-        sage: def young_idempotent(p):
-        ....:     return A.sum_of_terms((S(sigma), sigma.sign()) for sigma in p.column_stabilizer()) * A.sum_of_monomials(S(sigma) for sigma in p.row_stabilizer())
+        sage: T = StandardTableaux(4)
+        sage: def young_idempotent(t):
+        ....:     return A.sum_of_terms((S(sigma), sigma.sign()) for sigma in t.column_stabilizer()) * \
+        ....:            A.sum_of_monomials(S(sigma) for sigma in t.row_stabilizer())
 
-        sage: for p in P:
-        ....:     print p.shape(), p.shape().dimension(), Subspace([young_idempotent(p)], [functools.partial(operator.mul, s) for s in A.algebra_generators()]).dimension()
+        sage: for t in T:
+        ....:     print t.shape(), t.shape().dimension(), \
+        ....:          Subspace([young_idempotent(t)], \
+        ....:                   [functools.partial(operator.mul, s) for s in A.algebra_generators()]).dimension()
         [4] 1 1
         [3, 1] 3 3
         [3, 1] 3 3
