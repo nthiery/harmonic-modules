@@ -290,7 +290,9 @@ def index_filling(t):
 
     EXAMPLES::
 
-        sage: indexFilling(StandardTableau([[3,5],[1,2,4]]))
+        sage: Tableaux.options.convention="french"
+
+        sage: t = StandardTableau([[1,2,4], [3,5]])
         sage: ascii_art(t, index_filling(t), sep = "  -->  ")
           3  5            1  2
           1  2  4  -->    0  0  1
@@ -300,23 +302,19 @@ def index_filling(t):
           3               2
           2  5            1  3
           1  4  6  -->    0  2  3
-
+        <BLANKLINE>
           4               2
           2  5            1  2
           1  3  6  -->    0  1  2
-
+        <BLANKLINE>
           4               2
           3  5            1  2
           1  2  6  -->    0  0  2
-
-          ...
-
+        ...
           6               3
           2  4            1  2
           1  3  5  -->    0  1  2
-
-          ...
-
+        ...
           6               2
           4  5            1  1
           1  2  3  -->    0  0  0
