@@ -1,4 +1,5 @@
 import functools
+import sage.combinat.tableau
 
 def items_of_vector(v):
     """
@@ -230,3 +231,100 @@ class Subspace:
             w = op(v)
             if self._extend(w):
                 todo.extend((w,op) for op in self._operators)
+
+
+def destandardize(self):
+    """
+    Return the smallest word whose standard permutation is ``self``
+
+    INPUT:
+
+    - ``self`` -- a permutation of 1...n
+
+    OUTPUT: a word in the alphabet 0,...,
+
+    EXAMPLES::
+
+        sage: for p in Permutations(3): print(p, destandardize(p))
+        ([1, 2, 3], [0, 0, 0])
+        ([1, 3, 2], [0, 1, 0])
+        ([2, 1, 3], [1, 0, 1])
+        ([2, 3, 1], [1, 1, 0])
+        ([3, 1, 2], [1, 0, 0])
+        ([3, 2, 1], [2, 1, 0])
+
+        sage: for p in Permutations(4):
+        ....:     assert Word(destandardize(p)).standard_permutation() == p
+    """
+    n = len(self)
+    sigma = ~self
+    c = 0
+    w = [None] * n
+    for i in range(1,n+1):
+        w[sigma(i)-1] = c
+        if i < n and sigma(i+1) < sigma(i):
+            c += 1
+    return w
+
+def index_filling(t):
+    """
+    Return the index filling of this standard tableau.
+
+    INPUT:
+
+    - ``t`` -- a standard tableau
+
+    The index filling of `t` is the semi standard tableau with lowest
+    content whose standardized row reading coincides with the row
+    reading of `t`.
+
+    Reference: Higher Specht Polynomials for the symmetric group and
+    the wreath product, S.  Ariki, T.  Terasoma, H.  Yamada.
+
+    Note: in the above reference, the reading word is instead the
+    reverse of the row reading of the transpose of `t`.
+
+    .. TODO::
+
+        Check whether this is the most desirable convention.
+
+    EXAMPLES::
+
+        sage: indexFilling(StandardTableau([[3,5],[1,2,4]]))
+        sage: ascii_art(t, index_filling(t), sep = "  -->  ")
+          3  5            1  2
+          1  2  4  -->    0  0  1
+
+        sage: for t in StandardTableaux([3,2,1]):
+        ....:     print ascii_art(t,  index_filling(t), sep="  -->  "); print
+          3               2
+          2  5            1  3
+          1  4  6  -->    0  2  3
+
+          4               2
+          2  5            1  2
+          1  3  6  -->    0  1  2
+
+          4               2
+          3  5            1  2
+          1  2  6  -->    0  0  2
+
+          ...
+
+          6               3
+          2  4            1  2
+          1  3  5  -->    0  1  2
+
+          ...
+
+          6               2
+          4  5            1  1
+          1  2  3  -->    0  0  0
+
+    The sum of the entries of the index filling is the cocharge of `t`::
+
+        sage: for t in StandardTableaux(6):
+        ....:     assert t.cocharge() == sum(i for row in index_filling(t) for i in row)
+    """
+    return sage.combinat.tableau.from_shape_and_word(t.shape(), destandardize(t.reading_word_permutation()))
+
