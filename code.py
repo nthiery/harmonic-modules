@@ -485,6 +485,79 @@ def apply_young_idempotent(p, t):
     p = sum( p*sigma*sigma.sign() for sigma in t.column_stabilizer() )
     return p
 
+def hyper_specht(R, P, Q=None):
+    """
+    Return a basis element of the coinvariants
+
+    INPUT:
+
+    - `R` -- a polynomial ring
+    - `P` -- a standard tableau of some shape `\lambda`, or a partition `\lambda`
+    - `Q` -- a standard tableau of shape `\lambda`
+             (default: the initial tableau of shape `\lambda`)
+
+    The family `(H_{P,Q})_{P,Q}` is a basis of the space of `R_{S_n}`
+    coinvariants in `R` which is compatible with the action of the
+    symmetric group: namely, for each `P`, the family `(H_{P,Q})_Q`
+    forms the basis of an `S_n`-irreducible module `V_{P}` of type
+    `\lambda`.
+
+    If `P` is a partition `\lambda` or equivalently the initial
+    tableau of shape `\lambda`, then `H_{P,Q}` is the usual Specht
+    polynomial, and `V_P` the Specht module.
+
+    EXAMPLES::
+
+        sage: Tableaux.options.convention="french"
+
+        sage: R = PolynomialRing(QQ, 'x,y,z')
+        sage: for la in Partitions(3):
+        ....:     for P in StandardTableaux(la):
+        ....:         for Q in StandardTableaux(la):
+        ....:             print ascii_art(la, P, Q, factor(hyper_specht(R, P, Q)), sep="    ")
+        ....:             print
+        ***      1  2  3      1  2  3    2 * 3
+        <BLANKLINE>
+        *       2         2
+        **      1  3      1  3    (-1) * z * (x - y)
+        <BLANKLINE>
+        *       2         3
+        **      1  3      1  2    (-1) * y * (x - z)
+        <BLANKLINE>
+        *       3         2
+        **      1  2      1  3    (-2) * (x - y)
+        <BLANKLINE>
+        *       3         3
+        **      1  2      1  2    (-2) * (x - z)
+        <BLANKLINE>
+        *      3      3
+        *      2      2
+        *      1      1    (y - z) * (-x + y) * (x - z)
+
+        sage: R = PolynomialRing(QQ, 'x,y,z')
+        sage: for la in Partitions(3):
+        ....:     for P in StandardTableaux(la):
+        ....:         print ascii_art(la, P, factor(hyper_specht(R, P)), sep="    ")
+        ....:         print
+        ***      1  2  3    2 * 3
+        <BLANKLINE>
+        *       2
+        **      1  3    (-1) * y * (x - z)
+        <BLANKLINE>
+        *       3
+        **      1  2    (-2) * (x - z)
+        <BLANKLINE>
+        *      3
+        *      2
+        *      1    (y - z) * (-x + y) * (x - z)
+    """
+    if Q is None:
+        Q = P.shape().initial_tableau()
+    exponents = index_filling(P)
+    X = R.gens()
+    m = prod(X[i-1]**d for (d,i) in zip(exponents.entries(), Q.entries()))
+    return apply_young_idempotent(m, Q)
+
 ##############################################################################
 # Polynomial ring with diagonal action
 ##############################################################################
@@ -541,4 +614,39 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         X = self.algebra_generators()
         return self.sum(X[i2,j]*p.derivative(X[i1,j],d)
                         for j in range(n))
+
+    def hyper_specht(self, P, Q=None):
+        r"""
+        Return the hyper specht polynomial indexed by `P` and `Q` in the first row of variables
+
+        See :func:`hyper_specht` for details.
+
+        EXAMPLES::
+
+            sage: R = DiagonalPolynomialRing(QQ, 3, 2)
+            sage: R.algebra_generators()
+            [x00 x01 x02]
+            [x10 x11 x12]
+
+            sage: for la in Partitions(3):
+            ....:     for P in StandardTableaux(la):
+            ....:         print ascii_art(la, R.hyper_specht(P), sep="    ")
+            ....:         print
+            ....:
+            ***    6
+            <BLANKLINE>
+            *
+            **    -x00*x01 + x01*x02
+            <BLANKLINE>
+            *
+            **    -2*x00 + 2*x02
+            <BLANKLINE>
+            *
+            *
+            *    -x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2
+        """
+        X = self.algebra_generators()
+        R = PolynomialRing(self.base_ring(), list(X[0]))
+        H = hyper_specht(R, P, Q)
+        return self(H)
 
