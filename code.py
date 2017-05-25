@@ -340,7 +340,7 @@ def apply_young_idempotent(p, t):
 
     INPUT::
 
-    - `t` -- a standard tableaux
+    - `t` -- a standard tableau or a partition
     - `p` -- a polynomial on as many variables as there are cells in `t`
 
     The Young idempotent first symmetrizes `p` according to the
@@ -353,14 +353,20 @@ def apply_young_idempotent(p, t):
 
     EXAMPLES::
 
-        sage: t = StandardTableau([[1],[2],[3]])
         sage: x,y,z = QQ['x,y,z'].gens()
         sage: p = x^2 * y
+        sage: t = StandardTableau([[1],[2],[3]])
         sage: apply_young_idempotent(p, t)
+        x^2*y - x*y^2 - x^2*z + y^2*z + x*z^2 - y*z^2
+
+        sage: apply_young_idempotent(p, Partition([1,1,1]))
         x^2*y - x*y^2 - x^2*z + y^2*z + x*z^2 - y*z^2
 
         sage: t = StandardTableau([[1,2,3]])
         sage: apply_young_idempotent(p, t)
+        x^2*y + x*y^2 + x^2*z + y^2*z + x*z^2 + y*z^2
+
+        sage: apply_young_idempotent(p, Partition([3]))
         x^2*y + x*y^2 + x^2*z + y^2*z + x*z^2 + y*z^2
 
         sage: t = StandardTableau([[1,2],[3]])
@@ -372,6 +378,8 @@ def apply_young_idempotent(p, t):
         sage: apply_young_idempotent(p, t)
         -2*x^2*y*z + 2*x*y*z^2
     """
+    if isinstance(t, Partition):
+        t = t.initial_tableau()
     p = sum( p*sigma for sigma in t.row_stabilizer() )
     p = sum( p*sigma*sigma.sign() for sigma in t.column_stabilizer() )
     return p
