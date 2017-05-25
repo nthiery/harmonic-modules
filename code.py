@@ -96,7 +96,7 @@ class Basis:
         self._rank, self._unrank = sage.combinat.ranker.on_fly()
         self._matrix = matrix(base_ring, 0, 0)
 
-    def vector(self, v):
+    def plain_vector(self, v):
         """
         Return `v` as a plain vector
 
@@ -118,8 +118,7 @@ class Basis:
 
     def extend(self, v):
         m = self._matrix
-        dim_before = m.nrows()
-        r = self.vector(v)
+        r = self.plain_vector(v)
         if len(r) > m.ncols():
             m = m.augment(matrix(self._base_ring, m.nrows(), len(r)-m.ncols()))
         m = m.stack(r)
@@ -157,7 +156,7 @@ class Subspace:
         sage: F = Subspace([B[1]-B[2], B[2]-B[4], B[1]-B[4]])
         sage: F.dimension()
         2
-        sage: F._basis._matrix
+        sage: F.matrix()
         [ 1  0 -1]
         [ 0  1 -1]
 
@@ -167,7 +166,7 @@ class Subspace:
         sage: F = Subspace([phi(B[1])], [phi])
         sage: F.dimension()
         4
-        sage: F._basis._matrix
+        sage: F.matrix()
         [ 1  0  0  0 -1]
         [ 0  1  0  0  1]
         [ 0  0  1  0 -1]
@@ -180,7 +179,7 @@ class Subspace:
         sage: F = Subspace([x-y, y-z, x-z])
         sage: F.dimension()
         2
-        sage: F._basis._matrix
+        sage: F.matrix()
         [ 1  0 -1]
         [ 0  1 -1]
 
@@ -200,7 +199,7 @@ class Subspace:
         sage: F = Subspace([A.one()], [functools.partial(operator.mul, A.jucys_murphy(i)) for i in range(1,4)])
         sage: F.dimension()
         4
-        sage: F._basis._matrix
+        sage: F.matrix()
         [1 0 0 0 0 0]
         [0 1 1 0 0 0]
         [0 0 0 1 1 0]
@@ -225,38 +224,115 @@ class Subspace:
         [2, 1, 1] 3 3
         [2, 1, 1] 3 3
         [1, 1, 1, 1] 1 1
+
+
+    Redoing the derivatives of the Van-der-Monde determinant in `n` variables
+    as a graded subspace::
+
+        sage: def add_degrees(d1, d2):
+        ....:     d = d1 + d2
+        ....:     if d < 0: raise ValueError("Negative degree")
+        ....:     return d
+        sage: P = QQ['x,y,z']
+        sage: x,y,z = P.gens()
+        sage: Delta = (x-y)*(y-z)*(x-z)
+        sage: F = Subspace(generators={3:[Delta]},
+        ....:              operators={-1:[attrcall("derivative", x) for x in P.gens()]},
+        ....:              add_degrees=add_degrees)
+        sage: F.dimension()
+        6
+        sage: F.dimensions()
+        {0: 1, 1: 2, 2: 2, 3: 1}
+        sage: F.hilbert_polynomial()
+        q^3 + 2*q^2 + 2*q + 1
+
+        sage: P = QQ['x,y,z,t']
+        sage: x,y,z,t = P.gens()
+        sage: Delta = apply_young_idempotent(x^3*y^2*z, Partition([1,1,1,1]))
+        sage: F = Subspace(generators={6:[Delta]},
+        ....:              operators={-1:[attrcall("derivative", x) for x in P.gens()]},
+        ....:              add_degrees=add_degrees)
+        sage: F.hilbert_polynomial()
+        q^6 + 3*q^5 + 5*q^4 + 6*q^3 + 5*q^2 + 3*q + 1
+        sage: sage.combinat.q_analogues.q_factorial(4)
+        q^6 + 3*q^5 + 5*q^4 + 6*q^3 + 5*q^2 + 3*q + 1
     """
 
-    def __init__(self, generators, operators=[]):
-        self._ambient = generators[0].parent()
-        self._base_ring = self._ambient.base_ring()
+    def __init__(self, generators, operators=[],
+                 add_degrees=operator.add,
+                 hilbert_parent=None):
+        if not isinstance(generators, dict):
+            generators = {0: generators}
         self._generators = generators
-        self._operators = operators
-        self._basis = Basis(self._base_ring)
-        generators = [v
-                      for v in generators
-                      if self._basis.extend(v)]
-        self._todo = [(v, op)
-                      for v in generators
-                      for op in operators]
-        self.finalize()
 
-    @cached_method
+        ambient = {g.parent() for gens in generators.values() for g in gens}
+        assert len(ambient) == 1
+        ambient = ambient.pop()
+        self._ambient = ambient
+        self._base_ring = ambient.base_ring()
+
+        if hilbert_parent is None:
+            if generators.keys()[0] in NN:
+                hilbert_parent = QQ['q']
+        self._hilbert_parent = hilbert_parent
+
+        if not isinstance(operators, dict):
+            operators = {0: operators}
+        self._operators = operators
+
+        self._bases = {}
+        self._todo = []
+        self._add_degrees = add_degrees
+        for d, gens in generators.iteritems():
+            basis = Basis(self._base_ring)
+            gens = [v
+                    for v in gens
+                    if basis.extend(v)]
+            self._bases[d] = basis
+            self.todo(d, gens)
+
+    def todo(self, d1, vectors):
+        todo = self._todo
+        for d2, ops in self._operators.iteritems():
+            try:
+                d3 = self._add_degrees(d1, d2)
+            except ValueError:
+                continue
+            todo.extend((v, d3, op)
+                        for v in vectors
+                        for op in ops)
+
     def dimension(self):
         """
 
         """
         self.finalize()
-        return self._basis.cardinality()
+        return sum(basis.cardinality() for basis in self._bases.values())
+
+
+    def hilbert_polynomial(self):
+        return self._hilbert_parent(self.dimensions())
+
+    def dimensions(self):
+        self.finalize()
+        return {d: basis.cardinality() for d, basis in self._bases.iteritems()}
+
+
+    def matrix(self):
+        self.finalize()
+        assert self._bases.keys() == [0] # only handle the non graded case
+        return self._bases[0]._matrix
 
     @cached_method
     def finalize(self):
         todo = self._todo
         while todo:
-            v,op = todo.pop()
+            v,d,op = todo.pop()
             w = op(v)
-            if self._basis.extend(w):
-                todo.extend((w,op) for op in self._operators)
+            if d not in self._bases:
+                self._bases[d] = Basis(self._base_ring)
+            if self._bases[d].extend(w):
+                self.todo(d, [w])
 
 
 def destandardize(self):
