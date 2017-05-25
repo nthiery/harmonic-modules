@@ -4,19 +4,26 @@ import operator
 from sage.misc.cachefunc import cached_method
 from sage.misc.misc_c import prod
 
-import sage.combinat.tableau
 from sage.categories.sets_cat import Sets
+from sage.categories.algebras import Algebras
+
 from sage.structure.element_wrapper import ElementWrapper
 from sage.structure.parent import Parent
+from sage.structure.unique_representation import UniqueRepresentation
 
-from sage.combinat.ranker import rank_from_list
-from sage.combinat.partition import Partition
 from sage.combinat.free_module import CombinatorialFreeModule
+from sage.combinat.partition import Partition
+from sage.combinat.ranker import rank_from_list
+import sage.combinat.tableau
+
 from sage.groups.perm_gps.permgroup_named import SymmetricGroup
 from sage.matrix.constructor import matrix
 from sage.modules.free_module_element import vector
 from sage.rings.rational_field import QQ
 from sage.sets.recursively_enumerated_set import RecursivelyEnumeratedSet
+
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.semirings.non_negative_integer_semiring import NN
 
 
 def items_of_vector(v):
@@ -478,4 +485,60 @@ def apply_young_idempotent(p, t):
     p = sum( p*sigma*sigma.sign() for sigma in t.column_stabilizer() )
     return p
 
+##############################################################################
+# Polynomial ring with diagonal action
+##############################################################################
+
+class DiagonalPolynomialRing(UniqueRepresentation, Parent):
+    """
+
+    EXAMPLES::
+
+        sage: P = DiagonalPolynomialRing(QQ, 4, 3)
+        sage: P.algebra_generators()
+        [x00 x01 x02 x03]
+        [x10 x11 x12 x13]
+        [x20 x21 x22 x23]
+    """
+    def __init__(self, R, n, r):
+        names = ["x%s%s"%(i,j) for i in range(r) for j in range(n)]
+        P = PolynomialRing(R, n*r, names)
+        self._n = n
+        self._r = r
+        vars = P.gens()
+        self._P = P
+        self._vars = matrix([[vars[i*n+j] for j in range(n)] for i in range(r)])
+        Parent.__init__(self, facade=(P,), category=Algebras(QQ).Commutative())
+
+    def base_ring(self):
+        return self._P.base_ring()
+
+    def algebra_generators(self):
+        return self._vars
+
+    def polarization(self, p, i1, i2, d):
+        """
+
+        EXAMPLES::
+
+            sage: P = DiagonalPolynomialRing(QQ, 4, 3)
+            sage: X = P.algebra_generators()
+            sage: p = X[0,0]*X[1,0]^3*X[1,1]^1 + X[2,1]; p
+            x00*x10^3*x11 + x21
+
+            sage: P.polarization(p, 1, 2, 2)
+            6*x00*x10*x11*x20
+            sage: P.polarization(p, 1, 2, 1)
+            3*x00*x10^2*x11*x20 + x00*x10^3*x21
+
+            sage: P.polarization(p, 1, 0, 2)
+            6*x00^2*x10*x11
+
+            sage: P.polarization(p, 2, 0, 1)
+            x01
+        """
+        n = self._n
+        X = self.algebra_generators()
+        return self.sum(X[i2,j]*p.derivative(X[i1,j],d)
+                        for j in range(n))
 
