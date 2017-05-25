@@ -69,6 +69,51 @@ def items_of_vector(v):
         except AttributeError:
             return items_of_vector(v.lift())
 
+class Basis:
+    """
+    A mutable data structure representing a collection of vectors in row echelon form
+    """
+    def __init__(self, base_ring):
+        self._base_ring = base_ring
+        self._rank, self._unrank = sage.combinat.ranker.on_fly()
+        self._matrix = matrix(base_ring, 0, 0)
+
+    def vector(self, v):
+        """
+        Return `v` as a plain vector
+
+        INPUT:
+
+        - ``v`` -- an element of the ambient space
+
+        Invariant: when it's returned, the length of the vector is the
+        number of basis elements ranked, which is at least the number
+        of columns of the matrix.
+        """
+        # TODO:
+        # - optimize this
+        # - implement and use a generic api to recover the items
+        assert v.base_ring() == self._base_ring
+        rank = self._rank
+        d = dict((rank(i), c) for i, c in items_of_vector(v))
+        return vector(self._base_ring, len(self._rank.cache), d)
+
+    def extend(self, v):
+        m = self._matrix
+        dim_before = m.nrows()
+        r = self.vector(v)
+        if len(r) > m.ncols():
+            m = m.augment(matrix(self._base_ring, m.nrows(), len(r)-m.ncols()))
+        m = m.stack(r)
+        m.echelonize()
+        if m[-1]:
+            self._matrix = m
+            return True
+        return False
+
+    def cardinality(self):
+        return self._matrix.nrows()
+
 class Subspace:
     """
     Construct a subspace from generators and linear operators
@@ -94,7 +139,7 @@ class Subspace:
         sage: F = Subspace([B[1]-B[2], B[2]-B[4], B[1]-B[4]])
         sage: F.dimension()
         2
-        sage: F._matrix
+        sage: F._basis._matrix
         [ 1  0 -1]
         [ 0  1 -1]
 
@@ -104,7 +149,7 @@ class Subspace:
         sage: F = Subspace([phi(B[1])], [phi])
         sage: F.dimension()
         4
-        sage: F._matrix
+        sage: F._basis._matrix
         [ 1  0  0  0 -1]
         [ 0  1  0  0  1]
         [ 0  0  1  0 -1]
@@ -117,7 +162,7 @@ class Subspace:
         sage: F = Subspace([x-y, y-z, x-z])
         sage: F.dimension()
         2
-        sage: F._matrix
+        sage: F._basis._matrix
         [ 1  0 -1]
         [ 0  1 -1]
 
@@ -137,7 +182,7 @@ class Subspace:
         sage: F = Subspace([A.one()], [functools.partial(operator.mul, A.jucys_murphy(i)) for i in range(1,4)])
         sage: F.dimension()
         4
-        sage: F._matrix
+        sage: F._basis._matrix
         [1 0 0 0 0 0]
         [0 1 1 0 0 0]
         [0 0 0 1 1 0]
@@ -169,51 +214,14 @@ class Subspace:
         self._base_ring = self._ambient.base_ring()
         self._generators = generators
         self._operators = operators
-        self._rank, self._unrank = sage.combinat.ranker.on_fly()
-        self._matrix = matrix(self._ambient.base_ring(), 0, 0)
+        self._basis = Basis(self._base_ring)
         generators = [v
                       for v in generators
-                      if self._extend(v)]
+                      if self._basis.extend(v)]
         self._todo = [(v, op)
                       for v in generators
                       for op in operators]
         self.finalize()
-
-    def vector(self, v):
-        """
-        Return `v` as a plain vector
-
-        INPUT:
-
-        - ``v`` -- an element of the ambient space
-
-        Invariant: when it's returned, the length of the vector is the
-        number of basis elements ranked, which is at least the number
-        of columns of the matrix.
-        """
-        # TODO:
-        # - optimize this
-        # - implement and use a generic api to recover the items
-        assert v.base_ring() == self._base_ring
-        rank = self._rank
-        d = dict((rank(i), c) for i, c in items_of_vector(v))
-        return vector(self._base_ring, len(self._rank.cache), d)
-
-    def _extend(self, v):
-        m = self._matrix
-        dim_before = m.nrows()
-        r = self.vector(v)
-        if len(r) > m.ncols():
-            m = m.augment(matrix(self._base_ring, m.nrows(), len(r)-m.ncols()))
-        m = m.stack(r)
-        m.echelonize()
-        if m[-1]:
-            self._matrix = m
-            return True
-        return False
-
-    def _echelonize():
-        self._matrix.echelonize()
 
     @cached_method
     def dimension(self):
@@ -221,7 +229,7 @@ class Subspace:
 
         """
         self.finalize()
-        return self._matrix.nrows()
+        return self._basis.cardinality()
 
     @cached_method
     def finalize(self):
@@ -229,7 +237,7 @@ class Subspace:
         while todo:
             v,op = todo.pop()
             w = op(v)
-            if self._extend(w):
+            if self._basis.extend(w):
                 todo.extend((w,op) for op in self._operators)
 
 
