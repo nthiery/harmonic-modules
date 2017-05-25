@@ -328,3 +328,46 @@ def index_filling(t):
     """
     return sage.combinat.tableau.from_shape_and_word(t.shape(), destandardize(t.reading_word_permutation()))
 
+def apply_young_idempotent(p, t):
+    """
+    Apply the Young idempotent indexed by `t` on the polynomial `p`
+
+    INPUT::
+
+    - `t` -- a standard tableaux
+    - `p` -- a polynomial on as many variables as there are cells in `t`
+
+    The Young idempotent first symmetrizes `p` according to the
+    row stabilizer of `t` and then antisymmetrizes the result according
+    to the column stabilizer of `t` (a cell containing `i` in `t`
+    being associated to the `i`-th variable (starting at `i=1`)
+    of the polynomial ring containing `p`.
+
+    .. TODO:: normalize result
+
+    EXAMPLES::
+
+        sage: t = StandardTableau([[1],[2],[3]])
+        sage: x,y,z = QQ['x,y,z'].gens()
+        sage: p = x^2 * y
+        sage: apply_young_idempotent(p, t)
+        x^2*y - x*y^2 - x^2*z + y^2*z + x*z^2 - y*z^2
+
+        sage: t = StandardTableau([[1,2,3]])
+        sage: apply_young_idempotent(p, t)
+        x^2*y + x*y^2 + x^2*z + y^2*z + x*z^2 + y*z^2
+
+        sage: t = StandardTableau([[1,2],[3]])
+        sage: p = x*y*y^2
+        sage: apply_young_idempotent(p, t)
+        x^3*y + x*y^3 - y^3*z - y*z^3
+
+        sage: p = x*y*z^2
+        sage: apply_young_idempotent(p, t)
+        -2*x^2*y*z + 2*x*y*z^2
+    """
+    p = sum( p*sigma for sigma in t.row_stabilizer() )
+    p = sum( p*sigma*sigma.sign() for sigma in t.column_stabilizer() )
+    return p
+
+
