@@ -1,5 +1,23 @@
 import functools
+import operator
+
+from sage.misc.cachefunc import cached_method
+from sage.misc.misc_c import prod
+
 import sage.combinat.tableau
+from sage.categories.sets_cat import Sets
+from sage.structure.element_wrapper import ElementWrapper
+from sage.structure.parent import Parent
+
+from sage.combinat.ranker import rank_from_list
+from sage.combinat.partition import Partition
+from sage.combinat.free_module import CombinatorialFreeModule
+from sage.groups.perm_gps.permgroup_named import SymmetricGroup
+from sage.matrix.constructor import matrix
+from sage.modules.free_module_element import vector
+from sage.rings.rational_field import QQ
+from sage.sets.recursively_enumerated_set import RecursivelyEnumeratedSet
+
 
 def items_of_vector(v):
     """
