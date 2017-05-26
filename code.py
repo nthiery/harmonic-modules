@@ -121,7 +121,7 @@ class Basis:
         assert v.base_ring() == self._base_ring
         rank = self._rank
         d = dict((rank(i), c) for i, c in items_of_vector(v))
-        return vector(self._base_ring, len(self._rank.cache), d)
+        return vector(self._base_ring, len(self._rank.cache), d, sparse=False)
 
     def extend(self, v):
         m = self._matrix
