@@ -485,7 +485,7 @@ def apply_young_idempotent(p, t):
     p = sum( p*sigma*sigma.sign() for sigma in t.column_stabilizer() )
     return p
 
-def hyper_specht(R, P, Q=None):
+def higher_specht(R, P, Q=None):
     """
     Return a basis element of the coinvariants
 
@@ -514,7 +514,7 @@ def hyper_specht(R, P, Q=None):
         sage: for la in Partitions(3):
         ....:     for P in StandardTableaux(la):
         ....:         for Q in StandardTableaux(la):
-        ....:             print ascii_art(la, P, Q, factor(hyper_specht(R, P, Q)), sep="    ")
+        ....:             print ascii_art(la, P, Q, factor(higher_specht(R, P, Q)), sep="    ")
         ....:             print
         ***      1  2  3      1  2  3    2 * 3
         <BLANKLINE>
@@ -537,7 +537,7 @@ def hyper_specht(R, P, Q=None):
         sage: R = PolynomialRing(QQ, 'x,y,z')
         sage: for la in Partitions(3):
         ....:     for P in StandardTableaux(la):
-        ....:         print ascii_art(la, P, factor(hyper_specht(R, P)), sep="    ")
+        ....:         print ascii_art(la, P, factor(higher_specht(R, P)), sep="    ")
         ....:         print
         ***      1  2  3    2 * 3
         <BLANKLINE>
@@ -615,11 +615,11 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         return self.sum(X[i2,j]*p.derivative(X[i1,j],d)
                         for j in range(n))
 
-    def hyper_specht(self, P, Q=None):
+    def higher_specht(self, P, Q=None):
         r"""
         Return the hyper specht polynomial indexed by `P` and `Q` in the first row of variables
 
-        See :func:`hyper_specht` for details.
+        See :func:`higher_specht` for details.
 
         EXAMPLES::
 
@@ -630,7 +630,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
             sage: for la in Partitions(3):
             ....:     for P in StandardTableaux(la):
-            ....:         print ascii_art(la, R.hyper_specht(P), sep="    ")
+            ....:         print ascii_art(la, R.higher_specht(P), sep="    ")
             ....:         print
             ....:
             ***    6
@@ -647,6 +647,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         """
         X = self.algebra_generators()
         R = PolynomialRing(self.base_ring(), list(X[0]))
-        H = hyper_specht(R, P, Q)
+        H = higher_specht(R, P, Q)
         return self(H)
 
