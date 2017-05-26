@@ -7,9 +7,12 @@ from sage.misc.misc_c import prod
 from sage.categories.sets_cat import Sets
 from sage.categories.algebras import Algebras
 
+from sage.structure.element import have_same_parent
 from sage.structure.element_wrapper import ElementWrapper
 from sage.structure.parent import Parent
+
 from sage.structure.unique_representation import UniqueRepresentation
+
 
 from sage.combinat.free_module import CombinatorialFreeModule
 from sage.combinat.partition import Partition
@@ -102,6 +105,7 @@ class Basis:
         self._base_ring = base_ring
         self._rank, self._unrank = sage.combinat.ranker.on_fly()
         self._matrix = matrix(base_ring, 0, 0)
+        self._basis = []
 
     def plain_vector(self, v):
         """
@@ -486,7 +490,7 @@ def apply_young_idempotent(p, t):
     p = sum( p*sigma*sigma.sign() for sigma in t.column_stabilizer() )
     return p
 
-def higher_specht(R, P, Q=None):
+def higher_specht(R, P, Q=None, harmonic=False):
     """
     Return a basis element of the coinvariants
 
@@ -496,6 +500,8 @@ def higher_specht(R, P, Q=None):
     - `P` -- a standard tableau of some shape `\lambda`, or a partition `\lambda`
     - `Q` -- a standard tableau of shape `\lambda`
              (default: the initial tableau of shape `\lambda`)
+
+    - ``harmonic`` -- a boolean (default False); True not tested!!!
 
     The family `(H_{P,Q})_{P,Q}` is a basis of the space of `R_{S_n}`
     coinvariants in `R` which is compatible with the action of the
@@ -551,9 +557,26 @@ def higher_specht(R, P, Q=None):
         *      3
         *      2
         *      1    (y - z) * (-x + y) * (x - z)
+
+        sage: R = PolynomialRing(QQ, 'x,y,z')
+        sage: for la in Partitions(3):
+        ....:     for P in StandardTableaux(la):
+        ....:         for Q in StandardTableaux(la):
+        ....:             print ascii_art(la, P, Q, factor(higher_specht(R, P, Q, harmonic=True)), sep="    ")
+        ....:             print
     """
+    n = P.size()
+    assert n == R.ngens()
     if Q is None:
         Q = P.shape().initial_tableau()
+
+    if harmonic:
+        P = P.conjugate()
+        Q = Q.conjugate() # Is this really what we want?
+        h = higher_specht(R, P, Q)
+        vdm = higher_specht(R, Partition([1]*n).initial_tableau())
+        return polynomial_derivative(h, vdm)
+
     exponents = index_filling(P)
     X = R.gens()
     m = prod(X[i-1]**d for (d,i) in zip(exponents.entries(), Q.entries()))
@@ -616,7 +639,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         return self.sum(X[i2,j]*p.derivative(X[i1,j],d)
                         for j in range(n))
 
-    def higher_specht(self, P, Q=None):
+    def higher_specht(self, P, Q=None, harmonic=False):
         r"""
         Return the hyper specht polynomial indexed by `P` and `Q` in the first row of variables
 
@@ -648,7 +671,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         """
         X = self.algebra_generators()
         R = PolynomialRing(self.base_ring(), list(X[0]))
-        H = higher_specht(R, P, Q)
+        H = higher_specht(R, P, Q, harmonic=harmonic)
         return self(H)
 
 
@@ -662,18 +685,19 @@ def polynomial_derivative_on_basis(e, f):
 
     INPUT:
 
-    - `e`, `f` -- the exponent vectors representing two monomials `X^e` and `X^f`
+    - `e`, `f` -- exponent vectors representing two monomials `X^e` and `X^f`
                   (type: :class:`sage.rings.polynomial.polydict.ETuple`)
 
     OUTPUT:
 
-    - a pair `(g,c)` where `g` is an exponent vector and `c` a coefficient,
-      representing the term `c X^g`, or None if the result is zero
+    - a pair `(g,c)` where `g` is an exponent vector and `c` a
+      coefficient, representing the term `c X^g`, or :obj:`None` if
+      the result is zero.
 
-    Let `R=K[X]` be a multivariate polynomial ring.
-    Writing `X^e` for the monomial with exponent vector `e`, and
-    `p(\partial)` the differential operator obtained by substituting
-    each variable `x` in `p` by `\frac{\partial}{\partial x}`.
+    Let `R=K[X]` be a multivariate polynomial ring. Write `X^e` for
+    the monomial with exponent vector `e`, and `p(\partial)` the
+    differential operator obtained by substituting each variable `x`
+    in `p` by `\frac{\partial}{\partial x}`.
 
     This returns `X^e(\partial)(X^f)`
 
@@ -684,14 +708,68 @@ def polynomial_derivative_on_basis(e, f):
         ((0, 0), 24)
         sage: polynomial_derivative_on_basis(ETuple((0,3)), ETuple((0,3)))
         ((0, 0), 6)
-        sage: polynomial_derivative_on_basis(ETuple((4,0)), ETuple((2,0)))
+        sage: polynomial_derivative_on_basis(ETuple((0,1)), ETuple((0,3)))
+        ((0, 2), 3)
+        sage: polynomial_derivative_on_basis(ETuple((2,0)), ETuple((4,0)))
         ((2, 0), 12)
-        sage: polynomial_derivative_on_basis(ETuple((4,3)), ETuple((2,3)))
-        ((2, 0), 72)
-        sage: polynomial_derivative_on_basis(ETuple((1,2)), ETuple((1,3)))
-        sage: polynomial_derivative_on_basis(ETuple((1,2)), ETuple((2,0)))
+        sage: polynomial_derivative_on_basis(ETuple((2,1)), ETuple((4,3)))
+        ((2, 2), 36)
+        sage: polynomial_derivative_on_basis(ETuple((1,3)), ETuple((1,2)))
+        sage: polynomial_derivative_on_basis(ETuple((2,0)), ETuple((1,2)))
     """
-    g = e.esub(f)
+    g = f.esub(e)
     if any(i < 0 for i in g):
         return None
-    return (g, prod(factorial(i)/factorial(j) for (i,j) in zip(e,g)))
+    return (g, prod(factorial(i)/factorial(j) for (i,j) in zip(f,g)))
+
+def polynomial_derivative(p, q): # this just extends a function by bilinearity; we would want it to be built using ModulesWithBasis
+    """
+    Return the derivative of `q` w.r.t. `p`.
+
+    INPUT:
+
+    - `p`, `q` -- two polynomials in the same multivariate polynomial ring `\K[X]`
+
+    OUTPUT: a polynomial
+
+    The polynomial `p(\partial)(q)`, where `p(\partial)` the
+    differential operator obtained by substituting each variable `x`
+    in `p` by `\frac{\partial}{\partial x}`.
+
+    EXAMPLES::
+
+        sage: R = QQ['x,y']
+        sage: x,y = R.gens()
+
+        sage: polynomial_derivative(x, x)
+        1
+        sage: polynomial_derivative(x, x^3)
+        3*x^2
+        sage: polynomial_derivative(x^2, x^3)
+        6*x
+        sage: polynomial_derivative(x+y, x^3)
+        3*x^2
+        sage: polynomial_derivative(x+y, x^3*y^3)
+        3*x^3*y^2 + 3*x^2*y^3
+
+        sage: p = -x^2*y + 3*y^2
+        sage: q = x*(x+2*y+1)^3
+
+        sage: polynomial_derivative(p, q)
+        72*x^2 + 144*x*y + 36*x - 48*y - 24
+        sage: -diff(q, [x,x,y]) + 3 * diff(q, [y,y])
+        72*x^2 + 144*x*y + 36*x - 48*y - 24
+    """
+    if not have_same_parent(p,q):
+        raise ValueError("p and q should have the same parent")
+    R = p.parent()
+    result = R.zero() # We would want to use R.sum_of_terms_if_not_None
+    for (e1, c1) in items_of_vector(p):
+        for (e2, c2) in items_of_vector(q):
+            m = polynomial_derivative_on_basis(e1,e2)
+            if m is None:
+                continue
+            (e3,c3) = m
+            result += R({e3: c1*c2*c3})
+    return result
+
