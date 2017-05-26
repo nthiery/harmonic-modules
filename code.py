@@ -132,6 +132,7 @@ class Basis:
         m.echelonize()
         if m[-1]:
             self._matrix = m
+            self._basis.append(v)
             return True
         return False
 
