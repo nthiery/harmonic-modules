@@ -650,3 +650,47 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         H = higher_specht(R, P, Q)
         return self(H)
 
+
+##############################################################################
+# Polynomials as differential operators
+##############################################################################
+
+def polynomial_derivative_on_basis(e, f):
+    """
+    Return the differentiation of `f` by `e`.
+
+    INPUT:
+
+    - `e`, `f` -- the exponent vectors representing two monomials `X^e` and `X^f`
+                  (type: :class:`sage.rings.polynomial.polydict.ETuple`)
+
+    OUTPUT:
+
+    - a pair `(g,c)` where `g` is an exponent vector and `c` a coefficient,
+      representing the term `c X^g`, or None if the result is zero
+
+    Let `R=K[X]` be a multivariate polynomial ring.
+    Writing `X^e` for the monomial with exponent vector `e`, and
+    `p(\partial)` the differential operator obtained by substituting
+    each variable `x` in `p` by `\frac{\partial}{\partial x}`.
+
+    This returns `X^e(\partial)(X^f)`
+
+    EXAMPLES::
+
+        sage: from sage.rings.polynomial.polydict import ETuple
+        sage: polynomial_derivative_on_basis(ETuple((4,0)), ETuple((4,0)))
+        ((0, 0), 24)
+        sage: polynomial_derivative_on_basis(ETuple((0,3)), ETuple((0,3)))
+        ((0, 0), 6)
+        sage: polynomial_derivative_on_basis(ETuple((4,0)), ETuple((2,0)))
+        ((2, 0), 12)
+        sage: polynomial_derivative_on_basis(ETuple((4,3)), ETuple((2,3)))
+        ((2, 0), 72)
+        sage: polynomial_derivative_on_basis(ETuple((1,2)), ETuple((1,3)))
+        sage: polynomial_derivative_on_basis(ETuple((1,2)), ETuple((2,0)))
+    """
+    g = e.esub(f)
+    if any(i < 0 for i in g):
+        return None
+    return (g, prod(factorial(i)/factorial(j) for (i,j) in zip(e,g)))
