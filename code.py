@@ -760,6 +760,24 @@ def higher_specht(R, P, Q=None, harmonic=False):
         ....:         for Q in StandardTableaux(la):
         ....:             print ascii_art(la, P, Q, factor(higher_specht(R, P, Q, harmonic=True)), sep="    ")
         ....:             print
+        ***      1  2  3      1  2  3    2^2 * 3
+        <BLANKLINE>
+        *       2         2
+        **      1  3      1  3    (-2) * (-x^2 - 2*x*y + 2*y^2 + 4*x*z - 2*y*z - z^2)
+        <BLANKLINE>
+        *       2         3
+        **      1  3      1  2    (-2) * (x^2 - 4*x*y + y^2 + 2*x*z + 2*y*z - 2*z^2)
+        <BLANKLINE>
+        *       3         2
+        **      1  2      1  3    (-2) * (-x + 2*y - z)
+        <BLANKLINE>
+        *       3         3
+        **      1  2      1  2    (-2) * (x + y - 2*z)
+        <BLANKLINE>
+        *      3      3
+        *      2      2
+        *      1      1    (6) * (y - z) * (-x + y) * (x - z)
+        <BLANKLINE>
     """
     n = P.size()
     assert n == R.ngens()
