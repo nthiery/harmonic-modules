@@ -13,7 +13,6 @@ from sage.structure.parent import Parent
 
 from sage.structure.unique_representation import UniqueRepresentation
 
-
 from sage.combinat.free_module import CombinatorialFreeModule
 from sage.combinat.partition import Partition
 from sage.combinat.ranker import rank_from_list
@@ -23,10 +22,11 @@ from sage.groups.perm_gps.permgroup_named import SymmetricGroup
 from sage.matrix.constructor import matrix
 from sage.modules.free_module_element import vector
 from sage.rings.rational_field import QQ
-from sage.sets.recursively_enumerated_set import RecursivelyEnumeratedSet
-
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.semirings.non_negative_integer_semiring import NN
+from sage.sets.recursively_enumerated_set import RecursivelyEnumeratedSet
+
+from sage.functions.other import factorial
 
 
 def items_of_vector(v):
