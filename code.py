@@ -469,6 +469,8 @@ class Subspace:
     def __init__(self, generators, operators=[],
                  add_degrees=operator.add,
                  hilbert_parent=None):
+        self._stats={}
+
         if not isinstance(generators, dict):
             generators = {0: generators}
         self._generators = generators
@@ -492,7 +494,7 @@ class Subspace:
         self._todo = []
         self._add_degrees = add_degrees
         for d, gens in generators.iteritems():
-            basis = EchelonMatrixOfVectors(ambient=self._ambient)
+            basis = EchelonMatrixOfVectors(ambient=self._ambient, stats=self._stats)
             gens = [v
                     for v in gens
                     if basis.extend(v)]
@@ -538,7 +540,7 @@ class Subspace:
             v,d,op = todo.pop()
             w = op(v)
             if d not in self._bases:
-                self._bases[d] = EchelonMatrixOfVectors(ambient=self._ambient)
+                self._bases[d] = EchelonMatrixOfVectors(ambient=self._ambient, stats=self._stats)
             if self._bases[d].extend(w):
                 self.todo(d, [w])
 
