@@ -1,7 +1,7 @@
 import functools
 import operator
 
-from sage.misc.cachefunc import cached_method
+from sage.misc.cachefunc import cached_method, cached_function
 from sage.misc.misc_c import prod
 
 from sage.categories.sets_cat import Sets
@@ -14,8 +14,10 @@ from sage.structure.parent import Parent
 from sage.structure.unique_representation import UniqueRepresentation
 
 from sage.combinat.free_module import CombinatorialFreeModule
-from sage.combinat.partition import Partition
+from sage.combinat.partition import Partition, Partitions
 from sage.combinat.ranker import rank_from_list
+from sage.combinat.sf.sf import SymmetricFunctions
+from sage.combinat.tableau import StandardTableaux
 import sage.combinat.tableau
 
 from sage.groups.perm_gps.permgroup_named import SymmetricGroup
@@ -688,6 +690,7 @@ def apply_young_idempotent(p, t):
     p = sum( p*sigma*sigma.sign() for sigma in t.column_stabilizer() )
     return p
 
+@cached_function
 def higher_specht(R, P, Q=None, harmonic=False):
     """
     Return a basis element of the coinvariants
@@ -762,6 +765,30 @@ def higher_specht(R, P, Q=None, harmonic=False):
         ....:         for Q in StandardTableaux(la):
         ....:             print ascii_art(la, P, Q, factor(higher_specht(R, P, Q, harmonic=True)), sep="    ")
         ....:             print
+        ***      1  2  3      1  2  3    2 * 3
+
+        **      1  3      1  3
+        *       2         2       (-1/3) * (-x - y + 2*z) * (x - y)
+
+        **      1  3      1  2
+        *       2         3       (-1/3) * (-x + 2*y - z) * (x - z)
+
+        **      1  2      1  3
+        *       3         2       (-2) * (x - y)
+
+        **      1  2      1  2
+        *       3         3       (-2) * (x - z)
+
+        *      1      1
+        *      2      2
+        *      3      3    (y - z) * (-x + y) * (x - z)
+
+        sage: R = PolynomialRing(QQ, 'x,y,z')
+        sage: for la in Partitions(3):
+        ....:     for P in StandardTableaux(la):
+        ....:         for Q in StandardTableaux(la):
+        ....:             print ascii_art(la, P, Q, factor(higher_specht(R, P, Q, harmonic="dual")), sep="    ")
+        ....:             print
         ***      1  2  3      1  2  3    2^2 * 3
         <BLANKLINE>
         *       2         2
@@ -786,12 +813,27 @@ def higher_specht(R, P, Q=None, harmonic=False):
     if Q is None:
         Q = P.shape().initial_tableau()
 
-    if harmonic:
+    if harmonic == "dual":
         P = P.conjugate()
         Q = Q.conjugate() # Is this really what we want?
         h = higher_specht(R, P, Q)
         vdm = higher_specht(R, Partition([1]*n).initial_tableau())
         return polynomial_derivative(h, vdm)
+    elif harmonic:
+        # TODO: normalization
+        n = R.ngens()
+        Sym = SymmetricFunctions(R.base_ring())
+        m = Sym.m()
+        p = Sym.p()
+        d = P.cocharge()
+        B = [higher_specht(R, P, Q)] + \
+            [higher_specht(R, P2, Q) * m[nu].expand(n, R.gens())
+             for P2 in StandardTableaux(P.shape()) if P2.cocharge() < d
+             for nu in Partitions(d-P2.cocharge())]
+        operators = [p[k].expand(n,R.gens()) for k in range(1,n)]
+        ann = annihilator_basis(B, operators, action=polynomial_derivative, side='left')
+        assert(len(ann)==1)
+        return ann[0]
 
     exponents = index_filling(P)
     X = R.gens()
