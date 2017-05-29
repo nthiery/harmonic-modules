@@ -222,6 +222,123 @@ class EchelonMatrixOfVectors(MatrixOfVectors):
     def cardinality(self):
         return self._matrix.nrows()
 
+def annihilator_basis(B, S, action=operator.mul, side='right', ambient=None):
+    """
+    A generalization of :meth:`Modules.FiniteDimensional.WithBasis.ParentMethods.annihilator_basis`
+
+    Return a basis of the annihilator of a finite set of elements in the span of ``B``
+
+    INPUT:
+
+    - ``B`` -- a finite iterable of vectors (linearly independent???)
+
+    - ``S`` -- a finite iterable of objects
+
+    - ``action`` -- a function (default: :obj:`operator.mul`)
+
+    - ``side`` -- 'left' or 'right' (default: 'right'):
+      on which side of ``self`` the elements of `S` acts.
+
+    See :meth:`annihilator` for the assumptions and definition
+    of the annihilator.
+
+    EXAMPLES:
+
+    By default, the action is the standard `*` operation. So
+    our first example is about an algebra::
+
+        sage: F = FiniteDimensionalAlgebrasWithBasis(QQ).example(); F
+        An example of a finite dimensional algebra with basis:
+        the path algebra of the Kronecker quiver
+        (containing the arrows a:x->y and b:x->y) over Rational Field
+        sage: x,y,a,b = F.basis()
+
+    In this algebra, multiplication on the right by `x`
+    annihilates all basis elements but `x`::
+
+        sage: x*x, y*x, a*x, b*x
+        (x, 0, 0, 0)
+
+    So the annihilator is the subspace spanned by `y`, `a`, and `b`::
+
+        sage: annihilator_basis(F.basis(), [x])
+        (y, a, b)
+
+    The same holds for `a` and `b`::
+
+        sage: x*a, y*a, a*a, b*a
+        (a, 0, 0, 0)
+        sage: annihilator_basis(F.basis(), [a])
+        (y, a, b)
+
+    On the other hand, `y` annihilates only `x`::
+
+        sage: annihilator_basis(F.basis(), [y])
+        (x,)
+
+    Here is a non trivial annihilator::
+
+        sage: annihilator_basis(F.basis(), [a + 3*b + 2*y])
+        (-1/2*a - 3/2*b + x,)
+
+    Let's check it::
+
+        sage: (-1/2*a - 3/2*b + x) * (a + 3*b + 2*y)
+        0
+
+    Doing the same calculations on the left exchanges the
+    roles of `x` and `y`::
+
+        sage: annihilator_basis(F.basis(), [y], side="left")
+        (x, a, b)
+        sage: annihilator_basis(F.basis(), [a], side="left")
+        (x, a, b)
+        sage: annihilator_basis(F.basis(), [b], side="left")
+        (x, a, b)
+        sage: annihilator_basis(F.basis(), [x], side="left")
+        (y,)
+        sage: annihilator_basis(F.basis(), [a+3*b+2*x], side="left")
+        (-1/2*a - 3/2*b + y,)
+
+    By specifying an inner product, this method can be used to
+    compute the orthogonal of a subspace::
+
+        sage: x,y,a,b = F.basis()
+        sage: def scalar(u,v): return vector([sum(u[i]*v[i] for i in F.basis().keys())])
+        sage: annihilator_basis(F.basis(), [x+y, a+b], scalar)
+        (x - y, a - b)
+
+    By specifying the standard Lie bracket as action, one can
+    compute the commutator of a subspace of `F`::
+
+        sage: annihilator_basis(F.basis(), [a+b], action=F.bracket)
+        (x + y, a, b)
+
+    In particular one can compute a basis of the center of the
+    algebra. In our example, it is reduced to the identity::
+
+        sage: annihilator_basis(F.basis(), F.algebra_generators(), action=F.bracket)
+        (x + y,)
+
+    But see also
+    :meth:`FiniteDimensionalAlgebrasWithBasis.ParentMethods.center_basis`.
+    """
+    if side == 'right':
+        action_left = action
+        action = lambda b,s: action_left(s, b)
+    B = list(B)
+    if ambient is None:
+        ambient = B[0].parent()
+    mat = matrix(ambient.base_ring(), len(B), 0)
+
+    for s in S:
+        mat = mat.augment(
+            MatrixOfVectors([action(s, b) for b in B])._matrix)
+
+    return tuple(sum(c * B[i] for i,c in v.iteritems())
+                 for v in mat.left_kernel().basis())
+
+
 class Subspace:
     """
     Construct a subspace from generators and linear operators
