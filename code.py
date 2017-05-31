@@ -1,11 +1,14 @@
 import functools
 import operator
+import progressbar
 
 from sage.misc.cachefunc import cached_method, cached_function
 from sage.misc.misc_c import prod
 
 from sage.categories.sets_cat import Sets
 from sage.categories.algebras import Algebras
+from sage.categories.cartesian_product import cartesian_product
+from sage.categories.tensor import tensor
 
 from sage.structure.element import have_same_parent
 from sage.structure.element_wrapper import ElementWrapper
@@ -19,10 +22,12 @@ from sage.combinat.ranker import rank_from_list
 from sage.combinat.sf.sf import SymmetricFunctions
 from sage.combinat.tableau import StandardTableaux
 import sage.combinat.tableau
+from sage.combinat.words.word import Word
 
 from sage.groups.perm_gps.permgroup_named import SymmetricGroup
 from sage.matrix.constructor import matrix
 from sage.modules.free_module_element import vector
+from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.semirings.non_negative_integer_semiring import NN
@@ -130,6 +135,7 @@ class MatrixOfVectors:
         self._is_echelon = True
         stats.setdefault("add_vector", 0)
         stats.setdefault("extend", 0)
+        stats.setdefault("dimension", 0)
         self._stats = stats
         if vectors:
             for v in vectors:
@@ -216,6 +222,7 @@ class EchelonMatrixOfVectors(MatrixOfVectors):
         m = self._add_vector_to_matrix(self._matrix, v)
         m.echelonize()
         if m[-1]:
+            self._stats['dimension'] += 1
             self._matrix = m
             self._basis.append(v)
             return True
@@ -470,8 +477,10 @@ class Subspace:
 
     def __init__(self, generators, operators=[],
                  add_degrees=operator.add,
-                 hilbert_parent=None):
+                 hilbert_parent=None,
+                 verbose=False):
         self._stats={}
+        self._verbose=verbose
 
         if not isinstance(generators, dict):
             generators = {0: generators}
@@ -537,6 +546,8 @@ class Subspace:
 
     @cached_method
     def finalize(self):
+        if self._verbose:
+            bar = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
         todo = self._todo
         while todo:
             v,d,op = todo.pop()
@@ -545,7 +556,11 @@ class Subspace:
                 self._bases[d] = EchelonMatrixOfVectors(ambient=self._ambient, stats=self._stats)
             if self._bases[d].extend(w):
                 self.todo(d, [w])
-
+            if self._verbose:
+                bar.update(len(todo)),
+        if self._verbose:
+            bar.finish()
+            print "  dimension: %s  extensions: %s"%(self._stats["dimension"], self._stats["extend"])
 
 def destandardize(self):
     """
@@ -766,22 +781,23 @@ def higher_specht(R, P, Q=None, harmonic=False):
         ....:             print ascii_art(la, P, Q, factor(higher_specht(R, P, Q, harmonic=True)), sep="    ")
         ....:             print
         ***      1  2  3      1  2  3    2 * 3
-
-        **      1  3      1  3
-        *       2         2       (-1/3) * (-x - y + 2*z) * (x - y)
-
-        **      1  3      1  2
-        *       2         3       (-1/3) * (-x + 2*y - z) * (x - z)
-
-        **      1  2      1  3
-        *       3         2       (-2) * (x - y)
-
-        **      1  2      1  2
-        *       3         3       (-2) * (x - z)
-
-        *      1      1
+        <BLANKLINE>
+        *       2         2
+        **      1  3      1  3    (-1/3) * (-x - y + 2*z) * (x - y)
+        <BLANKLINE>
+        *       2         3
+        **      1  3      1  2    (-1/3) * (-x + 2*y - z) * (x - z)
+        <BLANKLINE>
+        *       3         2
+        **      1  2      1  3    (-2) * (x - y)
+        <BLANKLINE>
+        *       3         3
+        **      1  2      1  2    (-2) * (x - z)
+        <BLANKLINE>
+        *      3      3
         *      2      2
-        *      3      3    (y - z) * (-x + y) * (x - z)
+        *      1      1    (y - z) * (-x + y) * (x - z)
+        <BLANKLINE>
 
         sage: R = PolynomialRing(QQ, 'x,y,z')
         sage: for la in Partitions(3):
@@ -840,6 +856,49 @@ def higher_specht(R, P, Q=None, harmonic=False):
     m = prod(X[i-1]**d for (d,i) in zip(exponents.entries(), Q.entries()))
     return apply_young_idempotent(m, Q)
 
+def reverse_sorting_permutation(t):
+    r"""
+    Return a permutation `p` such that  is decreasing
+
+    INPUT:
+
+    - `t` -- a list/tuple/... of numbers
+
+    OUTPUT:
+
+    a minimal permutation `p` such that `w \circ p` is sorted decreasingly
+
+    EXAMPLES::
+
+        sage: t = [3, 3, 1, 2]
+        sage: s = reverse_sorting_permutation(t); s
+        [1, 2, 4, 3]
+        sage: [t[s[i]-1] for i in range(len(t))]
+        [3, 3, 2, 1]
+
+        sage:  t = [4, 2, 3, 2, 1, 3]
+        sage: s = reverse_sorting_permutation(t); s
+        [1, 3, 6, 2, 4, 5]
+        sage: [t[s[i]-1] for i in range(len(t))]
+        [4, 3, 3, 2, 2, 1]
+    """
+    return ~(Word([-i for i in t]).standard_permutation())
+
+def act_on_polynomial(p, sigma):
+    """
+
+    EXAMPLES::
+
+        sage: x,y,z,t = QQ['x,y,z,t'].gens()
+        sage: s = PermutationGroupElement([(1,2,3,4)])
+        sage: p = 2*x^2*y+3*z
+        sage: act_on_polynomial(p, s)
+        2*x*t^2 + 3*y
+    """
+    R = p.parent()
+    n = R.ngens()
+    return R({ tuple(t[sigma(i)-1] for i in range(1,n+1) ):d for t,d in p.dict().iteritems() })
+
 ##############################################################################
 # Polynomial ring with diagonal action
 ##############################################################################
@@ -862,6 +921,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         self._r = r
         vars = P.gens()
         self._P = P
+        self._grading_set = cartesian_product([ZZ for i in range(r)]) # ZZ^r
+        self._hilbert_parent = PolynomialRing(ZZ, r, 'q')
         self._vars = matrix([[vars[i*n+j] for j in range(n)] for i in range(r)])
         Parent.__init__(self, facade=(P,), category=Algebras(QQ).Commutative())
 
@@ -871,7 +932,52 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     def algebra_generators(self):
         return self._vars
 
-    def polarization(self, p, i1, i2, d):
+    def multidegree(self, p):
+        """
+        Return the multidegree of a multihomogeneous polynomial
+
+        EXAMPLES::
+
+            sage: P = DiagonalPolynomialRing(QQ,3,2)
+            sage: X = P.algebra_generators()
+            sage: p = X[0,0]*X[0,1]^2 * X[1,0]^2*X[1,1]^3
+            sage: P.multidegree(p)
+            (3, 5)
+            sage: P.multidegree(P.zero())
+            -1
+        """
+        if not p:
+            return -1
+        n = self._n
+        r = self._r
+        v = p.exponents()[0]
+        return self._grading_set([sum(v[n*i+j] for j in range(n))
+                                  for i in range(r)])
+
+    def row_permutation(self, sigma):
+        """
+        Return the permutation of the variables induced by a permutation of the rows
+
+        INPUT:
+
+        - ``sigma`` -- a permutation of the rows, as a permutation of `\{1,\ldots,r\}`
+
+        OUTPUT:
+
+        a permutation of the variables, as a permutation of `\{1,\ldots,nr\}`
+
+        EXAMPLES::
+
+            sage: s = PermutationGroupElement([(1,2,4),(3,5)])
+            sage: P = DiagonalPolynomialRing(QQ,3,5)
+            sage: P.row_permutation(s)
+            [(1, 4, 10), (2, 5, 11), (3, 6, 12), (7, 13), (8, 14), (9, 15)]
+        """
+        n = self._n
+        r = self._r
+        return PermutationGroupElement([ tuple((i-1)*n + 1 + j for i in c) for c in sigma.cycle_tuples() for j in range(n) ])
+
+    def polarization(self, p, i1, i2, d, use_symmetry=False):
         """
 
         EXAMPLES::
@@ -893,9 +999,80 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             x01
         """
         n = self._n
+        r = self._r
         X = self.algebra_generators()
-        return self.sum(X[i2,j]*p.derivative(X[i1,j],d)
-                        for j in range(n))
+        result = self.sum(X[i2,j]*p.derivative(X[i1,j],d)
+                          for j in range(n))
+        if use_symmetry and result:
+            d = self.multidegree(result)
+            if list(d) != sorted(d, reverse=True):
+                s = reverse_sorting_permutation(d)
+                ss = self.row_permutation(s)
+                result = act_on_polynomial(result, ss)
+                #substitution = \
+                #    dict(sum((zip(X[s[i]-1], X[i])
+                #              for i in range(r) if s[i]-1 != i), []
+                #            ))
+                #result = result.substitute(substitution)
+            Partition(self.multidegree(result))
+        return result
+
+    def polarization_operators_by_degree(self, side=None, use_symmetry=False):
+        """
+        Return the collection of polarization operators acting on harmonic polynomials
+
+        INPUT:
+
+        - ``side`` -- 'down'
+
+        If ``side`` is `down` (the only implemented choice), only
+        the operators from `X_{i1}` to `X_{i2}` for `i1<i2` are returned.
+
+        EXAMPLES::
+
+            sage: P = DiagonalPolynomialRing(QQ, 4, 2)
+            sage: ops = P.polarization_operators_by_degree(); ops
+            {(-1, 1): [<functools.partial object at ...>],
+             (1, -2): [<functools.partial object at ...>],
+             (-2, 1): [<functools.partial object at ...>],
+             (-3, 1): [<functools.partial object at ...>],
+             (1, -3): [<functools.partial object at ...>],
+             (1, -1): [<functools.partial object at ...>]}
+
+            sage: P.polarization_operators_by_degree(side="down")
+            {(-3, 1): [<functools.partial object at ...>],
+             (-1, 1): [<functools.partial object at ...>],
+             (-2, 1): [<functools.partial object at ...>]}
+
+            sage: P = DiagonalPolynomialRing(QQ, 3, 3)
+            sage: P.polarization_operators_by_degree(side="down")
+            {(-1, 1, 0): [<functools.partial object at ...>],
+             (-2, 1, 0): [<functools.partial object at ...>],
+             (-2, 0, 1): [<functools.partial object at ...>],
+             (0, -2, 1): [<functools.partial object at ...>],
+             (-1, 0, 1): [<functools.partial object at ...>],
+             (0, -1, 1): [<functools.partial object at ...>]}
+
+
+
+            sage: P = DiagonalPolynomialRing(QQ, 4, 3)
+            sage: ops = P.polarization_operators_by_degree()
+            sage: X = P.algebra_generators()
+            sage: p = X[0,0]*X[1,0]^3*X[1,1]^1 + X[2,1]; p
+            x00*x10^3*x11 + x21
+            sage: ops[(1,-2,0)][0](p)
+            6*x00^2*x10*x11
+            sage: ops[(0,-1,1)][0](p)
+            3*x00*x10^2*x11*x20 + x00*x10^3*x21
+        """
+        n = self._n
+        r = self._r
+        grading_set = self._grading_set
+        return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
+                [functools.partial(self.polarization, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry)]
+                for i1 in range(0,r)
+                for i2 in range(i1+1 if side=='down' else 0, r) if i1 != i2
+                for d in range(1, n)}
 
     def higher_specht(self, P, Q=None, harmonic=False):
         r"""
@@ -932,6 +1109,101 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         H = higher_specht(R, P, Q, harmonic=harmonic)
         return self(H)
 
+    def _add_degree(self, d1,d2):
+        d = d1 + d2
+        if not all(i>=0 for i in d):
+            raise ValueError("invalid degree")
+        return d
+
+    def _add_degree_symmetric(self, d1,d2):
+        """
+        EXAMPLES::
+
+            sage: P = DiagonalPolynomialRing(QQ,4,3)
+            sage: D = P._grading_set
+            sage: P._add_degree_symmetric(D([3,2,1]), D([-2,0,0]))
+            (2, 1, 1)
+            sage: P._add_degree_symmetric(D([3,2,1]), D([-2,1,4]))
+            (5, 3, 1)
+            sage: P._add_degree_symmetric(D([3,2,1]), D([2,1,1]))
+            (5, 3, 2)
+            sage: P._add_degree_symmetric(D([3,2,1]), D([2,1,-2]))
+            Traceback (most recent call last):
+            ...
+            ValueError: invalid degree
+        """
+        d = d1 + d2
+        if not all(i>=0 for i in d):
+            raise ValueError("invalid degree")
+        return self._grading_set(sorted(d, reverse=True))
+
+    def harmonic_space_by_shape(self, mu, verbose=False, use_symmetry=False):
+        """
+        EXAMPLES::
+
+            sage: P = DiagonalPolynomialRing(QQ,4,2)
+            sage: F = P.harmonic_space_by_shape([1,1,1,1])
+            sage: F.hilbert_polynomial()
+            s[3, 1] + s[4, 1] + s[6]
+
+            sage: P = DiagonalPolynomialRing(QQ,3,2)
+            sage: F = P.harmonic_space_by_shape([1,1,1])
+            sage: F.hilbert_polynomial()
+            s[1, 1] + s[3]
+
+            sage: P = DiagonalPolynomialRing(QQ,3,2)
+            sage: F = P.harmonic_space_by_shape([1,1,1])
+            sage: F.hilbert_polynomial()
+            s[1, 1] + s[3]
+        """
+        mu = Partition(mu)
+        r = self._r
+        S = SymmetricFunctions(ZZ)
+        s = S.s()
+        m = S.m()
+        def hilbert_parent(dimensions):
+            return s(S.from_polynomial(self._hilbert_parent(dimensions))
+                    ).restrict_partition_lengths(r,exact=False)
+        def hilbert_parent_symmetric(dimensions):
+            return s(m.sum_of_terms([Partition(d), c]
+                                     for d,c in dimensions.iteritems())
+                    ).restrict_partition_lengths(r, exact=False)
+        generators = {}
+        for t in StandardTableaux(mu):
+            p = self.higher_specht(t, harmonic=True)
+            d = self._grading_set([p.degree()]+[0]*(r-1))
+            generators.setdefault(d, [])
+            generators[d].append(p)
+        operators = self.polarization_operators_by_degree(side='down', use_symmetry=use_symmetry)
+        add_degree = self._add_degree_symmetric if use_symmetry else self._add_degree
+        F = Subspace(generators, operators=operators, add_degrees=add_degree, verbose=verbose)
+        F._hilbert_parent = hilbert_parent_symmetric if use_symmetry else hilbert_parent
+        return F
+
+    def harmonic_character(self, verbose=False, use_symmetry=False):
+        """
+        Return the `GL_r-S_n` character of the space of diagonally harmonic polynomials
+
+        EXAMPLES::
+
+            sage: P = DiagonalPolynomialRing(QQ,3,2)
+            sage: P.harmonic_character()
+            s[] # s[3] + s[1] # s[2, 1] + s[1, 1] # s[1, 1, 1] + s[2] # s[2, 1] + s[3] # s[1, 1, 1]
+
+        """
+        s = SymmetricFunctions(ZZ).s()
+        def char(mu):
+            if verbose:
+                print "%s:"%s(mu)
+            r = tensor([self.harmonic_space_by_shape(mu, verbose=verbose,
+                                                     use_symmetry=use_symmetry
+                                                    ).hilbert_polynomial(),
+                        s[mu]])
+            return r
+        # TODO Understand why this does not work in parallel
+        #char = parallel()(char)
+        #return sum( res[1] for res in char(Partitions(self._n).list()) )
+        return sum(char(mu) for mu in Partitions(self._n))
 
 ##############################################################################
 # Polynomials as differential operators
