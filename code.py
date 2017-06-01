@@ -25,16 +25,17 @@ import sage.combinat.tableau
 from sage.combinat.words.word import Word
 
 from sage.groups.perm_gps.permgroup_named import SymmetricGroup
+from sage.groups.perm_gps.permgroup_element import PermutationGroupElement
 from sage.matrix.constructor import matrix
 from sage.modules.free_module_element import vector
 from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.polynomial.polydict import ETuple
 from sage.rings.semirings.non_negative_integer_semiring import NN
 from sage.sets.recursively_enumerated_set import RecursivelyEnumeratedSet
 
 from sage.functions.other import factorial
-
 
 def items_of_vector(v):
     """
@@ -655,7 +656,7 @@ def index_filling(t):
     """
     return sage.combinat.tableau.from_shape_and_word(t.shape(), destandardize(t.reading_word_permutation()))
 
-def apply_young_idempotent(p, t):
+def apply_young_idempotent(p, t, use_antisymmetry=False):
     """
     Apply the Young idempotent indexed by `t` on the polynomial `p`
 
@@ -702,11 +703,18 @@ def apply_young_idempotent(p, t):
     if isinstance(t, Partition):
         t = t.initial_tableau()
     p = sum( p*sigma for sigma in t.row_stabilizer() )
-    p = sum( p*sigma*sigma.sign() for sigma in t.column_stabilizer() )
+    if use_antisymmetry:
+        antisymmetries = antisymmetries_of_tableau(t)
+        p = antisymmetric_normal(p, t.size(), 1, antisymmetries)
+    else:
+        p = sum( p*sigma*sigma.sign() for sigma in t.column_stabilizer() )
     return p
 
+def antisymmetries_of_tableau(Q):
+    return [[i-1 for i in column] for column in Q.conjugate()]
+
 @cached_function
-def higher_specht(R, P, Q=None, harmonic=False):
+def higher_specht(R, P, Q=None, harmonic=False, use_antisymmetry=False):
     """
     Return a basis element of the coinvariants
 
@@ -717,7 +725,7 @@ def higher_specht(R, P, Q=None, harmonic=False):
     - `Q` -- a standard tableau of shape `\lambda`
              (default: the initial tableau of shape `\lambda`)
 
-    - ``harmonic`` -- a boolean (default False); True not tested!!!
+    - ``harmonic`` -- a boolean (default False)
 
     The family `(H_{P,Q})_{P,Q}` is a basis of the space of `R_{S_n}`
     coinvariants in `R` which is compatible with the action of the
@@ -828,8 +836,9 @@ def higher_specht(R, P, Q=None, harmonic=False):
     assert n == R.ngens()
     if Q is None:
         Q = P.shape().initial_tableau()
-
     if harmonic == "dual":
+        # Computes an harmonic polynomial obtained by applying h as
+        # differential operator on the van der mond
         P = P.conjugate()
         Q = Q.conjugate() # Is this really what we want?
         h = higher_specht(R, P, Q)
@@ -842,19 +851,27 @@ def higher_specht(R, P, Q=None, harmonic=False):
         m = Sym.m()
         p = Sym.p()
         d = P.cocharge()
-        B = [higher_specht(R, P, Q)] + \
-            [higher_specht(R, P2, Q) * m[nu].expand(n, R.gens())
+        B = [higher_specht(R, P, Q, use_antisymmetry=use_antisymmetry)] + \
+            [higher_specht(R, P2, Q, use_antisymmetry=use_antisymmetry) * m[nu].expand(n, R.gens())
              for P2 in StandardTableaux(P.shape()) if P2.cocharge() < d
              for nu in Partitions(d-P2.cocharge())]
+        if use_antisymmetry:
+            antisymmetries = antisymmetries_of_tableau(Q)
+            B = [antisymmetric_normal(b, n, 1, antisymmetries) for b in B]
         operators = [p[k].expand(n,R.gens()) for k in range(1,n)]
-        ann = annihilator_basis(B, operators, action=polynomial_derivative, side='left')
+        if use_antisymmetry:
+            def action(e, f):
+                return antisymmetric_normal(polynomial_derivative(e,f), n, 1, antisymmetries)
+        else:
+            action = polynomial_derivative
+        ann = annihilator_basis(B, operators, action=action, side='left')
         assert(len(ann)==1)
         return ann[0]
 
     exponents = index_filling(P)
     X = R.gens()
     m = prod(X[i-1]**d for (d,i) in zip(exponents.entries(), Q.entries()))
-    return apply_young_idempotent(m, Q)
+    return apply_young_idempotent(m, Q, use_antisymmetry=use_antisymmetry)
 
 def reverse_sorting_permutation(t):
     r"""
@@ -876,7 +893,7 @@ def reverse_sorting_permutation(t):
         sage: [t[s[i]-1] for i in range(len(t))]
         [3, 3, 2, 1]
 
-        sage:  t = [4, 2, 3, 2, 1, 3]
+        sage: t = [4, 2, 3, 2, 1, 3]
         sage: s = reverse_sorting_permutation(t); s
         [1, 3, 6, 2, 4, 5]
         sage: [t[s[i]-1] for i in range(len(t))]
@@ -884,20 +901,158 @@ def reverse_sorting_permutation(t):
     """
     return ~(Word([-i for i in t]).standard_permutation())
 
-def act_on_polynomial(p, sigma):
+
+def diagonal_swap(exponents, n, r, i1, i2):
+    """
+    Swap in place two columns.
+
+    INPUT:
+
+    - ``exponents `` -- a list, seen as an `r\times n` array
+    - ``r``, ``n`` -- nonnegative integers
+    - ``i1``, ``i2`` -- integers in `0,\ldots,n-1`
+
+    Swap inplace the columnss ``i1`` and ``i2`` in the list ``exponnents``,
+    seen as an `r\times n` array.
+
+    EXAMPLES::
+
+        sage: l = [1,2,3,4,5,6,7,8]
+        sage: diagonal_swap(l, 4, 2, 1, 3)
+        sage: l
+        [1, 4, 3, 2, 5, 8, 7, 6]
+
+        sage: l = [1,2,3,4,5,6,7,8]
+        sage: diagonal_swap(l, 2, 4, 0, 1)
+        sage: l
+        [2, 1, 4, 3, 6, 5, 8, 7]
+    """
+    for i in range(r):
+        exponents[i*n+i1], exponents[i*n+i2] = exponents[i*n+i2], exponents[i*n+i1]
+
+def diagonal_cmp(exponents, n, r, i1, i2):
+    """
+    Compare lexicographically two columns.
+
+    INPUT:
+
+    - ``exponents `` -- a list, seen as an `r\times n` array
+    - ``r``, ``n`` -- nonnegative integers
+    - ``i1``, ``i2`` -- integers in `0,\ldots,n-1`
+
+    Compare lexicographically the columns ``i1`` and ``i2`` in the
+    list ``exponnents``, seen as an `r\times n` array.
+
+    EXAMPLES::
+
+        sage: l = [1, 1, 2, 2, 0, 1, 1, 0]
+        sage: diagonal_cmp(l, 4, 2, 0, 1)
+        -1
+        sage: diagonal_cmp(l, 4, 2, 1, 0)
+        1
+        sage: diagonal_cmp(l, 4, 2, 2, 3)
+        1
+        sage: diagonal_cmp(l, 4, 2, 3, 2)
+        -1
+        sage: diagonal_cmp(l, 4, 2, 3, 3)
+        0
+    """
+    for i in range(r):
+        c = cmp(exponents[i*n+i1], exponents[i*n+i2])
+        if c:
+            return c
+    return 0
+
+def diagonal_antisort(exponents, n, r, positions_list):
+    """
+    Sorts columns decreasingly according to positions.
+
+    INPUT:
+
+    - ``exponents `` -- a list, seen as an `r\times n` array
+    - ``r``, ``n`` -- nonnegative integers
+    - ``positions_list`` -- a list of list of positions
+
+    EXAMPLES::
+
+        sage: diagonal_antisort([2,1], 2, 1, [[0,1]])
+        ([2, 1], 1)
+        sage: diagonal_antisort([1,2], 2, 1, [[0,1]])
+        ([2, 1], -1)
+        sage: diagonal_antisort([2,2], 2, 1, [[0,1]])
+
+        sage: diagonal_antisort([1,2,3,4], 2, 2, [[0,1]])
+        ([2, 1, 4, 3], -1)
+        sage: diagonal_antisort([1,2,4,3], 2, 2, [[0,1]])
+        ([2, 1, 3, 4], -1)
+        sage: diagonal_antisort([2,1,4,3], 2, 2, [[0,1]])
+        ([2, 1, 4, 3], 1)
+        sage: diagonal_antisort([2,1,3,4], 2, 2, [[0,1]])
+        ([2, 1, 3, 4], 1)
+
+        sage: diagonal_antisort([1,2,3], 3, 1, [[0,1,2]])
+        ([3, 2, 1], -1)
+        sage: diagonal_antisort([1,3,2], 3, 1, [[0,1,2]])
+        ([3, 2, 1], 1)
+        sage: diagonal_antisort([3,2,1], 3, 1, [[0,1,2]])
+        ([3, 2, 1], 1)
+        sage: diagonal_antisort([1,2,3,4,5,6], 6, 1, [[0,2,4]])
+        ([5, 2, 3, 4, 1, 6], -1)
+
+    With unsorted list of positions, the order is relative to the
+    order of positions::
+
+        sage: diagonal_antisort([1,2,3], 3, 1, [[2,1,0]])
+        ([1, 2, 3], 1)
+        sage: diagonal_antisort([3,2,1], 3, 1, [[2,1,0]])
+        ([1, 2, 3], -1)
+
+    Two lists of positions::
+
+        sage: diagonal_antisort([1,2,3,4,5,6], 6, 1, [[0,2,4],[1,3,5]])
+        ([5, 6, 3, 4, 1, 2], 1)
+
+    """
+    sign = 1
+    exponents = list(exponents)
+    for positions in positions_list:
+        for i in range(1, len(positions)):
+            for j in range(i-1, -1, -1):
+                c = diagonal_cmp(exponents, n, r, positions[j], positions[j+1])
+                if not c:
+                    return None
+                if c < 0:
+                    diagonal_swap(exponents, n, r, positions[j], positions[j+1])
+                    sign = -sign
+                else:
+                    continue
+    return ETuple(exponents), sign
+
+def antisymmetric_normal(p, n, r, positions):
     """
 
     EXAMPLES::
 
-        sage: x,y,z,t = QQ['x,y,z,t'].gens()
-        sage: s = PermutationGroupElement([(1,2,3,4)])
-        sage: p = 2*x^2*y+3*z
-        sage: act_on_polynomial(p, s)
-        2*x*t^2 + 3*y
+        sage: p = 2 * X[0,0]*X[0,3]^2*X[1,1]*X[1,0]^3 + X[1,3] + 3
+        sage: antisymmetric_normal(p, 4, 2, [[0,1,2,3]])
+        -2*x00^2*x01*x11^3*x12
+
+    TODO: check the result
+
+        sage: antisymmetric_normal(p, 4, 2, [[0,1]])
+        2*x00*x03^2*x10^3*x11
+        sage: antisymmetric_normal(p, 4, 2, [[0,3]])
+        -2*x00^2*x03*x11*x13^3 - x10
     """
     R = p.parent()
-    n = R.ngens()
-    return R({ tuple(t[sigma(i)-1] for i in range(1,n+1) ):d for t,d in p.dict().iteritems() })
+    d = {}
+    for exponent, c in items_of_vector(p):
+        res = diagonal_antisort(exponent, n, r, positions)
+        if res:
+            exponent, sign = res
+            d[exponent] = sign*c
+    return R(d)
+
 
 ##############################################################################
 # Polynomial ring with diagonal action
@@ -971,13 +1126,14 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             sage: s = PermutationGroupElement([(1,2,4),(3,5)])
             sage: P = DiagonalPolynomialRing(QQ,3,5)
             sage: P.row_permutation(s)
-            [(1, 4, 10), (2, 5, 11), (3, 6, 12), (7, 13), (8, 14), (9, 15)]
+            (1,4,10)(2,5,11)(3,6,12)(7,13)(8,14)(9,15)
         """
         n = self._n
-        r = self._r
-        return PermutationGroupElement([ tuple((i-1)*n + 1 + j for i in c) for c in sigma.cycle_tuples() for j in range(n) ])
+        return PermutationGroupElement([tuple((i-1)*n + 1 + j for i in c)
+                                        for c in sigma.cycle_tuples()
+                                        for j in range(n) ])
 
-    def polarization(self, p, i1, i2, d, use_symmetry=False):
+    def polarization(self, p, i1, i2, d, use_symmetry=False, antisymmetries=None):
         """
 
         EXAMPLES::
@@ -999,7 +1155,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             x01
         """
         n = self._n
-        r = self._r
         X = self.algebra_generators()
         result = self.sum(X[i2,j]*p.derivative(X[i1,j],d)
                           for j in range(n))
@@ -1015,9 +1170,11 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                 #            ))
                 #result = result.substitute(substitution)
             Partition(self.multidegree(result))
+        if antisymmetries and result:
+            result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
         return result
 
-    def polarization_operators_by_degree(self, side=None, use_symmetry=False):
+    def polarization_operators_by_degree(self, side=None, use_symmetry=False, antisymmetries=None):
         """
         Return the collection of polarization operators acting on harmonic polynomials
 
@@ -1069,12 +1226,12 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         r = self._r
         grading_set = self._grading_set
         return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
-                [functools.partial(self.polarization, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry)]
+                [functools.partial(self.polarization, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry, antisymmetries=antisymmetries)]
                 for i1 in range(0,r)
                 for i2 in range(i1+1 if side=='down' else 0, r) if i1 != i2
                 for d in range(1, n)}
 
-    def higher_specht(self, P, Q=None, harmonic=False):
+    def higher_specht(self, P, Q=None, harmonic=False, use_antisymmetry=False):
         r"""
         Return the hyper specht polynomial indexed by `P` and `Q` in the first row of variables
 
@@ -1103,10 +1260,27 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             *
             *
             *    -x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2
+
+            sage: for la in Partitions(3):
+            ....:     for P in StandardTableaux(la):
+            ....:         print ascii_art(la, R.higher_specht(P, use_antisymmetry=True), sep="    ")
+            ....:         print
+            ....:
+            ***    6
+            <BLANKLINE>
+            **
+            *     -x00*x01
+            <BLANKLINE>
+            **
+            *     -2*x00
+            <BLANKLINE>
+            *
+            *
+            *    -x00^2*x01
         """
         X = self.algebra_generators()
         R = PolynomialRing(self.base_ring(), list(X[0]))
-        H = higher_specht(R, P, Q, harmonic=harmonic)
+        H = higher_specht(R, P, Q, harmonic=harmonic, use_antisymmetry=use_antisymmetry)
         return self(H)
 
     def _add_degree(self, d1,d2):
@@ -1137,7 +1311,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             raise ValueError("invalid degree")
         return self._grading_set(sorted(d, reverse=True))
 
-    def harmonic_space_by_shape(self, mu, verbose=False, use_symmetry=False):
+    def harmonic_space_by_shape(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False):
         """
         EXAMPLES::
 
@@ -1170,17 +1344,23 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                     ).restrict_partition_lengths(r, exact=False)
         generators = {}
         for t in StandardTableaux(mu):
-            p = self.higher_specht(t, harmonic=True)
+            p = self.higher_specht(t, harmonic=True, use_antisymmetry=use_antisymmetry)
             d = self._grading_set([p.degree()]+[0]*(r-1))
             generators.setdefault(d, [])
             generators[d].append(p)
-        operators = self.polarization_operators_by_degree(side='down', use_symmetry=use_symmetry)
+        if use_antisymmetry:
+            # FIXME: duplicated logic for computing the
+            # antisymmetrization positions, here and in apply_young_idempotent
+            antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+        else:
+            antisymmetries = None
+        operators = self.polarization_operators_by_degree(side='down', use_symmetry=use_symmetry, antisymmetries=antisymmetries)
         add_degree = self._add_degree_symmetric if use_symmetry else self._add_degree
         F = Subspace(generators, operators=operators, add_degrees=add_degree, verbose=verbose)
         F._hilbert_parent = hilbert_parent_symmetric if use_symmetry else hilbert_parent
         return F
 
-    def harmonic_character(self, verbose=False, use_symmetry=False):
+    def harmonic_character(self, verbose=False, use_symmetry=False, use_antisymmetry=False):
         """
         Return the `GL_r-S_n` character of the space of diagonally harmonic polynomials
 
@@ -1196,7 +1376,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             if verbose:
                 print "%s:"%s(mu)
             r = tensor([self.harmonic_space_by_shape(mu, verbose=verbose,
-                                                     use_symmetry=use_symmetry
+                                                     use_symmetry=use_symmetry,
+                                                     use_antisymmetry=use_antisymmetry
                                                     ).hilbert_polynomial(),
                         s[mu]])
             return r
