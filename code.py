@@ -976,41 +976,41 @@ def diagonal_antisort(exponents, n, r, positions_list):
     EXAMPLES::
 
         sage: diagonal_antisort([2,1], 2, 1, [[0,1]])
-        ([2, 1], 1)
+        ((2, 1), 1)
         sage: diagonal_antisort([1,2], 2, 1, [[0,1]])
-        ([2, 1], -1)
+        ((2, 1), -1)
         sage: diagonal_antisort([2,2], 2, 1, [[0,1]])
 
         sage: diagonal_antisort([1,2,3,4], 2, 2, [[0,1]])
-        ([2, 1, 4, 3], -1)
+        ((2, 1, 4, 3), -1)
         sage: diagonal_antisort([1,2,4,3], 2, 2, [[0,1]])
-        ([2, 1, 3, 4], -1)
+        ((2, 1, 3, 4), -1)
         sage: diagonal_antisort([2,1,4,3], 2, 2, [[0,1]])
-        ([2, 1, 4, 3], 1)
+        ((2, 1, 4, 3), 1)
         sage: diagonal_antisort([2,1,3,4], 2, 2, [[0,1]])
-        ([2, 1, 3, 4], 1)
+        ((2, 1, 3, 4), 1)
 
         sage: diagonal_antisort([1,2,3], 3, 1, [[0,1,2]])
-        ([3, 2, 1], -1)
+        ((3, 2, 1), -1)
         sage: diagonal_antisort([1,3,2], 3, 1, [[0,1,2]])
-        ([3, 2, 1], 1)
+        ((3, 2, 1), 1)
         sage: diagonal_antisort([3,2,1], 3, 1, [[0,1,2]])
-        ([3, 2, 1], 1)
+        ((3, 2, 1), 1)
         sage: diagonal_antisort([1,2,3,4,5,6], 6, 1, [[0,2,4]])
-        ([5, 2, 3, 4, 1, 6], -1)
+        ((5, 2, 3, 4, 1, 6), -1)
 
     With unsorted list of positions, the order is relative to the
     order of positions::
 
         sage: diagonal_antisort([1,2,3], 3, 1, [[2,1,0]])
-        ([1, 2, 3], 1)
+        ((1, 2, 3), 1)
         sage: diagonal_antisort([3,2,1], 3, 1, [[2,1,0]])
-        ([1, 2, 3], -1)
+        ((1, 2, 3), -1)
 
     Two lists of positions::
 
         sage: diagonal_antisort([1,2,3,4,5,6], 6, 1, [[0,2,4],[1,3,5]])
-        ([5, 6, 3, 4, 1, 2], 1)
+        ((5, 6, 3, 4, 1, 2), 1)
 
     """
     sign = 1
@@ -1033,6 +1033,8 @@ def antisymmetric_normal(p, n, r, positions):
 
     EXAMPLES::
 
+        sage: R = DiagonalPolynomialRing(QQ, 4, 2)
+        sage: X = R.algebra_generators()
         sage: p = 2 * X[0,0]*X[0,3]^2*X[1,1]*X[1,0]^3 + X[1,3] + 3
         sage: antisymmetric_normal(p, 4, 2, [[0,1,2,3]])
         -2*x00^2*x01*x11^3*x12
@@ -1268,11 +1270,11 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             ....:
             ***    6
             <BLANKLINE>
-            **
-            *     -x00*x01
+            *
+            **    -x00*x01
             <BLANKLINE>
-            **
-            *     -2*x00
+            *
+            **    -2*x00
             <BLANKLINE>
             *
             *
