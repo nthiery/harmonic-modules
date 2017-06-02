@@ -1339,6 +1339,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             raise ValueError("invalid degree")
         return self._grading_set(sorted(d, reverse=True))
 
+    @cached_method
     def harmonic_space_by_shape(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False):
         """
         EXAMPLES::
@@ -1413,6 +1414,18 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         #char = parallel()(char)
         #return sum( res[1] for res in char(Partitions(self._n).list()) )
         return sum(char(mu) for mu in Partitions(self._n))
+
+@func_persist
+def harmonic_character(mu):
+    n = mu.size()
+    if len(mu) == n:
+        r = n-1
+    else:
+        r = n-2
+    R = DiagonalPolynomialRing(QQ, n, r)
+    return R.harmonic_space_by_shape(mu, verbose=True,
+                                     use_symmetry=True,
+                                     use_antisymmetry=True).dimensions()
 
 ##############################################################################
 # Polynomials as differential operators
