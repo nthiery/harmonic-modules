@@ -831,6 +831,12 @@ def higher_specht(R, P, Q=None, harmonic=False, use_antisymmetry=False):
         *      2      2
         *      1      1    (6) * (y - z) * (-x + y) * (x - z)
         <BLANKLINE>
+
+    This catched two bugs::
+
+        sage: for mu in Partitions(6):             # long test
+        ....:     for t in StandardTableaux(mu):
+        ....:         p = R.higher_specht(t, harmonic=True, use_antisymmetry=True)
     """
     n = P.size()
     assert n == R.ngens()
@@ -854,11 +860,11 @@ def higher_specht(R, P, Q=None, harmonic=False, use_antisymmetry=False):
         B = [higher_specht(R, P, Q, use_antisymmetry=use_antisymmetry)] + \
             [higher_specht(R, P2, Q, use_antisymmetry=use_antisymmetry) * m[nu].expand(n, R.gens())
              for P2 in StandardTableaux(P.shape()) if P2.cocharge() < d
-             for nu in Partitions(d-P2.cocharge())]
+             for nu in Partitions(d-P2.cocharge(), max_length=n)]
         if use_antisymmetry:
             antisymmetries = antisymmetries_of_tableau(Q)
             B = [antisymmetric_normal(b, n, 1, antisymmetries) for b in B]
-        operators = [p[k].expand(n,R.gens()) for k in range(1,n)]
+        operators = [p[k].expand(n,R.gens()) for k in range(1,n+1)]
         if use_antisymmetry:
             def action(e, f):
                 return antisymmetric_normal(polynomial_derivative(e,f), n, 1, antisymmetries)
