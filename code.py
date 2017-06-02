@@ -1045,6 +1045,17 @@ def antisymmetric_normal(p, n, r, positions):
         2*x00*x03^2*x10^3*x11
         sage: antisymmetric_normal(p, 4, 2, [[0,3]])
         -2*x00^2*x03*x11*x13^3 - x10
+
+    An example with a collision in the result (failed at some point)::
+
+        sage: R = DiagonalPolynomialRing(QQ, 3, 3)
+        sage: R._P.inject_variables()
+        Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
+        sage: p1 = -2*x10*x11*x20 - 2*x10^2*x21 + 2*x10*x11*x21
+        sage: antisymmetric_normal(p1, 3, 3, [[0,1,2]])
+        -4*x10*x11*x20 - 2*x10^2*x21
+
+
     """
     R = p.parent()
     d = {}
@@ -1052,7 +1063,8 @@ def antisymmetric_normal(p, n, r, positions):
         res = diagonal_antisort(exponent, n, r, positions)
         if res:
             exponent, sign = res
-            d[exponent] = sign*c
+            d.setdefault(exponent, 0)
+            d[exponent] += sign*c
     return R(d)
 
 
