@@ -1095,6 +1095,14 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         self._vars = matrix([[vars[i*n+j] for j in range(n)] for i in range(r)])
         Parent.__init__(self, facade=(P,), category=Algebras(QQ).Commutative())
 
+    def _repr_(self):
+        """
+            sage: DiagonalPolynomialRing(QQ, 5, 3) # indirect doctest
+            Diagonal polynomial ring with 3 rows of 5 variables over Rational Field
+
+        """
+        return "Diagonal polynomial ring with %s rows of %s variables over %s"%(self._r, self._n, self.base_ring())
+
     def base_ring(self):
         return self._P.base_ring()
 
