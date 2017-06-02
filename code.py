@@ -865,7 +865,7 @@ def higher_specht(R, P, Q=None, harmonic=False, use_antisymmetry=False):
         else:
             action = polynomial_derivative
         ann = annihilator_basis(B, operators, action=action, side='left')
-        assert(len(ann)==1)
+        assert len(ann) == 1
         return ann[0]
 
     exponents = index_filling(P)
