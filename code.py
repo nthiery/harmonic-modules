@@ -1417,15 +1417,39 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
 @func_persist
 def harmonic_character(mu):
+    mu = Partition(mu)
     n = mu.size()
+    print mu
     if len(mu) == n:
         r = n-1
     else:
         r = n-2
     R = DiagonalPolynomialRing(QQ, n, r)
-    return R.harmonic_space_by_shape(mu, verbose=True,
+    result = R.harmonic_space_by_shape(mu, verbose=False,
                                      use_symmetry=True,
                                      use_antisymmetry=True).dimensions()
+    return {tuple(degrees): dim
+            for degrees, dim in result.iteritems()}
+
+@parallel()
+def harmonic_character_paral(mu):
+    t1 = datetime.datetime.now()
+    result = harmonic_character(mu)
+    t2 = datetime.datetime.now()
+    return result, t2-t1
+
+def harmonic_characters(n):
+    S = SymmetricFunctions(ZZ)
+    s = S.s()
+    m = S.m()
+    for (((nu,),_), (dimensions, t)) in harmonic_character_paral((tuple(mu),) for mu in Partitions(n)):
+        if len(nu) == n:
+            r = n-1
+        else:
+            r = n-2
+        print Partition(nu), "\t("+str(t)[:-7]+"):", s(m.sum_of_terms([Partition(d), c]
+                                     for d,c in dimensions.iteritems())
+                   ).restrict_partition_lengths(r, exact=False)
 
 ##############################################################################
 # Polynomials as differential operators
