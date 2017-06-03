@@ -1,6 +1,5 @@
 import functools
 import operator
-import progressbar
 
 from sage.misc.cachefunc import cached_method, cached_function
 from sage.misc.misc_c import prod
@@ -548,6 +547,7 @@ class Subspace:
     @cached_method
     def finalize(self):
         if self._verbose:
+            import progressbar
             bar = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
         todo = self._todo
         while todo:
