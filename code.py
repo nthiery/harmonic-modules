@@ -1,6 +1,9 @@
 import datetime
+import inspect
 import functools
 import operator
+import os
+import sage.misc.persist as persist
 
 from sage.misc.cachefunc import cached_method, cached_function
 from sage.misc.misc_c import prod
@@ -36,6 +39,55 @@ from sage.rings.semirings.non_negative_integer_semiring import NN
 from sage.sets.recursively_enumerated_set import RecursivelyEnumeratedSet
 
 from sage.functions.other import factorial
+
+class func_persist:
+    r"""
+    Put ``@func_persist`` right before your function
+    definition to cache values it computes to disk.
+    """
+    def __init__(self, f, dir='func_persist', prefix=None, hash=hash, key=None):
+        from sage.misc.misc import sage_makedirs
+        self._func = f
+        self._dir  = dir
+        if prefix is None:
+            prefix = f.__name__
+        self._prefix = dir+"/"+prefix
+        self._hash = hash
+        if key is not None:
+            self.key = key
+        sage_makedirs(dir)
+        self.__doc__ = '%s%s%s'%(\
+            f.__name__,
+            inspect.formatargspec(*inspect.getargs(f.__code__)),
+            f.__doc__)
+
+    def key(self, *args, **kwds):
+        return (tuple(args), tuple(kwds.items()))
+
+    def __call__(self, *args, **kwds):
+        key = self.key(*args, **kwds)
+        h = self._hash(key)
+        name = '%s_%s.sobj'%(self._prefix, h)
+
+        if os.path.exists(name):
+            key2, val = persist.load(name)
+            if key == key2:
+                # We save and test equality of keys to avoid
+                # the (extremely remote) possibility of a hash
+                # collision.  Correctness is crucial in mathematics.
+                return val
+
+        val = self._func(*args, **kwds)
+        persist.save((key, val), name)
+        return val
+
+    def dict(self):
+        """
+        Return the already computed values
+        """
+        import glob
+        return dict(persist.load(name)
+                    for name in glob.glob("%s*.sobj"%self._prefix))
 
 def items_of_vector(v):
     """
@@ -877,7 +929,7 @@ def higher_specht(R, P, Q=None, harmonic=False, use_antisymmetry=False):
 
     exponents = index_filling(P)
     X = R.gens()
-    m = prod(X[i-1]**d for (d,i) in zip(exponents.entries(), Q.entries()))
+    m = R.prod(X[i-1]**d for (d,i) in zip(exponents.entries(), Q.entries()))
     return apply_young_idempotent(m, Q, use_antisymmetry=use_antisymmetry)
 
 def reverse_sorting_permutation(t):
@@ -1308,7 +1360,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             *    -x00^2*x01
         """
         X = self.algebra_generators()
-        R = PolynomialRing(self.base_ring(), list(X[0]))
+        # the self._n forces a multivariate polynomial ring even if n=1
+        R = PolynomialRing(self.base_ring(), self._n, list(X[0]))
         H = higher_specht(R, P, Q, harmonic=harmonic, use_antisymmetry=use_antisymmetry)
         return self(H)
 
@@ -1416,8 +1469,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         #return sum( res[1] for res in char(Partitions(self._n).list()) )
         return sum(char(mu) for mu in Partitions(self._n))
 
-@func_persist
-def harmonic_character(mu):
+def harmonic_character_plain(mu):
     mu = Partition(mu)
     n = mu.size()
     print mu
@@ -1425,32 +1477,77 @@ def harmonic_character(mu):
         r = n-1
     else:
         r = n-2
+    r = max(r, 1)
     R = DiagonalPolynomialRing(QQ, n, r)
     result = R.harmonic_space_by_shape(mu, verbose=False,
                                      use_symmetry=True,
-                                     use_antisymmetry=True).dimensions()
+                                     use_antisymmetry=True).hilbert_polynomial()
     return {tuple(degrees): dim
-            for degrees, dim in result.iteritems()}
+            for degrees, dim in result}
+
+harmonic_character_plain = func_persist(harmonic_character_plain,
+                                        hash=lambda mu: str(mu).replace(" ","")[1:-1],
+                                        key=lambda mu: tuple(Partition(mu))
+                                        )
+
+def harmonic_character(mu):
+    mu = tuple(mu)
+    result = harmonic_character_plain(mu)
+    S = SymmetricFunctions(ZZ)
+    s = S.s()
+    return s.sum_of_terms([Partition(d), c] for d,c in result.iteritems())
 
 @parallel()
 def harmonic_character_paral(mu):
     t1 = datetime.datetime.now()
-    result = harmonic_character(mu)
+    result = harmonic_character_plain(mu)
     t2 = datetime.datetime.now()
     return result, t2-t1
 
 def harmonic_characters(n):
     S = SymmetricFunctions(ZZ)
     s = S.s()
-    m = S.m()
-    for (((nu,),_), (dimensions, t)) in harmonic_character_paral((tuple(mu),) for mu in Partitions(n)):
-        if len(nu) == n:
-            r = n-1
-        else:
-            r = n-2
-        print Partition(nu), "\t("+str(t)[:-7]+"):", s(m.sum_of_terms([Partition(d), c]
-                                     for d,c in dimensions.iteritems())
-                   ).restrict_partition_lengths(r, exact=False)
+    for (((nu,),_), (result, t)) in harmonic_character_paral((tuple(mu),) for mu in Partitions(n)):
+        print Partition(nu), "\t("+str(t)[:-7]+"):",s.sum_of_terms([Partition(d), c]
+                                                                   for d,c in result.iteritems())
+
+def harmonic_character_truncated_series():
+    """
+
+        sage: SymmetricFunctions(ZZ).inject_shorthands()
+        sage: Harm = harmonic_character_truncated_series()
+        sage: s.sum_of_terms([nu,c] for ((mu,nu),c) in Harm if mu == [1,1])
+
+        sage: H = sum(h[i] for i in range(0, 10))
+
+        sage: H
+        h[] + h[1] + h[2] + h[3] + h[4] + h[5] + h[6] + h[7] + h[8] + h[9]
+        sage: Hinv = s(1-e[1]+e[2]-e[3]+e[4]-e[5]+e[6])
+
+        sage: truncate(H*Hinv,6)
+        h[]
+
+
+        sage: bitruncate(Harm * tensor([s.one(), (1-s[1]+s[2]-s[3]+s[4]-s[5])]), 6)
+
+    Not quite::
+
+        sage: bitruncate(Harm * tensor([s.one(), Hinv]), 6)
+        s[] # s[] + s[1] # s[1, 1] - s[1] # s[1, 1, 1] + s[1] # s[1, 1, 1, 1] - s[1] # s[1, 1, 1, 1, 1] + s[1, 1] # s[1, 1, 1] - s[1, 1] # s[1, 1, 1, 1] + s[1, 1] # s[1, 1, 1, 1, 1] + s[1, 1, 1] # s[1, 1, 1, 1] - s[1, 1, 1] # s[1, 1, 1, 1, 1] + s[1, 1, 1, 1] # s[1, 1, 1, 1, 1] + s[2] # s[2, 1] - s[2] # s[2, 1, 1] + s[2] # s[2, 1, 1, 1] + s[2, 1] # s[2, 1, 1] - s[2, 1] # s[2, 1, 1, 1] + s[2, 1] # s[2, 2] - s[2, 1] # s[2, 2, 1] + s[2, 1, 1] # s[2, 1, 1, 1] + s[2, 1, 1] # s[2, 2, 1] + s[2, 2] # s[2, 2, 1] + s[2, 2] # s[3, 2] + s[3] # s[1, 1, 1] - s[3] # s[1, 1, 1, 1] + s[3] # s[1, 1, 1, 1, 1] + s[3] # s[3, 1] - s[3] # s[3, 1, 1] + s[3, 1] # s[1, 1, 1, 1] - s[3, 1] # s[1, 1, 1, 1, 1] + s[3, 1] # s[2, 1, 1] - s[3, 1] # s[2, 1, 1, 1] + s[3, 1] # s[3, 1, 1] + s[3, 1] # s[3, 2] + s[3, 1, 1] # s[1, 1, 1, 1, 1] + s[3, 1, 1] # s[2, 1, 1, 1] + s[3, 1, 1] # s[2, 2, 1] + s[3, 2] # s[2, 1, 1, 1] + s[3, 2] # s[2, 2, 1] + s[3, 2] # s[3, 1, 1] + s[4] # s[2, 1, 1] - s[4] # s[2, 1, 1, 1] + s[4] # s[2, 2] - s[4] # s[2, 2, 1] + s[4] # s[4, 1] + s[4, 1] # s[1, 1, 1, 1] - s[4, 1] # s[1, 1, 1, 1, 1] + s[4, 1] # s[2, 1, 1, 1] + 2*s[4, 1] # s[2, 2, 1] + s[4, 1] # s[3, 1, 1] + s[4, 1] # s[3, 2] + s[5] # s[2, 1, 1] - s[5] # s[2, 1, 1, 1] + s[5] # s[3, 1, 1] + s[5] # s[3, 2]
+
+
+    """
+    s = SymmetricFunctions(ZZ).s()
+    ss = tensor([s,s])
+    return ss.sum_of_terms([(Partition(mu), Partition(nu)), c]
+                           for nu,d in harmonic_character_plain.dict().iteritems()
+                           for mu,c in d.iteritems())
+
+def truncate(f,d):
+    return f.map_support_skip_none(lambda mu: mu if mu.size() < d else None)
+
+def bitruncate(f,d):
+    return f.map_support_skip_none(lambda (mu,nu): (mu,nu) if mu.size() < d and nu.size() < d else None)
 
 ##############################################################################
 # Polynomials as differential operators
