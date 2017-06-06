@@ -1490,6 +1490,17 @@ harmonic_character_plain = func_persist(harmonic_character_plain,
                                         key=lambda mu: tuple(Partition(mu))
                                         )
 
+"""
+Migrating persistent database from previous format::
+
+    sage: myhash=lambda mu: str(list(mu)).replace(" ","")[1:-1]
+    sage: for s in glob.glob("harmonic_character*.sobj"):
+    ....:     obj = load(s)
+    ....:     key = obj[0][0][0]
+    ....:     value = obj[1]
+    ....:     save((key,value), "plain/harmonic_character_plain_%s"%(myhash(key)))
+"""
+
 def harmonic_character(mu):
     mu = tuple(mu)
     result = harmonic_character_plain(mu)
