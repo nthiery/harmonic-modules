@@ -1499,6 +1499,14 @@ Migrating persistent database from previous format::
     ....:     key = obj[0][0][0]
     ....:     value = obj[1]
     ....:     save((key,value), "plain/harmonic_character_plain_%s"%(myhash(key)))
+
+Inserting François's value for the character for `1^6` in the database::
+
+    sage: res = s[1, 1, 1, 1, 1] + s[3, 1, 1, 1] + s[4, 1, 1, 1] + s[4, 2, 1] + s[4, 3, 1] + s[4, 4] + s[4, 4, 1] + s[5, 1, 1, 1] + s[5, 2, 1] + s[5, 3, 1] + s[6, 1, 1] + s[6,1, 1, 1] + s[6, 2, 1] + s[6, 3] + s[6, 3, 1] + s[6, 4] + s[7, 1, 1] + s[7, 2] +s[7, 2, 1] + s[7, 3] + s[7, 4] + 2*s[8, 1, 1] + s[8, 2] + s[8, 2, 1] + s[8, 3] + s[9, 1, 1] + s[9, 2] + s[9, 3] + s[10, 1] + s[10, 1, 1] + s[10, 2] + s[11, 1] + s[11, 2] + s[12, 1] + s[13, 1] + s[15]
+    sage: key=Partition([1,1,1,1,1,1])
+    sage: value = {tuple(mu):c for mu,c in res}
+    sage: myhash=lambda mu: str(list(mu)).replace(" ","")[1:-1]
+    sage: save((key,value), "func_persist/harmonic_character_plain_%s"%(myhash(key)))
 """
 
 def harmonic_character(mu):
@@ -1657,4 +1665,3 @@ def polynomial_derivative(p, q): # this just extends a function by bilinearity; 
             (e3,c3) = m
             result += R({e3: c1*c2*c3})
     return result
-
