@@ -1512,6 +1512,15 @@ Inserting François's value for the character for `1^6` in the database::
 """
 
 def harmonic_character(mu):
+    """
+    Return the contribution of an `S_n` isotypic component in the
+    diagonal harmonic polynomials
+
+    Let `H` be the space of diagonal harmonic harmonic polynomials on
+    `k\times n` variables, with `k` large enough.  Write its `GL_k
+    \times S_n` bicharacter as `\sum f_\mu \otimes s_\mu`.  This
+    computes `f_\mu`.
+    """
     mu = tuple(mu)
     result = harmonic_character_plain(mu)
     S = SymmetricFunctions(ZZ)
@@ -1526,6 +1535,10 @@ def harmonic_character_paral(mu):
     return result, t2-t1
 
 def harmonic_characters(n):
+    """
+    Compute in parallel the harmonic characters for all
+    irreducible representations of `S_n`.
+    """
     S = SymmetricFunctions(ZZ)
     s = S.s()
     for (((nu,),_), (result, t)) in harmonic_character_paral((tuple(mu),) for mu in Partitions(n)):
@@ -1534,9 +1547,16 @@ def harmonic_characters(n):
 
 def harmonic_character_truncated_series():
     """
+    Return the diagonal harmonic bicharacter series, truncated to
+    whatever has already been computed and stored in the database.
+
+    OUTPUT: a sum `\sum c_{\lambda,\mu} s_\lambda \tensor s_\mu`
+
+    EXAMPLES::
+
+        sage: Harm = harmonic_character_truncated_series()
 
         sage: SymmetricFunctions(ZZ).inject_shorthands()
-        sage: Harm = harmonic_character_truncated_series()
         sage: s.sum_of_terms([nu,c] for ((mu,nu),c) in Harm if mu == [1,1])
 
         sage: H = sum(h[i] for i in range(0, 10))
@@ -1555,8 +1575,6 @@ def harmonic_character_truncated_series():
 
         sage: bitruncate(Harm * tensor([s.one(), Hinv]), 6)
         s[] # s[] + s[1] # s[1, 1] - s[1] # s[1, 1, 1] + s[1] # s[1, 1, 1, 1] - s[1] # s[1, 1, 1, 1, 1] + s[1, 1] # s[1, 1, 1] - s[1, 1] # s[1, 1, 1, 1] + s[1, 1] # s[1, 1, 1, 1, 1] + s[1, 1, 1] # s[1, 1, 1, 1] - s[1, 1, 1] # s[1, 1, 1, 1, 1] + s[1, 1, 1, 1] # s[1, 1, 1, 1, 1] + s[2] # s[2, 1] - s[2] # s[2, 1, 1] + s[2] # s[2, 1, 1, 1] + s[2, 1] # s[2, 1, 1] - s[2, 1] # s[2, 1, 1, 1] + s[2, 1] # s[2, 2] - s[2, 1] # s[2, 2, 1] + s[2, 1, 1] # s[2, 1, 1, 1] + s[2, 1, 1] # s[2, 2, 1] + s[2, 2] # s[2, 2, 1] + s[2, 2] # s[3, 2] + s[3] # s[1, 1, 1] - s[3] # s[1, 1, 1, 1] + s[3] # s[1, 1, 1, 1, 1] + s[3] # s[3, 1] - s[3] # s[3, 1, 1] + s[3, 1] # s[1, 1, 1, 1] - s[3, 1] # s[1, 1, 1, 1, 1] + s[3, 1] # s[2, 1, 1] - s[3, 1] # s[2, 1, 1, 1] + s[3, 1] # s[3, 1, 1] + s[3, 1] # s[3, 2] + s[3, 1, 1] # s[1, 1, 1, 1, 1] + s[3, 1, 1] # s[2, 1, 1, 1] + s[3, 1, 1] # s[2, 2, 1] + s[3, 2] # s[2, 1, 1, 1] + s[3, 2] # s[2, 2, 1] + s[3, 2] # s[3, 1, 1] + s[4] # s[2, 1, 1] - s[4] # s[2, 1, 1, 1] + s[4] # s[2, 2] - s[4] # s[2, 2, 1] + s[4] # s[4, 1] + s[4, 1] # s[1, 1, 1, 1] - s[4, 1] # s[1, 1, 1, 1, 1] + s[4, 1] # s[2, 1, 1, 1] + 2*s[4, 1] # s[2, 2, 1] + s[4, 1] # s[3, 1, 1] + s[4, 1] # s[3, 2] + s[5] # s[2, 1, 1] - s[5] # s[2, 1, 1, 1] + s[5] # s[3, 1, 1] + s[5] # s[3, 2]
-
-
     """
     s = SymmetricFunctions(ZZ).s()
     ss = tensor([s,s])
