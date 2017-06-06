@@ -1486,7 +1486,7 @@ def harmonic_character_plain(mu):
             for degrees, dim in result}
 
 harmonic_character_plain = func_persist(harmonic_character_plain,
-                                        hash=lambda mu: str(mu).replace(" ","")[1:-1],
+                                        hash=lambda mu: str(list(mu)).replace(" ","")[1:-1],
                                         key=lambda mu: tuple(Partition(mu))
                                         )
 
