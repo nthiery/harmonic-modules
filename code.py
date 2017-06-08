@@ -1543,7 +1543,7 @@ def harmonic_character_plain(mu):
     result = R.harmonic_character(mu, verbose=False,
                                   use_symmetry=True,
                                   use_lie=True,
-                                  use_antisymmetry=True).hilbert_polynomial()
+                                  use_antisymmetry=True)
     return {tuple(degrees): dim
             for degrees, dim in result}
 
