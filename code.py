@@ -1540,9 +1540,10 @@ def harmonic_character_plain(mu):
         r = n-2
     r = max(r, 1)
     R = DiagonalPolynomialRing(QQ, n, r)
-    result = R.harmonic_space_by_shape(mu, verbose=False,
-                                     use_symmetry=True,
-                                     use_antisymmetry=True).hilbert_polynomial()
+    result = R.harmonic_character(mu, verbose=False,
+                                  use_symmetry=True,
+                                  use_lie=True,
+                                  use_antisymmetry=True).hilbert_polynomial()
     return {tuple(degrees): dim
             for degrees, dim in result}
 
