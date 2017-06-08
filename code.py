@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 import inspect
 import functools
@@ -173,7 +174,7 @@ class MatrixOfVectors:
         [0 1 1]
         [2 1 1]
     """
-    def __init__(self, ambient=None, vectors=None, stats={}):
+    def __init__(self, vectors=None, ambient=None, stats={}):
         if vectors is None and not isinstance(ambient, Parent):
             vectors = ambient
             ambient = None
@@ -228,7 +229,7 @@ class MatrixOfVectors:
         # TODO:
         # - optimize this
         # - implement and use a generic api to recover the items
-        if v.parent() != self._ambient:
+        if not self._ambient.is_parent_of(v):
             raise ValueError("Expected vector in %s; got %s"%(self._ambient, v))
         rank = self._rank
         d = dict((rank(i), c) for i, c in items_of_vector(v))
@@ -395,7 +396,7 @@ def annihilator_basis(B, S, action=operator.mul, side='right', ambient=None):
 
     for s in S:
         mat = mat.augment(
-            MatrixOfVectors([action(s, b) for b in B])._matrix)
+            MatrixOfVectors([action(s, b) for b in B], ambient=ambient)._matrix)
 
     return tuple(sum(c * B[i] for i,c in v.iteritems())
                  for v in mat.left_kernel().basis())
@@ -599,10 +600,12 @@ class Subspace:
 
     @cached_method
     def finalize(self):
+        todo = self._todo
+        if not todo:
+            return
         if self._verbose:
             import progressbar
             bar = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
-        todo = self._todo
         while todo:
             v,d,op = todo.pop()
             w = op(v)
@@ -1255,13 +1258,16 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
         return result
 
-    def polarization_operators_by_degree(self, side=None, use_symmetry=False, antisymmetries=None):
+    def polarization_operators_by_degree(self, side=None, use_symmetry=False, antisymmetries=None, min_degree=0):
         """
         Return the collection of polarization operators acting on harmonic polynomials
 
         INPUT:
 
         - ``side`` -- 'down'
+        - ``min_degree`` -- a non negative integer `d` (default: `0`)
+
+          if `d>0`, only return the polarization operators of differential degree `>=d`.
 
         If ``side`` is `down` (the only implemented choice), only
         the operators from `X_{i1}` to `X_{i2}` for `i1<i2` are returned.
@@ -1291,7 +1297,12 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
              (-1, 0, 1): [<functools.partial object at ...>],
              (0, -1, 1): [<functools.partial object at ...>]}
 
-
+            sage: P.polarization_operators_by_degree(use_lie=True)       # not tested
+            {(-2, 1, 0): [<functools.partial object at 0x7f6e3235f520>],
+             (-2, 0, 1): [<functools.partial object at 0x7f6e3235f5d0>],
+             (0, 1, -1): [<functools.partial object at 0x7f6e3235f3c0>],
+             (0, -2, 1): [<functools.partial object at 0x7f6e3235f680>],
+             (1, -1, 0): [<functools.partial object at 0x7f6e3235f470>]}
 
             sage: P = DiagonalPolynomialRing(QQ, 4, 3)
             sage: ops = P.polarization_operators_by_degree()
@@ -1308,9 +1319,12 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         grading_set = self._grading_set
         return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
                 [functools.partial(self.polarization, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry, antisymmetries=antisymmetries)]
+                for d in range(min_degree+1, n)
                 for i1 in range(0,r)
-                for i2 in range(i1+1 if side=='down' else 0, r) if i1 != i2
-                for d in range(1, n)}
+                for i2 in range(0, r)
+                #if ((i1==i2+1 if d==1 else i1<i2) if use_lie else i1<i2 if side == 'down' else i1!=i2)
+                if (i1<i2 if side == 'down' else i1!=i2)
+               }
 
     def higher_specht(self, P, Q=None, harmonic=False, use_antisymmetry=False):
         r"""
@@ -1394,7 +1408,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         return self._grading_set(sorted(d, reverse=True))
 
     @cached_method
-    def harmonic_space_by_shape(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False):
+    def harmonic_space_by_shape(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False):
         """
         EXAMPLES::
 
@@ -1418,13 +1432,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         S = SymmetricFunctions(ZZ)
         s = S.s()
         m = S.m()
-        def hilbert_parent(dimensions):
-            return s(S.from_polynomial(self._hilbert_parent(dimensions))
-                    ).restrict_partition_lengths(r,exact=False)
-        def hilbert_parent_symmetric(dimensions):
-            return s(m.sum_of_terms([Partition(d), c]
-                                     for d,c in dimensions.iteritems())
-                    ).restrict_partition_lengths(r, exact=False)
         generators = {}
         for t in StandardTableaux(mu):
             p = self.higher_specht(t, harmonic=True, use_antisymmetry=use_antisymmetry)
@@ -1437,20 +1444,73 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
         else:
             antisymmetries = None
-        operators = self.polarization_operators_by_degree(side='down', use_symmetry=use_symmetry, antisymmetries=antisymmetries)
+        if use_lie:
+            use_symmetry=True
+            def hilbert_parent(dimensions):
+                return s.sum_of_terms([Partition(d), c]
+                                       for d,c in dimensions.iteritems() if c)
+        elif use_symmetry:
+            def hilbert_parent(dimensions):
+                return s(m.sum_of_terms([Partition(d), c]
+                                         for d,c in dimensions.iteritems())
+                        ).restrict_partition_lengths(r, exact=False)
+        else:
+            def hilbert_parent(dimensions):
+                return s(S.from_polynomial(self._hilbert_parent(dimensions))
+                        ).restrict_partition_lengths(r,exact=False)
+
+        operators = self.polarization_operators_by_degree(side='down',
+                                                          use_symmetry=use_symmetry,
+                                                          antisymmetries=antisymmetries,
+                                                          min_degree=1 if use_lie else 0)
+        if use_lie:
+            operators[self._grading_set.zero()] = [
+                functools.partial(lambda v,i: self.polarization(self.polarization(v, i+1,i, 1,antisymmetries=antisymmetries), i,i+1, 1,antisymmetries=antisymmetries), i=i)
+                for i in range(r-1)
+                ]
+        # print operators
         add_degree = self._add_degree_symmetric if use_symmetry else self._add_degree
         F = Subspace(generators, operators=operators, add_degrees=add_degree, verbose=verbose)
-        F._hilbert_parent = hilbert_parent_symmetric if use_symmetry else hilbert_parent
+        F._hilbert_parent = hilbert_parent
+        F.antisymmetries = antisymmetries
         return F
 
-    def harmonic_character(self, verbose=False, use_symmetry=False, use_antisymmetry=False):
+
+    def harmonic_character(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False):
+        """
+        Return the `GL_r` character of the space of diagonally harmonic polynomials
+        contributed by a given `S_n` irreducible representation.
+
+        EXAMPLES::
+
+            sage: P = DiagonalPolynomialRing(QQ,3,2)
+            sage: P.harmonic_character(Partition([3,2]))
+            s[] # s[3] + s[1] # s[2, 1] + s[1, 1] # s[1, 1, 1] + s[2] # s[2, 1] + s[3] # s[1, 1, 1]
+
+        """
+        mu = Partition(mu)
+        F = self.harmonic_space_by_shape(mu, verbose=verbose,
+                                         use_symmetry=use_symmetry,
+                                         use_antisymmetry=use_antisymmetry,
+                                         use_lie=use_lie)
+        F.finalize()
+        if not use_lie:
+            return F.hilbert_polynomial()
+        operators = [functools.partial(self.polarization, i1=i1, i2=i2, d=1,
+                                       antisymmetries=F.antisymmetries)
+                     for i1 in range(1, self._r)
+                     for i2 in range(i1)]
+        return F._hilbert_parent({mu: len(annihilator_basis(basis._basis, operators, action=lambda b, op: op(b), ambient=self))
+                                  for mu, basis in F._bases.iteritems() if basis._basis})
+
+    def harmonic_bicharacter(self, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False):
         """
         Return the `GL_r-S_n` character of the space of diagonally harmonic polynomials
 
         EXAMPLES::
 
             sage: P = DiagonalPolynomialRing(QQ,3,2)
-            sage: P.harmonic_character()
+            sage: P.harmonic_bicharacter()
             s[] # s[3] + s[1] # s[2, 1] + s[1, 1] # s[1, 1, 1] + s[2] # s[2, 1] + s[3] # s[1, 1, 1]
 
         """
@@ -1460,7 +1520,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                 print "%s:"%s(mu)
             r = tensor([self.harmonic_space_by_shape(mu, verbose=verbose,
                                                      use_symmetry=use_symmetry,
-                                                     use_antisymmetry=use_antisymmetry
+                                                     use_antisymmetry=use_antisymmetry,
+                                                     use_lie=use_lie,
                                                     ).hilbert_polynomial(),
                         s[mu]])
             return r
@@ -1493,11 +1554,16 @@ harmonic_character_plain = func_persist(harmonic_character_plain,
 """
 Migrating persistent database from previous format::
 
+    sage: SymmetricFunctions(ZZ).inject_shorthands()
+    sage: cd func_persist
     sage: myhash=lambda mu: str(list(mu)).replace(" ","")[1:-1]
-    sage: for s in glob.glob("harmonic_character*.sobj"):
-    ....:     obj = load(s)
+    sage: for filename in glob.glob("harmonic_character*.sobj"):
+    ....:     obj = load(filename)
     ....:     key = obj[0][0][0]
     ....:     value = obj[1]
+    ....:     chi = s(m.sum_of_terms([Partition(nu), c] for nu, c in value.iteritems())).restrict_partition_lengths(max(4, len(key)-1), exact=False)
+    ....:     print key, chi
+    ....:     value = {tuple(nu):c for nu,c in chi }
     ....:     save((key,value), "plain/harmonic_character_plain_%s"%(myhash(key)))
 
 Inserting François's value for the character for `1^6` in the database::
@@ -1545,7 +1611,7 @@ def harmonic_characters(n):
         print Partition(nu), "\t("+str(t)[:-7]+"):",s.sum_of_terms([Partition(d), c]
                                                                    for d,c in result.iteritems())
 
-def harmonic_character_truncated_series():
+def harmonic_bicharacter_truncated_series():
     """
     Return the diagonal harmonic bicharacter series, truncated to
     whatever has already been computed and stored in the database.
