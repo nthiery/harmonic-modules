@@ -1441,8 +1441,10 @@ def harmonic_bicharacter_truncated_series():
 
     Extracting the `S_n` character for a given `GL_r` representation::
 
-        sage: def chi(mu):
-        ....:     return s.sum_of_terms([nu,c] for ((mu1,nu),c) in Harm if mu1 == mu)
+        sage: def chi1(mu, p):
+        ....:     return s.sum_of_terms([nu,c] for ((mu1,nu),c) in p if mu1 == mu)
+        sage: def chi2(nu, p):
+        ....:     return e.sum_of_terms([mu,c] for ((mu,nu1),c) in p if nu1 == nu)
         sage: p11 = chi([1,1])
         s[1, 1, 1] + s[2, 1, 1] + s[3, 1, 1] + s[4, 1, 1]
 
@@ -1456,13 +1458,13 @@ def harmonic_bicharacter_truncated_series():
         sage: truncate(H*Hinv,6)
         h[]
 
-        sage: truncate((1-chi([1])    ) * Hinv, 7)
+        sage: truncate((1-chi1([1], Harm)    ) * Hinv, 7)
         s[] - s[1]
 
-        sage: truncate((1+chi([1,1])  ) * Hinv, 7)
+        sage: truncate((1+chi1([1,1], Harm)  ) * Hinv, 7)
         s[] - s[1] + s[1, 1]
 
-        sage: truncate((1-chi([1,1,1])) * Hinv, 7)
+        sage: truncate((1-chi1([1,1,1], Harm)) * Hinv, 7)
         s[] - s[1] + s[1, 1] - s[1, 1, 1]
 
 
@@ -1473,6 +1475,14 @@ def harmonic_bicharacter_truncated_series():
 
         sage: bitruncate(Harm * tensor([s.one(), Hinv]), 6)
         s[] # s[] + s[1] # s[1, 1] - s[1] # s[1, 1, 1] + s[1] # s[1, 1, 1, 1] - s[1] # s[1, 1, 1, 1, 1] + s[1, 1] # s[1, 1, 1] - s[1, 1] # s[1, 1, 1, 1] + s[1, 1] # s[1, 1, 1, 1, 1] + s[1, 1, 1] # s[1, 1, 1, 1] - s[1, 1, 1] # s[1, 1, 1, 1, 1] + s[1, 1, 1, 1] # s[1, 1, 1, 1, 1] + s[2] # s[2, 1] - s[2] # s[2, 1, 1] + s[2] # s[2, 1, 1, 1] + s[2, 1] # s[2, 1, 1] - s[2, 1] # s[2, 1, 1, 1] + s[2, 1] # s[2, 2] - s[2, 1] # s[2, 2, 1] + s[2, 1, 1] # s[2, 1, 1, 1] + s[2, 1, 1] # s[2, 2, 1] + s[2, 2] # s[2, 2, 1] + s[2, 2] # s[3, 2] + s[3] # s[1, 1, 1] - s[3] # s[1, 1, 1, 1] + s[3] # s[1, 1, 1, 1, 1] + s[3] # s[3, 1] - s[3] # s[3, 1, 1] + s[3, 1] # s[1, 1, 1, 1] - s[3, 1] # s[1, 1, 1, 1, 1] + s[3, 1] # s[2, 1, 1] - s[3, 1] # s[2, 1, 1, 1] + s[3, 1] # s[3, 1, 1] + s[3, 1] # s[3, 2] + s[3, 1, 1] # s[1, 1, 1, 1, 1] + s[3, 1, 1] # s[2, 1, 1, 1] + s[3, 1, 1] # s[2, 2, 1] + s[3, 2] # s[2, 1, 1, 1] + s[3, 2] # s[2, 2, 1] + s[3, 2] # s[3, 1, 1] + s[4] # s[2, 1, 1] - s[4] # s[2, 1, 1, 1] + s[4] # s[2, 2] - s[4] # s[2, 2, 1] + s[4] # s[4, 1] + s[4, 1] # s[1, 1, 1, 1] - s[4, 1] # s[1, 1, 1, 1, 1] + s[4, 1] # s[2, 1, 1, 1] + 2*s[4, 1] # s[2, 2, 1] + s[4, 1] # s[3, 1, 1] + s[4, 1] # s[3, 2] + s[5] # s[2, 1, 1] - s[5] # s[2, 1, 1, 1] + s[5] # s[3, 1, 1] + s[5] # s[3, 2]
+
+
+    Substituting `q_n=1` (which should be equivalent to computing the plethysm on `X+1`)
+    gives an e-positive expression::
+
+        sage: res = tensor([s,e])( sum(c*tensor( [s[mu](s[1] + 1), s[nu]] ) for ((mu, nu), c) in Harm) )
+        sage: set(res.coefficients())
+        {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12}
     """
     s = SymmetricFunctions(ZZ).s()
     ss = tensor([s,s])
