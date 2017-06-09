@@ -536,9 +536,14 @@ class Subspace:
         todo = self._todo
         if not todo:
             return
-        if self._verbose:
-            import progressbar
-            bar = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
+        if self._verbose is not False:
+            import tqdm
+            if isinstance(self._verbose, tqdm.tqdm):
+                bar = self._verbose
+            else:
+                bar = tqdm.tqdm(leave=True, unit=" extensions")
+            if isinstance(self._verbose, str):
+                bar.set_description(self._verbose)
         while todo:
             v,d,op = todo.pop()
             w = op(v)
@@ -546,11 +551,13 @@ class Subspace:
                 self._bases[d] = EchelonMatrixOfVectors(ambient=self._ambient, stats=self._stats)
             if self._bases[d].extend(w):
                 self.todo(d, [w])
-            if self._verbose:
-                bar.update(len(todo)),
-        if self._verbose:
-            bar.finish()
-            print "  dimension: %s  extensions: %s"%(self._stats["dimension"], self._stats["extend"])
+            if self._verbose is not False:
+                bar.update()
+                bar.set_postfix({'todo': len(todo), 'dimension': self._stats['dimension']})
+        if self._verbose is not False:
+            bar.set_postfix({'dimension': self._stats['dimension']})
+            bar.close()
+            #print "  dimension: %s  extensions: %s"%(self._stats["dimension"], self._stats["extend"])
 
 def destandardize(self):
     """
@@ -1303,27 +1310,33 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         #return sum( res[1] for res in char(Partitions(self._n).list()) )
         return sum(char(mu) for mu in Partitions(self._n))
 
-def harmonic_character_plain(mu):
+def harmonic_character_plain(mu, verbose=False, parallel=False):
+    import tqdm
     mu = Partition(mu)
     n = mu.size()
-    print mu
     if len(mu) == n:
         r = n-1
     else:
         r = n-2
     r = max(r, 1)
     R = DiagonalPolynomialRing(QQ, n, r)
-    result = R.harmonic_character(mu, verbose=False,
+    if verbose:
+        progressbar = tqdm.tqdm(unit=" extensions", leave=True, desc="harmonic character for "+str(mu).ljust(mu.size()*3), position=mu.rank() if parallel else 1)
+    else:
+        progressbar = False
+    result = R.harmonic_character(mu, verbose=progressbar,
                                   use_symmetry=True,
                                   use_lie=True,
                                   use_antisymmetry=True)
     return {tuple(degrees): dim
             for degrees, dim in result}
 
-harmonic_character_plain = func_persist(harmonic_character_plain,
-                                        hash=lambda mu: str(list(mu)).replace(" ","")[1:-1],
-                                        key=lambda mu: tuple(Partition(mu))
-                                        )
+def harmonic_character_plain_hash(mu, **args):
+    return str(list(mu)).replace(" ","")[1:-1]
+#harmonic_character_plain = func_persist(harmonic_character_plain,
+#                                        hash=harmonic_character_plain_hash,
+#                                        key=lambda mu: tuple(Partition(mu))
+#                                        )
 
 """
 Migrating persistent database from previous format::
@@ -1395,7 +1408,7 @@ def harmonic_character(mu):
 @parallel()
 def harmonic_character_paral(mu):
     t1 = datetime.datetime.now()
-    result = harmonic_character_plain(mu)
+    result = harmonic_character_plain(mu, verbose=True, parallel=True)
     t2 = datetime.datetime.now()
     return result, t2-t1
 
@@ -1407,8 +1420,10 @@ def harmonic_characters(n):
     S = SymmetricFunctions(ZZ)
     s = S.s()
     for (((nu,),_), (result, t)) in harmonic_character_paral((tuple(mu),) for mu in Partitions(n)):
-        print Partition(nu), "\t("+str(t)[:-7]+"):",s.sum_of_terms([Partition(d), c]
-                                                                   for d,c in result.iteritems())
+        import tqdm
+        tqdm.tqdm.write("\r%s\t("%Partition(nu)+str(t)[:-7]+"): %s"%
+                                                     s.sum_of_terms([Partition(d), c]
+                                                                    for d,c in result.iteritems()))
 
 def harmonic_bicharacter_truncated_series():
     """
