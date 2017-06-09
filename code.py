@@ -90,74 +90,6 @@ class func_persist:
         return dict(persist.load(name)
                     for name in glob.glob("%s*.sobj"%self._prefix))
 
-def items_of_vector(v):
-    """
-    Return an iterator over the pairs ``(index, coefficient)`` for `v`.
-
-    INPUT::
-
-    - ``v`` -- an element of some some vector space or free module
-
-    EXAMPLES:
-
-    This handles indexed free module elements::
-
-        sage: E = CombinatorialFreeModule(QQ, [1,2,4,8,16])
-        sage: v = E.an_element(); v
-        2*B[1] + 2*B[2] + 3*B[4]
-        sage: list(items_of_vector(v))
-        [(1, 2), (2, 2), (4, 3)]
-
-    free module elements::
-
-        sage: v = vector([4,0,1,2])
-        sage: list(items_of_vector(v))
-        [(0, 4), (2, 1), (3, 2)]
-
-        sage: v = vector([4,0,1,2], sparse=True)
-        sage: list(items_of_vector(v))
-        [(0, 4), (2, 1), (3, 2)]
-
-    multivariate polynomials::
-
-        sage: P = QQ['x,y,z']
-        sage: x,y,z = P.gens()
-        sage: p = (x+y+1)^2; p
-        x^2 + 2*x*y + y^2 + 2*x + 2*y + 1
-        sage: list(items_of_vector(p))
-        [((1, 0, 0), 2),
-         ((1, 1, 0), 2),
-         ((0, 0, 0), 1),
-         ((2, 0, 0), 1),
-         ((0, 1, 0), 2),
-         ((0, 2, 0), 1)]
-
-    univariate polynomials::
-
-        sage: P = ZZ['x']
-        sage: x = P.gen()
-        sage: (x+2)^3
-        x^3 + 6*x^2 + 12*x + 8
-        sage: list(items_of_vector(_))
-        [(0, 8), (1, 12), (2, 6), (3, 1)]
-
-    elements of quotients::
-
-        sage: C = CyclotomicField(5)
-        sage: z = C.gen()
-        sage: p = (z+2)^2; p
-        zeta5^2 + 4*zeta5 + 4
-        sage: list(items_of_vector(p))
-        [(0, 4), (1, 4), (2, 1)]
-    """
-    if isinstance(v, CombinatorialFreeModule.Element):
-        return v
-    else:
-        try:
-            return v.dict().items()
-        except AttributeError:
-            return items_of_vector(v.lift())
-
 class MatrixOfVectors:
     """
     A mutable data structure representing a collection of vectors as a matrix
@@ -966,172 +898,6 @@ def reverse_sorting_permutation(t):
     return ~(Word([-i for i in t]).standard_permutation())
 
 
-def diagonal_swap(exponents, n, r, i1, i2):
-    """
-    Swap in place two columns.
-
-    INPUT:
-
-    - ``exponents `` -- a list, seen as an `r\times n` array
-    - ``r``, ``n`` -- nonnegative integers
-    - ``i1``, ``i2`` -- integers in `0,\ldots,n-1`
-
-    Swap inplace the columnss ``i1`` and ``i2`` in the list ``exponnents``,
-    seen as an `r\times n` array.
-
-    EXAMPLES::
-
-        sage: l = [1,2,3,4,5,6,7,8]
-        sage: diagonal_swap(l, 4, 2, 1, 3)
-        sage: l
-        [1, 4, 3, 2, 5, 8, 7, 6]
-
-        sage: l = [1,2,3,4,5,6,7,8]
-        sage: diagonal_swap(l, 2, 4, 0, 1)
-        sage: l
-        [2, 1, 4, 3, 6, 5, 8, 7]
-    """
-    for i in range(r):
-        exponents[i*n+i1], exponents[i*n+i2] = exponents[i*n+i2], exponents[i*n+i1]
-
-def diagonal_cmp(exponents, n, r, i1, i2):
-    """
-    Compare lexicographically two columns.
-
-    INPUT:
-
-    - ``exponents `` -- a list, seen as an `r\times n` array
-    - ``r``, ``n`` -- nonnegative integers
-    - ``i1``, ``i2`` -- integers in `0,\ldots,n-1`
-
-    Compare lexicographically the columns ``i1`` and ``i2`` in the
-    list ``exponnents``, seen as an `r\times n` array.
-
-    EXAMPLES::
-
-        sage: l = [1, 1, 2, 2, 0, 1, 1, 0]
-        sage: diagonal_cmp(l, 4, 2, 0, 1)
-        -1
-        sage: diagonal_cmp(l, 4, 2, 1, 0)
-        1
-        sage: diagonal_cmp(l, 4, 2, 2, 3)
-        1
-        sage: diagonal_cmp(l, 4, 2, 3, 2)
-        -1
-        sage: diagonal_cmp(l, 4, 2, 3, 3)
-        0
-    """
-    for i in range(r):
-        c = cmp(exponents[i*n+i1], exponents[i*n+i2])
-        if c:
-            return c
-    return 0
-
-def diagonal_antisort(exponents, n, r, positions_list):
-    """
-    Sorts columns decreasingly according to positions.
-
-    INPUT:
-
-    - ``exponents `` -- a list, seen as an `r\times n` array
-    - ``r``, ``n`` -- nonnegative integers
-    - ``positions_list`` -- a list of list of positions
-
-    EXAMPLES::
-
-        sage: diagonal_antisort([2,1], 2, 1, [[0,1]])
-        ((2, 1), 1)
-        sage: diagonal_antisort([1,2], 2, 1, [[0,1]])
-        ((2, 1), -1)
-        sage: diagonal_antisort([2,2], 2, 1, [[0,1]])
-
-        sage: diagonal_antisort([1,2,3,4], 2, 2, [[0,1]])
-        ((2, 1, 4, 3), -1)
-        sage: diagonal_antisort([1,2,4,3], 2, 2, [[0,1]])
-        ((2, 1, 3, 4), -1)
-        sage: diagonal_antisort([2,1,4,3], 2, 2, [[0,1]])
-        ((2, 1, 4, 3), 1)
-        sage: diagonal_antisort([2,1,3,4], 2, 2, [[0,1]])
-        ((2, 1, 3, 4), 1)
-
-        sage: diagonal_antisort([1,2,3], 3, 1, [[0,1,2]])
-        ((3, 2, 1), -1)
-        sage: diagonal_antisort([1,3,2], 3, 1, [[0,1,2]])
-        ((3, 2, 1), 1)
-        sage: diagonal_antisort([3,2,1], 3, 1, [[0,1,2]])
-        ((3, 2, 1), 1)
-        sage: diagonal_antisort([1,2,3,4,5,6], 6, 1, [[0,2,4]])
-        ((5, 2, 3, 4, 1, 6), -1)
-
-    With unsorted list of positions, the order is relative to the
-    order of positions::
-
-        sage: diagonal_antisort([1,2,3], 3, 1, [[2,1,0]])
-        ((1, 2, 3), 1)
-        sage: diagonal_antisort([3,2,1], 3, 1, [[2,1,0]])
-        ((1, 2, 3), -1)
-
-    Two lists of positions::
-
-        sage: diagonal_antisort([1,2,3,4,5,6], 6, 1, [[0,2,4],[1,3,5]])
-        ((5, 6, 3, 4, 1, 2), 1)
-
-    """
-    sign = 1
-    exponents = list(exponents)
-    for positions in positions_list:
-        for i in range(1, len(positions)):
-            for j in range(i-1, -1, -1):
-                c = diagonal_cmp(exponents, n, r, positions[j], positions[j+1])
-                if not c:
-                    return None
-                if c < 0:
-                    diagonal_swap(exponents, n, r, positions[j], positions[j+1])
-                    sign = -sign
-                else:
-                    continue
-    return ETuple(exponents), sign
-
-def antisymmetric_normal(p, n, r, positions):
-    """
-
-    EXAMPLES::
-
-        sage: R = DiagonalPolynomialRing(QQ, 4, 2)
-        sage: X = R.algebra_generators()
-        sage: p = 2 * X[0,0]*X[0,3]^2*X[1,1]*X[1,0]^3 + X[1,3] + 3
-        sage: antisymmetric_normal(p, 4, 2, [[0,1,2,3]])
-        -2*x00^2*x01*x11^3*x12
-
-    TODO: check the result
-
-        sage: antisymmetric_normal(p, 4, 2, [[0,1]])
-        2*x00*x03^2*x10^3*x11
-        sage: antisymmetric_normal(p, 4, 2, [[0,3]])
-        -2*x00^2*x03*x11*x13^3 - x10
-
-    An example with a collision in the result (failed at some point)::
-
-        sage: R = DiagonalPolynomialRing(QQ, 3, 3)
-        sage: R._P.inject_variables()
-        Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
-        sage: p1 = -2*x10*x11*x20 - 2*x10^2*x21 + 2*x10*x11*x21
-        sage: antisymmetric_normal(p1, 3, 3, [[0,1,2]])
-        -4*x10*x11*x20 - 2*x10^2*x21
-
-
-    """
-    R = p.parent()
-    d = {}
-    for exponent, c in items_of_vector(p):
-        res = diagonal_antisort(exponent, n, r, positions)
-        if res:
-            exponent, sign = res
-            d.setdefault(exponent, 0)
-            d[exponent] += sign*c
-    return R(d)
-
-
 ##############################################################################
 # Polynomial ring with diagonal action
 ##############################################################################
@@ -1660,7 +1426,9 @@ def harmonic_bicharacter_truncated_series():
 
     Extracting the `S_n` character for a given `GL_r` representation::
 
-        sage: s.sum_of_terms([nu,c] for ((mu,nu),c) in Harm if mu == [1,1])
+        sage: def chi(mu):
+        ....:     return s.sum_of_terms([nu,c] for ((mu1,nu),c) in Harm if mu1 == mu)
+        sage: p11 = chi([1,1])
         s[1, 1, 1] + s[2, 1, 1] + s[3, 1, 1] + s[4, 1, 1]
 
     Some steps toward recovering it as a product H * finite sum.
@@ -1672,6 +1440,17 @@ def harmonic_bicharacter_truncated_series():
 
         sage: truncate(H*Hinv,6)
         h[]
+
+        sage: truncate((1-chi([1])    ) * Hinv, 7)
+        s[] - s[1]
+
+        sage: truncate((1+chi([1,1])  ) * Hinv, 7)
+        s[] - s[1] + s[1, 1]
+
+        sage: truncate((1-chi([1,1,1])) * Hinv, 7)
+        s[] - s[1] + s[1, 1] - s[1, 1, 1]
+
+
 
         sage: bitruncate(Harm * tensor([s.one(), (1-s[1]+s[2]-s[3]+s[4]-s[5])]), 6)
 
