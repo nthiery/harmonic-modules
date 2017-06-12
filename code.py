@@ -41,10 +41,16 @@ from sage.sets.recursively_enumerated_set import RecursivelyEnumeratedSet
 
 from sage.functions.other import factorial
 
+load("code1.pyx")
+
 class func_persist:
     r"""
     Put ``@func_persist`` right before your function
     definition to cache values it computes to disk.
+
+    -- ``key`` - a function that normalizes the input arguments into a unique key
+    -- ``hash`` - a function that takes this key and make it into a string (will be used for the name of the file name storing the result)
+
     """
     def __init__(self, f, dir='func_persist', prefix=None, hash=hash, key=None):
         from sage.misc.misc import sage_makedirs
@@ -1331,12 +1337,13 @@ def harmonic_character_plain(mu, verbose=False, parallel=False):
     return {tuple(degrees): dim
             for degrees, dim in result}
 
-def harmonic_character_plain_hash(mu, **args):
+def harmonic_character_plain_key(mu, **args):
+    return tuple(Partition(mu))
+def harmonic_character_plain_hash(mu):
     return str(list(mu)).replace(" ","")[1:-1]
-#harmonic_character_plain = func_persist(harmonic_character_plain,
-#                                        hash=harmonic_character_plain_hash,
-#                                        key=lambda mu: tuple(Partition(mu))
-#                                        )
+harmonic_character_plain = func_persist(harmonic_character_plain,
+                                        hash=harmonic_character_plain_hash,
+                                        key= harmonic_character_plain_key)
 
 """
 Migrating persistent database from previous format::
@@ -1445,7 +1452,7 @@ def harmonic_bicharacter_truncated_series():
         ....:     return s.sum_of_terms([nu,c] for ((mu1,nu),c) in p if mu1 == mu)
         sage: def chi2(nu, p):
         ....:     return e.sum_of_terms([mu,c] for ((mu,nu1),c) in p if nu1 == nu)
-        sage: p11 = chi([1,1])
+        sage: chi1([1,1], Harm)
         s[1, 1, 1] + s[2, 1, 1] + s[3, 1, 1] + s[4, 1, 1]
 
     Some steps toward recovering it as a product H * finite sum.
@@ -1470,6 +1477,7 @@ def harmonic_bicharacter_truncated_series():
 
 
         sage: bitruncate(Harm * tensor([s.one(), (1-s[1]+s[2]-s[3]+s[4]-s[5])]), 6)
+        s[] # s[] - s[] # s[1, 1] + s[] # s[2] + s[] # s[2, 2] - s[] # s[3, 1] + s[] # s[4] + s[1] # s[1, 1] - s[1] # s[1, 1, 1] - s[1] # s[2, 2] + s[1] # s[2, 2, 1] + s[1] # s[3, 1] - s[1] # s[3, 1, 1] + s[1, 1] # s[1, 1, 1] - s[1, 1] # s[1, 1, 1, 1] - s[1, 1] # s[2, 2, 1] + s[1, 1] # s[3, 1, 1] + s[1, 1, 1] # s[1, 1, 1, 1] - s[1, 1, 1] # s[1, 1, 1, 1, 1] + s[1, 1, 1, 1] # s[1, 1, 1, 1, 1] + s[2] # s[2, 1] - s[2] # s[2, 1, 1] + s[2] # s[4, 1] + s[2, 1] # s[2, 1, 1] - s[2, 1] # s[2, 1, 1, 1] + s[2, 1] # s[2, 2] - s[2, 1] # s[2, 2, 1] + s[2, 1, 1] # s[2, 1, 1, 1] + s[2, 1, 1] # s[2, 2, 1] + s[2, 2] # s[2, 2, 1] + s[2, 2] # s[3, 2] + s[3] # s[1, 1, 1] - s[3] # s[1, 1, 1, 1] - s[3] # s[2, 2, 1] + s[3] # s[3, 1] + s[3, 1] # s[1, 1, 1, 1] - s[3, 1] # s[1, 1, 1, 1, 1] + s[3, 1] # s[2, 1, 1] - s[3, 1] # s[2, 1, 1, 1] + s[3, 1] # s[3, 1, 1] + s[3, 1] # s[3, 2] + s[3, 1, 1] # s[1, 1, 1, 1, 1] + s[3, 1, 1] # s[2, 1, 1, 1] + s[3, 1, 1] # s[2, 2, 1] + s[3, 2] # s[2, 1, 1, 1] + s[3, 2] # s[2, 2, 1] + s[3, 2] # s[3, 1, 1] + s[4] # s[2, 1, 1] - s[4] # s[2, 1, 1, 1] + s[4] # s[2, 2] - s[4] # s[2, 2, 1] + s[4] # s[4, 1] + s[4, 1] # s[1, 1, 1, 1] - s[4, 1] # s[1, 1, 1, 1, 1] + s[4, 1] # s[2, 1, 1, 1] + 2*s[4, 1] # s[2, 2, 1] + s[4, 1] # s[3, 1, 1] + s[4, 1] # s[3, 2] + s[5] # s[2, 1, 1] - s[5] # s[2, 1, 1, 1] + s[5] # s[3, 1, 1] + s[5] # s[3, 2]
 
     Not quite::
 
@@ -1478,10 +1486,10 @@ def harmonic_bicharacter_truncated_series():
 
 
     Substituting `q_n=1` (which should be equivalent to computing the plethysm on `X+1`)
-    gives an e-positive expression::
+    gives an e-positive expression (TODO: see why this is currently broken)::
 
-        sage: res = tensor([s,e])( sum(c*tensor( [s[mu](s[1] + 1), s[nu]] ) for ((mu, nu), c) in Harm) )
-        sage: set(res.coefficients())
+        sage: res = tensor([s,e])( sum(c*tensor( [s[mu](s[1] + 1), s[nu]] ) for ((mu, nu), c) in Harm) )   # not tested
+        sage: set(res.coefficients())                                                                      # not tested
         {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12}
     """
     s = SymmetricFunctions(ZZ).s()
