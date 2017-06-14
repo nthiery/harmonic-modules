@@ -8,6 +8,7 @@ import sage.misc.persist as persist
 
 from sage.misc.cachefunc import cached_method, cached_function
 from sage.misc.misc_c import prod
+from sage.misc.constant_function import ConstantFunction
 
 from sage.categories.algebras import Algebras
 from sage.categories.cartesian_product import cartesian_product
@@ -475,6 +476,7 @@ class Subspace:
 
     def __init__(self, generators, operators=[],
                  add_degrees=operator.add,
+                 extend_word=ConstantFunction([]),
                  hilbert_parent=None,
                  verbose=False):
         self._stats={}
@@ -502,15 +504,13 @@ class Subspace:
         self._bases = {}
         self._todo = []
         self._add_degrees = add_degrees
+        self._extend_word = extend_word
         for d, gens in generators.iteritems():
             basis = EchelonMatrixOfVectors(ambient=self._ambient, stats=self._stats)
             for g in gens:
                 if basis.extend(g):
                     self.todo(g, d, [])
             self._bases[d] = basis
-
-    def _extend_word(self, word, op):
-        return []
 
     def todo(self, vector, d1, word):
         todo = self._todo
