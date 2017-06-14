@@ -767,7 +767,9 @@ def higher_specht(R, P, Q=None, harmonic=False, use_antisymmetry=False):
         *      2      2
         *      1      1    (y - z) * (-x + y) * (x - z)
 
-        sage: R = PolynomialRing(QQ, 'x,y,z')
+        sage: factor(higher_specht(R, Partition([2,1])))
+        (-2) * (x - z)
+
         sage: for la in Partitions(3):
         ....:     for P in StandardTableaux(la):
         ....:         print ascii_art(la, P, factor(higher_specht(R, P)), sep="    ")
@@ -841,6 +843,8 @@ def higher_specht(R, P, Q=None, harmonic=False, use_antisymmetry=False):
         ....:     for t in StandardTableaux(mu):
         ....:         p = R.higher_specht(t, harmonic=True, use_antisymmetry=True)
     """
+    if not isinstance(P, StandardTableau):
+        P = Partition(P).initial_tableau()
     n = P.size()
     assert n == R.ngens()
     if Q is None:
