@@ -120,6 +120,7 @@ class MatrixOfVectors:
         self._rank, self._unrank = sage.combinat.ranker.on_fly()
         self._matrix = matrix(self._base_ring, 0, 0)
         self._basis = []
+        self._words = []
         self._is_echelon = True
         stats.setdefault("add_vector", 0)
         stats.setdefault("extend", 0)
@@ -204,7 +205,7 @@ class EchelonMatrixOfVectors(MatrixOfVectors):
         m = self._matrix
         return "A %sx%s echelon matrix of vectors in %s"%(m.nrows(), m.ncols(), self.ambient())
 
-    def extend(self, v):
+    def extend(self, v, word=None):
         self._stats["extend"] += 1
         assert self._is_echelon
         m = self._add_vector_to_matrix(self._matrix, v)
@@ -213,6 +214,8 @@ class EchelonMatrixOfVectors(MatrixOfVectors):
             self._stats['dimension'] += 1
             self._matrix = m
             self._basis.append(v)
+            if word is not None:
+                self._words.append(word)
             return True
         return False
 
@@ -464,6 +467,12 @@ class Subspace:
         q^6 + 3*q^5 + 5*q^4 + 6*q^3 + 5*q^2 + 3*q + 1
     """
 
+    # Invariants:
+    #
+    # self._todo contains a list of tuples (v, op, d, word) where `v`
+    # is a vector on which we need to apply op to produced an element
+    # w of degree d and "reduced word" `word`
+
     def __init__(self, generators, operators=[],
                  add_degrees=operator.add,
                  hilbert_parent=None,
@@ -495,22 +504,25 @@ class Subspace:
         self._add_degrees = add_degrees
         for d, gens in generators.iteritems():
             basis = EchelonMatrixOfVectors(ambient=self._ambient, stats=self._stats)
-            gens = [v
-                    for v in gens
-                    if basis.extend(v)]
+            for g in gens:
+                if basis.extend(g):
+                    self.todo(g, d, [])
             self._bases[d] = basis
-            self.todo(d, gens)
 
-    def todo(self, d1, vectors):
+    def _extend_word(self, word, op):
+        return []
+
+    def todo(self, vector, d1, word):
         todo = self._todo
         for d2, ops in self._operators.iteritems():
             try:
                 d3 = self._add_degrees(d1, d2)
             except ValueError:
                 continue
-            todo.extend((v, d3, op)
-                        for v in vectors
-                        for op in ops)
+            for op in ops:
+                new_word = self._extend_word(word, op)
+                if new_word is not None:
+                    todo.append((vector, op, d3, word))
 
     def dimension(self):
         """
@@ -547,12 +559,12 @@ class Subspace:
             if isinstance(self._verbose, str):
                 bar.set_description(self._verbose)
         while todo:
-            v,d,op = todo.pop()
+            v,op,d,word = todo.pop()
             w = op(v)
             if d not in self._bases:
                 self._bases[d] = EchelonMatrixOfVectors(ambient=self._ambient, stats=self._stats)
             if self._bases[d].extend(w):
-                self.todo(d, [w])
+                self.todo(w, d, word)
             if self._verbose is not False:
                 bar.update()
                 bar.set_postfix({'todo': len(todo), 'dimension': self._stats['dimension']})
