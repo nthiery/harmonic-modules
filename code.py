@@ -9,35 +9,31 @@ import sage.misc.persist as persist
 from sage.misc.cachefunc import cached_method, cached_function
 from sage.misc.misc_c import prod
 
-from sage.categories.sets_cat import Sets
 from sage.categories.algebras import Algebras
 from sage.categories.cartesian_product import cartesian_product
 from sage.categories.tensor import tensor
 
+from sage.parallel.decorate import parallel
 from sage.structure.element import have_same_parent
-from sage.structure.element_wrapper import ElementWrapper
+from sage.structure.sage_object import load
 from sage.structure.parent import Parent
 
 from sage.structure.unique_representation import UniqueRepresentation
 
-from sage.combinat.free_module import CombinatorialFreeModule
 from sage.combinat.partition import Partition, Partitions
 from sage.combinat.ranker import rank_from_list
 from sage.combinat.sf.sf import SymmetricFunctions
-from sage.combinat.tableau import StandardTableaux
+from sage.combinat.tableau import StandardTableau, StandardTableaux
 import sage.combinat.tableau
 from sage.combinat.words.word import Word
 
-from sage.groups.perm_gps.permgroup_named import SymmetricGroup
 from sage.groups.perm_gps.permgroup_element import PermutationGroupElement
 from sage.matrix.constructor import matrix
 from sage.modules.free_module_element import vector
 from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.rings.polynomial.polydict import ETuple
 from sage.rings.semirings.non_negative_integer_semiring import NN
-from sage.sets.recursively_enumerated_set import RecursivelyEnumeratedSet
 
 from sage.functions.other import factorial
 
