@@ -522,7 +522,7 @@ class Subspace:
             for op in ops:
                 new_word = self._extend_word(word, op)
                 if new_word is not None:
-                    todo.append((vector, op, d3, word))
+                    todo.append((vector, op, d3, new_word))
 
     def dimension(self):
         """
@@ -1200,7 +1200,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             raise ValueError("invalid degree")
         return self._grading_set(sorted(d, reverse=True))
 
-    def harmonic_space_by_shape(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False):
+    def harmonic_space_by_shape(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
         """
         Return the projection under the Young idempotent for the
         partition / tableau `mu` of the space of diagonal harmonic
@@ -1244,7 +1244,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         else:
             antisymmetries = None
         if use_lie:
-            use_symmetry=True
+            #use_symmetry=True
             def hilbert_parent(dimensions):
                 return s.sum_of_terms([Partition(d), c]
                                        for d,c in dimensions.iteritems() if c)
@@ -1267,15 +1267,34 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                 functools.partial(lambda v,i: self.polarization(self.polarization(v, i+1,i, 1,antisymmetries=antisymmetries), i,i+1, 1,antisymmetries=antisymmetries), i=i)
                 for i in range(r-1)
                 ]
+
+        operators_by_degree = {}
+        for degree,ops in operators.iteritems():
+            d = sum(degree)
+            operators_by_degree.setdefault(d,[])
+            operators_by_degree[d].extend(ops)
+        ranks = {}
+        for d, ops in operators_by_degree.iteritems():
+            ranker = rank_from_list(ops)
+            for op in ops:
+                ranks[op] = (d, ranker(op))
+        ranker = ranks.__getitem__
+        def extend_word(word, op):
+            new_word = word + [ranker(op)]
+            if use_commutativity and sorted(new_word) != new_word:
+                #print "rejected: %s"% new_word
+                return None
+            #print new_word
+            return new_word
         # print operators
         add_degree = self._add_degree_symmetric if use_symmetry else self._add_degree
-        F = Subspace(generators, operators=operators, add_degrees=add_degree, verbose=verbose)
+        F = Subspace(generators, operators=operators, add_degrees=add_degree, extend_word=extend_word, verbose=verbose)
         F._hilbert_parent = hilbert_parent
         F.antisymmetries = antisymmetries
         return F
 
 
-    def harmonic_character(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False):
+    def harmonic_character(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
         """
         Return the `GL_r` character of the space of diagonally harmonic polynomials
         contributed by a given `S_n` irreducible representation.
@@ -1290,7 +1309,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         F = self.harmonic_space_by_shape(mu, verbose=verbose,
                                          use_symmetry=use_symmetry,
                                          use_antisymmetry=use_antisymmetry,
-                                         use_lie=use_lie)
+                                         use_lie=use_lie,
+                                         use_commutativity=use_commutativity)
         F.finalize()
         if not use_lie:
             return F.hilbert_polynomial()
