@@ -125,6 +125,7 @@ class MatrixOfVectors:
         self._is_echelon = True
         stats.setdefault("add_vector", 0)
         stats.setdefault("extend", 0)
+        stats.setdefault("zero", 0)
         stats.setdefault("dimension", 0)
         self._stats = stats
         if vectors:
@@ -208,6 +209,9 @@ class EchelonMatrixOfVectors(MatrixOfVectors):
 
     def extend(self, v, word=None):
         self._stats["extend"] += 1
+        if not v:
+            self._stats["zero"] += 1
+            return False
         assert self._is_echelon
         m = self._add_vector_to_matrix(self._matrix, v)
         m.echelonize()
@@ -567,9 +571,9 @@ class Subspace:
                 self.todo(w, d, word)
             if self._verbose is not False:
                 bar.update()
-                bar.set_postfix({'todo': len(todo), 'dimension': self._stats['dimension']})
+                bar.set_postfix({'todo': len(todo), 'dimension': self._stats['dimension'],  'zero': self._stats['zero']})
         if self._verbose is not False:
-            bar.set_postfix({'dimension': self._stats['dimension']})
+            bar.set_postfix({'dimension': self._stats['dimension'], 'zero': self._stats['zero']})
             bar.close()
             #print "  dimension: %s  extensions: %s"%(self._stats["dimension"], self._stats["extend"])
 
