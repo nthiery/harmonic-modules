@@ -27,6 +27,10 @@ from sage.combinat.sf.sf import SymmetricFunctions
 from sage.combinat.tableau import StandardTableau, StandardTableaux
 import sage.combinat.tableau
 from sage.combinat.words.word import Word
+from sage.functions.other import binomial
+
+from sage.groups.perm_gps.permgroup_named import SymmetricGroup
+from sage.sets.set import Set
 
 from sage.groups.perm_gps.permgroup_element import PermutationGroupElement
 from sage.matrix.constructor import matrix
@@ -172,7 +176,16 @@ class MatrixOfVectors:
         d = dict((rank(i), c) for i, c in items_of_vector(v))
         return vector(self._base_ring, len(self._rank.cache), d, sparse=False)
 
-    def _add_vector_to_matrix(self, m, v):
+    def vector(self, v):
+        R = self.ambient()
+        unrank = self._unrank
+        # TODO: this only works for polynomials!
+        return sum(v[i]* R.monomial(*unrank(i)) for i in range(len(v)))
+
+    def vectors(self):
+        return tuple(self.vector(v) for v in self._matrix)
+
+    def _add_vector_to_matrix(self, m, v): # append?
         r = self.plain_vector(v)
         if len(r) > m.ncols():
             m = m.augment(matrix(self._base_ring, m.nrows(), len(r)-m.ncols()))
@@ -224,7 +237,7 @@ class EchelonMatrixOfVectors(MatrixOfVectors):
             return True
         return False
 
-    def cardinality(self):
+    def cardinality(self): # or __len__, nrows, dimension, ???
         return self._matrix.nrows()
 
 def annihilator_basis(B, S, action=operator.mul, side='right', ambient=None):
@@ -482,12 +495,32 @@ class Subspace:
                  add_degrees=operator.add,
                  extend_word=ConstantFunction([]),
                  hilbert_parent=None,
+                 degree=None,
                  verbose=False):
         self._stats={}
         self._verbose=verbose
 
+        if self._verbose is not False:
+            import tqdm
+            if isinstance(self._verbose, tqdm.tqdm):
+                self._bar = self._verbose
+            else:
+                self._bar = tqdm.tqdm(leave=True, unit=" extensions")
+            if isinstance(self._verbose, str):
+                self._bar.set_description(self._verbose)
+
+        self._degree = degree
         if not isinstance(generators, dict):
-            generators = {0: generators}
+            if self._degree is None:
+                generators = {0: generators}
+            else:
+                gens = dict()
+                for g in generators:
+                    d = self._degree(g)
+                    gens.setdefault(d, [])
+                    gens[d].append(g)
+                generators = gens
+
         self._generators = generators
 
         ambient = {g.parent() for gens in generators.values() for g in gens}
@@ -535,6 +568,9 @@ class Subspace:
         self.finalize()
         return sum(basis.cardinality() for basis in self._bases.values())
 
+    def basis(self):
+        self.finalize()
+        return sum((basis.vectors() for basis in self._bases.values()), ())
 
     def hilbert_polynomial(self):
         return self._hilbert_parent(self.dimensions())
@@ -549,32 +585,32 @@ class Subspace:
         assert self._bases.keys() == [0] # only handle the non graded case
         return self._bases[0]._matrix
 
+    def extend(self, v, d, word):
+        if self._degree is not None:
+            d = self._degree(v)
+        if d not in self._bases:
+            self._bases[d] = EchelonMatrixOfVectors(ambient=self._ambient, stats=self._stats)
+        if self._bases[d].extend(v):
+            self.todo(v, d, word)
+        if self._verbose is not False:
+            self._bar.update()
+            self._bar.set_postfix({'todo': len(self._todo), 'dimension': self._stats['dimension'],  'zero': self._stats['zero']})
+
     @cached_method
     def finalize(self):
         todo = self._todo
         if not todo:
             return
-        if self._verbose is not False:
-            import tqdm
-            if isinstance(self._verbose, tqdm.tqdm):
-                bar = self._verbose
-            else:
-                bar = tqdm.tqdm(leave=True, unit=" extensions")
-            if isinstance(self._verbose, str):
-                bar.set_description(self._verbose)
         while todo:
             v,op,d,word = todo.pop()
             w = op(v)
-            if d not in self._bases:
-                self._bases[d] = EchelonMatrixOfVectors(ambient=self._ambient, stats=self._stats)
-            if self._bases[d].extend(w):
-                self.todo(w, d, word)
-            if self._verbose is not False:
-                bar.update()
-                bar.set_postfix({'todo': len(todo), 'dimension': self._stats['dimension'],  'zero': self._stats['zero']})
+            if not isinstance(w, (list, tuple)):
+                w = [w]
+            for w2 in w:
+                self.extend(w2, d, word)
         if self._verbose is not False:
-            bar.set_postfix({'dimension': self._stats['dimension'], 'zero': self._stats['zero']})
-            bar.close()
+            self._bar.set_postfix({'dimension': self._stats['dimension'], 'zero': self._stats['zero']})
+            self._bar.close()
             #print "  dimension: %s  extensions: %s"%(self._stats["dimension"], self._stats["extend"])
 
 def destandardize(self):
@@ -968,6 +1004,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     def algebra_generators(self):
         return self._vars
 
+    def inject_variables(self):
+        self._P.inject_variables()
+
     def multidegree(self, p):
         """
         Return the multidegree of a multihomogeneous polynomial
@@ -989,6 +1028,40 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         v = p.exponents()[0]
         return self._grading_set([sum(v[n*i+j] for j in range(n))
                                   for i in range(r)])
+
+    def random_monomial(self, D):
+        """
+        Return a random monomial of multidegree `D`
+
+        EXAMPLES::
+
+            sage: P = DiagonalPolynomialRing(QQ,3,3)
+            sage: D = (3,1,4)
+            sage: P.random_monomial(D)          # random
+            x00*x01*x02*x10*x20*x21^2*x22
+
+            sage: for i in range(50):
+            ....:     assert P.multidegree(P.random_monomial(D)) == D
+        """
+        X = self.algebra_generators()
+        X_by_rows = [Set(list(row)) for row in X]
+        return prod( X_by_rows[i].random_element()
+                     for i in range(len(D))
+                     for j in range(D[i]) )
+
+    def random_element(self, D, l=10):
+        """
+        Return a "random" multi homogeneous polynomial of multidegree `D`.
+
+        EXAMPLES::
+
+            sage: P = DiagonalPolynomialRing(QQ,3,3)
+            sage: P.random_element((2,0,1))         # random
+            x01^2*x20 - x02^2*x20 - x00*x01*x21 - x02^2*x21 + 7/4*x00^2*x22 + x01^2*x22 + 183/184*x01*x02*x22
+        """
+        K = self.base_ring()
+        return sum(K.random_element() * self.random_monomial(D)
+                   for i in range(l))
 
     def row_permutation(self, sigma):
         """
@@ -1123,6 +1196,240 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                 if (i1<i2 if side == 'down' else i1!=i2)
                }
 
+    def e(self, i):
+        return functools.partial(self.polarization, i1=i, i2=i+1, d=1)
+
+    def f(self, i):
+        return functools.partial(self.polarization, i1=i+1, i2=i, d=1)
+
+    def is_highest_weight_vector(self, p, _assert=False):
+        for i2 in range(self._r):
+            for i1 in range(i2):
+                if self.polarization(p, i2, i1, 1):
+                    if _assert:
+                        assert False
+                    else:
+                        return False
+        return True
+
+    def test_highest_weight_vector(self, p):
+        self.is_highest_weight_vector(p, _assert=True)
+
+    def highest_weight_vectors(self, p, i1=None, i2=None):
+        """
+        Return the "unique" highest weight vectors `p_j, j\geq 0` such
+        that `p = \sum e^j p_j`.
+
+        EXAMPLES::
+
+            sage: P = DiagonalPolynomialRing(QQ, 4, 2)
+            sage: X = P.algebra_generators()
+            sage: P.highest_weight_vectors(X[0,0], 0, 1)
+            [x00]
+            sage: P.highest_weight_vectors(X[0,0], 1, 0)
+            [0, x10]
+
+            sage: P.highest_weight_vectors(X[1,0]^3, 0, 1)
+            [0, 0, 0, 1/6*x00^3]
+            sage: P.test_highest_weight_vectors(X[1,0]^3, 0, 1)
+
+            sage: P.highest_weight_vectors(p, 0, 1)  # not tested
+            [-x01*x10 + x00*x11, x00^2 - x01^2]
+            sage: P.test_highest_weight_vectors(p, 0, 1)   # not tested
+
+        A random example::
+
+            sage: P = DiagonalPolynomialRing(QQ, 4, 3)
+            sage: P.inject_variables()
+            Defining x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23
+            sage: x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23 = P._P.gens()
+            sage: p = 1/2*x10^2*x11*x20 + 3*x10*x11*x12*x20 + 1/3*x11^2*x12*x20 + 1/2*x10*x11*x12*x21 + x10*x11^2*x22 + 1/15*x10*x11*x12*x22 - 2*x11^2*x12*x22 - 2*x12^3*x22
+            sage: res = P.highest_weight_vectors(p); res
+            [1/48*x00^2*x01*x10 + 1/4*x00*x01*x02*x10 - 1/48*x01^2*x02*x10 - 1/360*x01*x02^2*x10 - 1/48*x00^3*x11 - 1/8*x00^2*x02*x11 - 5/72*x00*x01*x02*x11 - 1/360*x00*x02^2*x11 + 1/6*x01*x02^2*x11 - 1/8*x00^2*x01*x12 + 13/144*x00*x01^2*x12 + 1/180*x00*x01*x02*x12 - 1/6*x01^2*x02*x12,
+            1/48*x00^3*x01 + 1/8*x00^2*x01*x02 + 11/144*x00*x01^2*x02 + 1/360*x00*x01*x02^2 - 1/12*x01^2*x02^2 - 1/12*x02^4]
+            sage: [P.multidegree(q) for q in res]
+            [(3, 1, 0), (4, 0, 0)]
+            sage: for q in res:
+            ....:     P.test_highest_weight_vector(q)
+
+        .. TODO:: Check that p is indeed in the span of res
+
+        Failing for the strategy of clearing HW for i1,i2 in increasing revlex  order:
+
+            sage: p = 11*x01*x12*x20*x21^2 + 1/3*x00*x12*x20^2*x22 - 1/8*x02*x11*x20*x22^2
+
+
+        Failing for the strategy of taking the reduced word 1,0,1, or any repeat thereof:
+
+            sage: p = 891/2097152*x01^3*x02*x10 + 27/1048576*x00^2*x02^2*x10 - 81/16777216*x01*x02^3*x10 + 891/1048576*x00*x01^2*x02*x11 + 243/16777216*x00*x02^3*x11 - 2673/2097152*x00*x01^3*x12 - 27/1048576*x00^3*x02*x12 - 81/8388608*x00*x01*x02^2*x12
+        """
+        # Define HW_{i1,i2}(q) as the predicate
+        #   q highest weight for i1, i2; namely: e_{i1,i2}.q = 0
+        # Define HW_{<i1,i2}(q) as the predicate
+        #   HW_{i1',i2'}(q) for i1'<i2' with (i1',i2') <_{revlex} (i1,i2)
+        # Define similarly HW_{≤i1,i2}(q)
+        if i1 is None and i2 is None:
+            ps = [p]
+            # HR:
+            # - p is in the span of ps upon application of e_i,j operators
+            # - for any q in ps, HW_{<i1,i2}(q)
+            for zut in range(5):
+                for i2 in range(self._r-1):
+                    for i1 in range(self._r-2,i2-1,-1):
+                        ps = [r
+                                  for q in ps
+                                  for r in self.highest_weight_vectors(q, i1, i1+1)
+                                  if r]
+            return ps
+
+        # Precondition: HW_{<i1,i2}(p)
+        # Goal: produce pjs such that:
+        # - p = \sum_j e^j pjs[j]
+        # - HW_{≤ i1, i2}(q) for q in pjs
+        e = functools.partial(self.polarization, i1=i1, i2=i2, d=1)
+        f = functools.partial(self.polarization, i1=i2, i2=i1, d=1)
+        D = self.multidegree(p)
+        w = D[i1] - D[i2]
+
+        # Invariant: fis[i]: f^i(p)
+        fip = p
+        fis = []
+        while fip:
+            fis.append(fip)
+            fip = f(fip)
+
+        # Invariants:
+        # pjs[j]: None or p_j
+        # pijs[j]: None or e^(j-i) p_j
+        pjs = [ None for j in range(len(fis)) ]
+        epjs = [ None for j in range(len(fis)) ]
+        for i in range(len(fis)-1, -1, -1):
+            for j in range(i+1, len(pjs)):
+                epjs[j] = e(epjs[j])
+            r = fis[i] - sum(fiej(i,j,w+2*j) * epjs[j] for j in range(i+1, len(epjs)))
+            if r:
+                pjs[i] = r / fiej(i,i,w+2*i)
+            else:
+                pjs[i] = r
+            epjs[i] = pjs[i]
+        # for i2p in range(i2+1):
+        #     for i1p in range(i2p):
+        #         for q in pjs:
+        #             assert self.polarization(q, i2p, i1p, d=1) == 0
+        return pjs
+
+    def test_highest_weight_vectors(self, p, i1, i2):
+        e = functools.partial(self.polarization, i1=i1, i2=i2, d=1)
+        f = functools.partial(self.polarization, i1=i2, i2=i1, d=1)
+        pjs = list(self.highest_weight_vectors(p, i1, i2))
+        for q in pjs:
+            assert f(q) == 0
+        for j in range(len(pjs)):
+            for i in range(j):
+                pjs[j] = e(pjs[j])
+        assert p == sum(pjs)
+
+    def strip_highest_weight_vector(self, p):
+        """
+        EXAMPLES::
+
+            sage: R = DiagonalPolynomialRing(QQ, 3, 3)
+            sage: R.inject_variables()
+            Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
+            sage: x00, x01, x02, x10, x11, x12, x20, x21, x22 = R._P.gens()
+            sage: R.strip_highest_weight_vector(x00)
+            (x00, [], 0)
+            sage: R.strip_highest_weight_vector(x20)
+            (x00, [[1, 1], [0, 1]], 0)
+            sage: R.strip_highest_weight_vector(x20^2)
+            (4*x00^2, [[1, 2], [0, 2]], 0)
+        """
+        W = SymmetricGroup(range(self._r))
+        w0 = W.long_element().reduced_word()
+        word = []
+        q = p
+        for i in w0:
+            l = 0
+            while True:
+                q2 = self.polarization(q, i+1, i, 1)
+                if q2:
+                    q = q2
+                    l += 1
+                else:
+                    break
+            if l:
+                word.append([i,l])
+        q2 = q
+        for i,l in reversed(word):
+            D = self.multidegree(q2)
+            w = D[i] - D[i+1]
+            for l2 in range(l):
+                q2 = self.polarization(q2, i, i+1, 1)
+            q2 /= fiej(l, l, w)
+        self.test_highest_weight_vector(q)
+        return q, word, p-q2
+
+    def highest_weight_vectors_decomposition(self, p):
+        """
+        EXAMPLES::
+
+            sage: R = DiagonalPolynomialRing(QQ, 3, 3)
+            sage: R.inject_variables()
+            Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
+            sage: x00, x01, x02, x10, x11, x12, x20, x21, x22 = R._P.gens()
+            sage: e0 = R.e(0); e1 = R.e(1)
+            sage: p = e1(e0(e0(3*x00^3))) + e0(e1(e0(x01*x02^2)))
+            sage: R.highest_weight_vectors_decomposition(p)
+            [[36*x00^3 + 6*x01*x02^2, [[0, 1], [1, 1], [0, 1]]]]
+
+            sage: p = 1/2*x10^2*x11*x20 + 3*x10*x11*x12*x20 + 1/3*x11^2*x12*x20 + 1/2*x10*x11*x12*x21 + x10*x11^2*x22 + 1/15*x10*x11*x12*x22 - 2*x11^2*x12*x22 - 2*x12^3*x22
+            sage: R.highest_weight_vectors_decomposition(p)
+            [[3*x00^3*x01 + 18*x00^2*x01*x02 + 11*x00*x01^2*x02 + 2/5*x00*x01*x02^2 - 12*x01^2*x02^2 - 12*x02^4,
+            [[0, 3], [1, 1], [0, 1]]],
+            [3/4*x00^2*x01*x10 + 9*x00*x01*x02*x10 - 3/4*x01^2*x02*x10 - 1/10*x01*x02^2*x10 - 3/4*x00^3*x11 - 9/2*x00^2*x02*x11 - 5/2*x00*x01*x02*x11 - 1/10*x00*x02^2*x11 + 6*x01*x02^2*x11 - 9/2*x00^2*x01*x12 + 13/4*x00*x01^2*x12 + 1/5*x00*x01*x02*x12 - 6*x01^2*x02*x12,
+            [[0, 3], [1, 1]]]]
+
+        On a non trivial highest weight vector::
+
+            sage: f0 = R.f(0)
+            sage: f1 = R.f(1)
+            sage: p = 891/2097152*x01^3*x02*x10 + 27/1048576*x00^2*x02^2*x10 - 81/16777216*x01*x02^3*x10 + 891/1048576*x00*x01^2*x02*x11 + 243/16777216*x00*x02^3*x11 - 2673/2097152*x00*x01^3*x12 - 27/1048576*x00^3*x02*x12 - 81/8388608*x00*x01*x02^2*x12
+            sage: f0(p)
+            0
+            sage: f1(p)
+            0
+            sage: R.multidegree(p)
+            (4, 1, 0)
+            sage: R.highest_weight_vectors_decomposition(p) == [[p, []]]
+            True
+
+        Found while computing harmonic::
+
+            sage: R = DiagonalPolynomialRing(QQ, 4, 3)
+            sage: R.inject_variables()
+            Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
+            sage: p = 1/2*x02*x10*x20 - 1/2*x03*x10*x20 - 5/2*x02*x11*x20 + 5/2*x03*x11*x20 - 3/2*x00*x12*x20 - 1/2*x01*x12*x20 + 2*x02*x12*x20 + 3/2*x00*x13*x20 + 1/2*x01*x13*x20 - 2*x03*x13*x20 - 2*x02*x10*x21 + 2*x03*x10*x21 + 2*x00*x12*x21 - 2*x03*x12*x21 - 2*x00*x13*x21 + 2*x02*x13*x21 - 2*x00*x10*x22 + 1/2*x01*x10*x22 + 3/2*x02*x10*x22 + 5/2*x00*x11*x22 - 5/2*x03*x11*x22 - 1/2*x00*x12*x22 + 1/2*x03*x12*x22 - 1/2*x01*x13*x22 - 3/2*x02*x13*x22 + 2*x03*x13*x22 + 2*x00*x10*x23 - 1/2*x01*x10*x23 - 3/2*x03*x10*x23 - 5/2*x00*x11*x23 + 5/2*x02*x11*x23 + 1/2*x01*x12*x23 - 2*x02*x12*x23 + 3/2*x03*x12*x23 + 1/2*x00*x13*x23 - 1/2*x02*x13*x23
+
+            sage: p = x02*x10*x20 - x00*x12*x20
+            sage: R.multidegree(p)
+            (1, 1, 1)
+
+            sage: q
+            x00*x02*x10 - x00^2*x12
+            sage: e0(e1(q))
+            x02*x10*x20 + x00*x12*x20 - 2*x00*x10*x22
+            sage: e1(e0(q))
+            2*x02*x10*x20 - x00*x12*x20 - x00*x10*x22
+
+
+        """
+        result = []
+        while p:
+            q, word, p = self.strip_highest_weight_vector(p)
+            result.append([q, word])
+        return result
+
+
     def higher_specht(self, P, Q=None, harmonic=False, use_antisymmetry=False):
         r"""
         Return the hyper specht polynomial indexed by `P` and `Q` in the first row of variables
@@ -1235,12 +1542,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         S = SymmetricFunctions(ZZ)
         s = S.s()
         m = S.m()
-        generators = {}
-        for t in StandardTableaux(mu):
-            p = self.higher_specht(t, harmonic=True, use_antisymmetry=use_antisymmetry)
-            d = self._grading_set([p.degree()]+[0]*(r-1))
-            generators.setdefault(d, [])
-            generators[d].append(p)
+        generators = [self.higher_specht(t, harmonic=True, use_antisymmetry=use_antisymmetry)
+                      for t in StandardTableaux(mu)]
+
         if use_antisymmetry:
             # FIXME: duplicated logic for computing the
             # antisymmetrization positions, here and in apply_young_idempotent
@@ -1267,10 +1571,14 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                                                           antisymmetries=antisymmetries,
                                                           min_degree=1 if use_lie else 0)
         if use_lie:
-            operators[self._grading_set.zero()] = [
-                functools.partial(lambda v,i: self.polarization(self.polarization(v, i+1,i, 1,antisymmetries=antisymmetries), i,i+1, 1,antisymmetries=antisymmetries), i=i)
-                for i in range(r-1)
-                ]
+        #     operators[self._grading_set.zero()] = [
+        #         functools.partial(lambda v,i: self.polarization(self.polarization(v, i+1,i, 1,antisymmetries=antisymmetries), i,i+1, 1,antisymmetries=antisymmetries), i=i)
+        #         for i in range(r-1)
+        #         ]
+            def post_compose(f):
+			    return lambda x: [q for (q,word) in self.highest_weight_vectors_decomposition(f(x))]
+            operators = {d: [post_compose(op) for op in ops]
+                         for d, ops in operators.iteritems()}
 
         operators_by_degree = {}
         for degree,ops in operators.iteritems():
@@ -1292,7 +1600,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             return new_word
         # print operators
         add_degree = self._add_degree_symmetric if use_symmetry else self._add_degree
-        F = Subspace(generators, operators=operators, add_degrees=add_degree, extend_word=extend_word, verbose=verbose)
+        F = Subspace(generators, operators=operators,
+                     add_degrees=add_degree, degree=self.multidegree,
+                     extend_word=extend_word, verbose=verbose)
         F._hilbert_parent = hilbert_parent
         F.antisymmetries = antisymmetries
         return F
@@ -1316,7 +1626,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                                          use_lie=use_lie,
                                          use_commutativity=use_commutativity)
         F.finalize()
-        if not use_lie:
+        if True: # not use_lie:
             return F.hilbert_polynomial()
         operators = [functools.partial(self.polarization, i1=i1, i2=i2, d=1,
                                        antisymmetries=F.antisymmetries)
@@ -1467,6 +1777,12 @@ def harmonic_characters(n):
         tqdm.tqdm.write("\r%s\t("%Partition(nu)+str(t)[:-7]+"): %s"%
                                                      s.sum_of_terms([Partition(d), c]
                                                                     for d,c in result.iteritems()))
+
+def harmonic_bicharacter(n):
+    s = SymmetricFunctions(ZZ).s()
+    ss = tensor([s,s])
+    return ss.sum(tensor([harmonic_character(mu), s.term(mu)])
+                  for mu in Partitions(n))
 
 def harmonic_bicharacter_truncated_series():
     """
@@ -1637,3 +1953,90 @@ def polynomial_derivative(p, q): # this just extends a function by bilinearity; 
             (e3,c3) = m
             result += R({e3: c1*c2*c3})
     return result
+
+def fiej(i, j, d):
+    """
+    INPUT:
+
+    - `i`, `j`, `d` -- nonnegative integers
+
+    OUTPUT: a nonnegative integer
+
+    Let $f = x\partial_y and e = y\partial_x$, and `p` be a highest
+    weight polynomial of weight `d`.  Then `c=fiej(i,j,d)` is such
+    that `f^i e^j p = c e^{j-i} p`. `c` is given by the formula::
+
+    .. MATH:: \prod_{k = j-i+1}^j (kd - 2 \binom{k}{2})
+
+    EXAMPLES::
+
+        sage: R = QQ['x,y']
+        sage: R.inject_variables()
+        Defining x, y
+        sage: def f(p): return x*diff(p,y)
+        sage: def e(p): return y*diff(p,x)
+
+        sage: fiej(0,0,3)
+        1
+
+        sage: fiej(0,1,3)
+        1
+        sage: f(e(x^3)) / x^3
+        3
+        sage: fiej(1,1,3)
+        3
+        sage: f(f(e(x^3)))
+        0
+        sage: fiej(2,1,3)
+        0
+
+        sage: fiej(0,2,3)
+        1
+        sage: f(e(e(x^3))) / e(x^3)
+        4
+        sage: fiej(1,2,3)
+        4
+        sage: f(f(e(e(x^3)))) / x^3
+        12
+        sage: fiej(2,2,3)
+        12
+
+
+        sage: fiej(0,3,3)
+        1
+        sage: f(e(e(e(x^3)))) / e(e(x^3))
+        3
+        sage: fiej(1,3,3)
+        3
+        sage: f(f(e(e(e(x^3))))) / e(x^3)
+        12
+        sage: f(f(f(e(e(e(x^3)))))) / x^3
+        36
+        sage: fiej(3,3,3)
+        36
+        sage: fiej(4,3,3)
+        0
+
+        sage: f(f(f(e(e(e(x^9)))))) / x^9
+        3024
+        sage: fiej(3,3,9)
+        3024
+    """
+    return binomial(j, i) * binomial(d-j+i,i) * factorial(i)**2
+    #return prod( k*d - 2*binomial(k,2) for k in range(j-i+1,j+1) )
+
+
+def string_matrix(d, l):
+    """
+    Return the string matrix for `d`, `l`
+
+    Let `p = \sum e^j p^{(j)}` where each `p^{(j)}` is a highest
+    weight vector, and the sum is homogeneous.
+
+    Then `f^i(p)` is also a linear combination of the e^j
+
+    This return a matrix whose `i`-th row contains the coefficients of
+    the expansion of `f^i(p)` as a linear combination of the
+    `e^(j-i)p^{(j)}`.
+    """
+    return matrix(l, l, lambda i,j: fiej(i,j,d+2*j))
