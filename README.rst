@@ -1,6 +1,8 @@
 Computing the bicharacter of diagonal harmonic polynomials
 ==========================================================
 
+.. image:: https://mybinder.org/badge.svg :target: https://mybinder.org/v2/gh/nthiery/harmonic-modules/master?filepath=talk.ipynb
+
 The main goal of this project  is to compute the character of diagonal
 harmonic polynomials on $k$ rows of $n$ variables w.r.t. the action of
 $GL_k$ and $S_n$. See `<DiagonalCharacter.ipynb>`_
@@ -9,3 +11,4 @@ for explanations, as well as those `slides <https://mybinder.org/v2/gh/nthiery/h
 Dependencies: the `SageMath <http://sagemath.org>`_ open source mathematical system
 
 License: GPL
+
