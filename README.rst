@@ -1,7 +1,8 @@
 Computing the bicharacter of diagonal harmonic polynomials
 ==========================================================
 
-.. image:: https://mybinder.org/badge.svg :target: https://mybinder.org/v2/gh/nthiery/harmonic-modules/master?filepath=talk.ipynb
+.. image:: https://mybinder.org/badge.svg
+   :target: https://mybinder.org/v2/gh/nthiery/harmonic-modules/master?filepath=talk.ipynb
 
 The main goal of this project  is to compute the character of diagonal
 harmonic polynomials on $k$ rows of $n$ variables w.r.t. the action of
