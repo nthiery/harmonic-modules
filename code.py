@@ -488,7 +488,7 @@ class Subspace:
     # Invariants:
     #
     # self._todo contains a list of tuples (v, op, d, word) where `v`
-    # is a vector on which we need to apply op to produced an element
+    # is a vector on which we need to apply op to produce an element
     # w of degree d and "reduced word" `word`
 
     def __init__(self, generators, operators=[],
