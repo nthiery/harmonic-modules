@@ -1738,7 +1738,7 @@ Inserting François's value for the character for `1^6` in the database::
 
 def harmonic_character(mu):
     """
-    Return the contribution of an `S_n` isotypic component in the
+    Return the `GL_n` character of an `S_n` isotypic component in the
     diagonal harmonic polynomials
 
     Let `H` be the space of diagonal harmonic harmonic polynomials on
@@ -1770,7 +1770,7 @@ def harmonic_character(mu):
         s[2, 1, 1] + s[2, 1, 1, 1] + s[2, 2, 1] + s[3, 1, 1] + s[3, 1, 1, 1] + s[3, 2] + 2*s[3, 2, 1] + s[3, 3] + s[3, 3, 1] + s[4, 1] + 3*s[4, 1, 1] + s[4, 1, 1, 1] + 2*s[4, 2] + 3*s[4, 2, 1] + 2*s[4, 3] + s[4, 3, 1] + s[4, 4] + 2*s[5, 1] + 3*s[5, 1, 1] + 4*s[5, 2] + 2*s[5, 2, 1] + 3*s[5, 3] + s[5, 4] + 3*s[6, 1] + 4*s[6, 1, 1] + 4*s[6, 2] + s[6, 2, 1] + 2*s[6, 3] + s[7] + 4*s[7, 1] + 2*s[7, 1, 1] + 4*s[7, 2] + s[7, 3] + s[8] + 4*s[8, 1] + s[8, 1, 1] + 2*s[8, 2] + 2*s[9] + 4*s[9, 1] + s[9, 2] + s[10] + 2*s[10, 1] + 2*s[11] + s[11, 1] + s[12] + s[13]
         sage: harmonic_character([1, 1, 1, 1, 1, 1])
         s[1, 1, 1, 1, 1] + s[3, 1, 1, 1] + s[4, 1, 1, 1] + s[4, 2, 1] + s[4, 3, 1] + s[4, 4] + s[4, 4, 1] + s[5, 1, 1, 1] + s[5, 2, 1] + s[5, 3, 1] + s[6, 1, 1] + s[6, 1, 1, 1] + s[6, 2, 1] + s[6, 3] + s[6, 3, 1] + s[6, 4] + s[7, 1, 1] + s[7, 2] + s[7, 2, 1] + s[7, 3] + s[7, 4] + 2*s[8, 1, 1] + s[8, 2] + s[8, 2, 1] + s[8, 3] + s[9, 1, 1] + s[9, 2] + s[9, 3] + s[10, 1] + s[10, 1, 1] + s[10, 2] + s[11, 1] + s[11, 2] + s[12, 1] + s[13, 1] + s[15]
-        """
+    """
     mu = tuple(mu)
     result = harmonic_character_plain(mu)
     S = SymmetricFunctions(ZZ)
@@ -1779,15 +1779,20 @@ def harmonic_character(mu):
 
 @parallel()
 def harmonic_character_paral(mu):
+    r"""
+    Utility to parallelize the computation of the `GL_r` character of
+    the `S_n` isotypic components in the diagonal harmonic
+    polynomials.
+    """
     t1 = datetime.datetime.now()
     result = harmonic_character_plain(mu, verbose=True, parallel=True)
     t2 = datetime.datetime.now()
     return result, t2-t1
 
 def harmonic_characters(n):
-    """
-    Compute in parallel the harmonic characters for all
-    irreducible representations of `S_n`.
+    r"""
+    Compute in parallel the `GL_r` character of all `S_n` isotypic
+    components in the diagonal harmonic polynomials.
     """
     S = SymmetricFunctions(ZZ)
     s = S.s()
