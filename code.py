@@ -1089,6 +1089,11 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
     def polarization(self, p, i1, i2, d, use_symmetry=False, antisymmetries=None):
         """
+        Return the polarization `P_{d,i_1,i_2}. p` of `p`.
+
+        Recall that the polarization operator is defined by
+
+        .. MATH:: P_{d,i_1,i_2} := \sum_j x_{i_2,j} \partial_{i_1,j}^d
 
         EXAMPLES::
 
