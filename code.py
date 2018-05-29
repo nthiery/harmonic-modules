@@ -1557,7 +1557,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         else:
             antisymmetries = None
         if use_lie:
-            #use_symmetry=True
+            # The hilbert series will be directly expressed in terms of the
+            # dimensions of the highest weight spaces, thus as a symmetric
+            # function in the Schur basis
             def hilbert_parent(dimensions):
                 return s.sum_of_terms([Partition(d), c]
                                        for d,c in dimensions.iteritems() if c)
@@ -1575,15 +1577,18 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                                                           use_symmetry=use_symmetry,
                                                           antisymmetries=antisymmetries,
                                                           min_degree=1 if use_lie else 0)
-        if use_lie:
-        #     operators[self._grading_set.zero()] = [
-        #         functools.partial(lambda v,i: self.polarization(self.polarization(v, i+1,i, 1,antisymmetries=antisymmetries), i,i+1, 1,antisymmetries=antisymmetries), i=i)
-        #         for i in range(r-1)
-        #         ]
+        if use_lie == "euler+intersection":
+            operators[self._grading_set.zero()] = [
+                functools.partial(lambda v,i: self.polarization(self.polarization(v, i+1,i, 1,antisymmetries=antisymmetries), i,i+1, 1,antisymmetries=antisymmetries), i=i)
+                for i in range(r-1)
+                ]
+        elif use_lie == 'decompose':
             def post_compose(f):
 			    return lambda x: [q for (q,word) in self.highest_weight_vectors_decomposition(f(x))]
             operators = {d: [post_compose(op) for op in ops]
                          for d, ops in operators.iteritems()}
+        elif use_lie == 'intersection':
+            raise NotImplementedError
 
         operators_by_degree = {}
         for degree,ops in operators.iteritems():
@@ -1631,8 +1636,17 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                                          use_lie=use_lie,
                                          use_commutativity=use_commutativity)
         F.finalize()
-        if True: # not use_lie:
+
+        if not (use_lie and 'intersection' in use_lie):
             return F.hilbert_polynomial()
+        # Otherwise:
+        # The hilbert polynomial is expressed directly in terms of the
+        # dimensions of the highest weight spaces; however the subspaces that
+        # have been computed at this stage may include non highest weight
+        # vectors.
+        # We compute the intersection with the highest weight space,
+        # i.e. the joint kernel of the f operators of the lie algebra
+        # which are the polarization operators of degree 0 with i_2 < i_1
         operators = [functools.partial(self.polarization, i1=i1, i2=i2, d=1,
                                        antisymmetries=F.antisymmetries)
                      for i1 in range(1, self._r)
