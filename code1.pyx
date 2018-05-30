@@ -124,17 +124,17 @@ cpdef act_on_polynomial(p, PermutationGroupElement sigma):
     #return R({tuple(t[sigma(i)-1] for i in range(1,n+1)): c
     #          for t,c in p.dict().iteritems() })
 
-cpdef list diagonal_swap(list exponents, int n, int r, int i1, int i2):
+cpdef list diagonal_swap(list exponents, int n, int r, int j1, int j2):
     """
-    Swap in place two columns.
+    Swap in place two columns of a diagonal exponent vector.
 
     INPUT:
 
     - ``exponents `` -- a list, seen as an `r\times n` array
     - ``r``, ``n`` -- nonnegative integers
-    - ``i1``, ``i2`` -- integers in `0,\ldots,n-1`
+    - ``j1``, ``j2`` -- integers in `0,\ldots,n-1`
 
-    Swap inplace the columnss ``i1`` and ``i2`` in the list ``exponnents``,
+    Swap inplace the columnss ``j1`` and ``j2`` in the list ``exponnents``,
     seen as an `r\times n` array.
 
     EXAMPLES::
@@ -151,9 +151,9 @@ cpdef list diagonal_swap(list exponents, int n, int r, int i1, int i2):
     """
     cdef int i
     for i in range(r):
-        exponents[i*n+i1], exponents[i*n+i2] = exponents[i*n+i2], exponents[i*n+i1]
+        exponents[i*n+j1], exponents[i*n+j2] = exponents[i*n+j2], exponents[i*n+j1]
 
-cpdef int diagonal_cmp(list exponents, int n, int r, int i1, int i2):
+cpdef int diagonal_cmp(list exponents, int n, int r, int j1, int j2):
     """
     Compare lexicographically two columns.
 
@@ -161,9 +161,9 @@ cpdef int diagonal_cmp(list exponents, int n, int r, int i1, int i2):
 
     - ``exponents `` -- a list, seen as an `r\times n` array
     - ``r``, ``n`` -- nonnegative integers
-    - ``i1``, ``i2`` -- integers in `0,\ldots,n-1`
+    - ``j1``, ``j2`` -- integers in `0,\ldots,n-1`
 
-    Compare lexicographically the columns ``i1`` and ``i2`` in the
+    Compare lexicographically the columns ``j1`` and ``j2`` in the
     list ``exponnents``, seen as an `r\times n` array.
 
     EXAMPLES::
@@ -183,7 +183,7 @@ cpdef int diagonal_cmp(list exponents, int n, int r, int i1, int i2):
     cdef int i
     cdef int c
     for i in range(r):
-        c = cmp(exponents[i*n+i1], exponents[i*n+i2])
+        c = cmp(exponents[i*n+j1], exponents[i*n+j2])
         if c:
             return c
     return 0
