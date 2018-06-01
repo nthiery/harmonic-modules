@@ -21,6 +21,7 @@ from sage.structure.parent import Parent
 
 from sage.structure.unique_representation import UniqueRepresentation
 
+from sage.combinat.integer_lists.invlex import IntegerListsLex
 from sage.combinat.partition import Partition, Partitions
 from sage.combinat.ranker import rank_from_list
 from sage.combinat.sf.sf import SymmetricFunctions
@@ -199,6 +200,9 @@ class MatrixOfVectors:
         self._is_echelon = False
         self._matrix = self._add_vector_to_matrix(self._matrix, v)
 
+    def cardinality(self): # or __len__, nrows ??? or dimension in EchelonMatrixOfVectors ???
+        return self._matrix.nrows()
+
 class EchelonMatrixOfVectors(MatrixOfVectors):
     """
     A mutable data structure representing a collection of vectors in row echelon form
@@ -236,9 +240,6 @@ class EchelonMatrixOfVectors(MatrixOfVectors):
                 self._words.append(word)
             return True
         return False
-
-    def cardinality(self): # or __len__, nrows, dimension, ???
-        return self._matrix.nrows()
 
 def annihilator_basis(B, S, action=operator.mul, side='right', ambient=None):
     """
@@ -358,7 +359,7 @@ def annihilator_basis(B, S, action=operator.mul, side='right', ambient=None):
                  for v in mat.left_kernel().basis())
 
 
-class Subspace:
+class Subspace(object):
     """
     Construct a subspace from generators and linear operators
 
@@ -491,11 +492,12 @@ class Subspace:
     # is a vector on which we need to apply op to produce an element
     # w of degree d and "reduced word" `word`
 
-    def __init__(self, generators, operators=[],
+    def __init__(self, generators, operators={},
                  add_degrees=operator.add,
                  extend_word=ConstantFunction([]),
                  hilbert_parent=None,
                  degree=None,
+                 ambient=None,
                  verbose=False):
         self._stats={}
         self._verbose=verbose
@@ -523,9 +525,12 @@ class Subspace:
 
         self._generators = generators
 
-        ambient = {g.parent() for gens in generators.values() for g in gens}
-        assert len(ambient) == 1
-        ambient = ambient.pop()
+        if ambient is not None:
+            assert all( ambient.is_parent_of(g) for gens in generators.values() for g in gens )
+        else:
+            ambient = {g.parent() for gens in generators.values() for g in gens}
+            assert len(ambient) == 1
+            ambient = ambient.pop()
         self._ambient = ambient
         self._base_ring = ambient.base_ring()
 
@@ -585,8 +590,8 @@ class Subspace:
         assert self._bases.keys() == [0] # only handle the non graded case
         return self._bases[0]._matrix
 
-    def extend(self, v, d, word):
-        if self._degree is not None:
+    def extend(self, v, d=None, word=None):
+        if d is None and self._degree is not None:
             d = self._degree(v)
         if d not in self._bases:
             self._bases[d] = EchelonMatrixOfVectors(ambient=self._ambient, stats=self._stats)
@@ -612,6 +617,92 @@ class Subspace:
             self._bar.set_postfix({'dimension': self._stats['dimension'], 'zero': self._stats['zero']})
             self._bar.close()
             #print "  dimension: %s  extensions: %s"%(self._stats["dimension"], self._stats["extend"])
+
+class HighestWeightSubspace(Subspace):
+    def __init__(self, generators,
+                 add_degrees=None,
+                 degree=None,
+                 hilbert_parent=None,
+                 antisymmetries=None,
+                 ambient=None,
+                 verbose=False):
+        Subspace.__init__(self, generators,
+                 degree=degree,
+                 add_degrees=add_degrees,
+                 hilbert_parent=hilbert_parent,
+                 ambient=ambient,
+                 verbose=verbose)
+        self._antisymmetries=antisymmetries
+
+    @cached_method
+    def finalize(self):
+        R = self._ambient
+        r = R._r
+        assert all( not any(d[1:])
+                    for d in self._bases.keys() )
+        maxd = max(d[0] for d in self._bases.keys() )
+        degrees = [tuple(D) for D in IntegerListsLex(max_sum=maxd, length=r, max_slope=0)]
+        for D2 in degrees:
+            # Apply multi polarization operators from subspaces of higher degree
+            for D1 in self._bases.keys():
+                D = e_polarization_degrees(D1, D2)
+                if not D:
+                    continue
+                i, D = D
+                if sum(D) == 1:
+                    continue
+                for p in self._bases[D1].vectors():
+                    q = R.multi_polarization(p, D, i, antisymmetries=self._antisymmetries)
+                    self.extend(q, D2)
+            if D2 not in self._bases: # no vector of this degree was found
+                continue
+            # Intersect with highest weight space
+            basis = self._bases[D2]
+            operators = [functools.partial(R.polarization, i1=i1, i2=i2, d=1,
+                                           antisymmetries=self._antisymmetries)
+                         for i1 in range(1, R._r)
+                         for i2 in range(i1)]
+            highest_weight_space = annihilator_basis(basis._basis, operators, action=lambda b, op: op(b), ambient=R)
+            self._bases[D2] = MatrixOfVectors( # Could possibly be EchelonMatrixOfVectors?
+                highest_weight_space,
+                ambient=R,
+                )
+        return "finished"
+
+def e_polarization_degrees(D1, D2):
+    """
+    Return the degree of an e-multipolarization operator from degree D1 to degree D2
+
+    EXAMPLES::
+
+        sage: e_polarization_degrees([5,0,0],[3,1,0])
+        (1, [2, 0])
+        sage: e_polarization_degrees([5,0,0],[3,1,0])
+        (1, [2, 0])
+        sage: e_polarization_degrees([5,0,0],[3,2,0])
+        sage: e_polarization_degrees([5,1,0],[3,2,0])
+        (1, [2, 0])
+        sage: e_polarization_degrees([5,4,0,1],[1,1,0,2])
+        (3, [4, 3, 0, 0])
+        sage: e_polarization_degrees([5,4,0,1,0,0],[1,1,0,2,0,0])
+        (3, [4, 3, 0, 0, 0, 0])
+        sage: e_polarization_degrees([5,4,0,1,0,0],[1,1,0,2,0,1])
+        sage: e_polarization_degrees([5,4,0,1,0,1],[1,1,0,2,0,0])
+
+
+    """
+    D = [D1i-D2i for D1i,D2i in zip(D1, D2)]
+    for i in reversed(range(len(D))):
+        if D[i] == -1:
+            break
+        if D[i] != 0:
+            return None
+    if i <= 0:
+        return None
+    D[i] = 0
+    if any(D[j] < 0 for j in range(i)):
+        return None
+    return i, D
 
 def destandardize(self):
     """
@@ -990,6 +1081,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         self._vars = matrix([[vars[i*n+j] for j in range(n)] for i in range(r)])
         Parent.__init__(self, facade=(P,), category=Algebras(QQ).Commutative())
 
+    def monomial(self, *args):
+        return self._P.monomial(*args)
+
     def _repr_(self):
         """
             sage: DiagonalPolynomialRing(QQ, 5, 3) # indirect doctest
@@ -1129,6 +1223,57 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                 #            ))
                 #result = result.substitute(substitution)
             Partition(self.multidegree(result))
+        if antisymmetries and result:
+            result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
+        return result
+
+    @cached_method
+    def derivative_input(self, D, j):
+        r = self._r
+        X = self.algebra_generators()
+        res = []
+        for i in range(r):
+            res.extend([X[i,j],D[i]])
+        return res
+
+    def multi_polarization(self, p, D, i2, antisymmetries=None):
+        """
+        Return the multi polarization `P_{D,i_2}. p` of `p`.
+
+        The multi polarization operator is defined by
+
+        .. MATH:: P_{D,i_2} := \sum_j x_{i_2,j} \partial_{*,j}^D
+
+        EXAMPLES::
+
+            sage: P = DiagonalPolynomialRing(QQ, 4, 3)
+            sage: X = P.algebra_generators()
+            sage: p = X[0,0]*X[1,0]^3*X[1,1]^1 + X[2,1]; p
+            x00*x10^3*x11 + x21
+
+        Usual polarizations::
+
+            sage: P.multi_polarization(p, [0,2,0],2)
+            6*x00*x10*x11*x20
+            sage: P.multi_polarization(p, [0,1,0],2)
+            3*x00*x10^2*x11*x20 + x00*x10^3*x21
+
+            sage: P.multi_polarization(p, [0,2,0], 0)
+            6*x00^2*x10*x11
+
+            sage: P.multi_polarization(p, [0,0,1], 0)
+            x01
+
+        Multi polarizations::
+
+            sage: P.multi_polarization(p, [1,2,0], 2)
+            6*x10*x11*x20
+        """
+        n = self._n
+        X = self.algebra_generators()
+        D = tuple(D)
+        result = self.sum(X[i2,j]*p.derivative(*(self.derivative_input(D, j)))
+                          for j in range(n))
         if antisymmetries and result:
             result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
         return result
@@ -1541,6 +1686,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             sage: F = P.harmonic_space_by_shape([1,1,1])
             sage: F.hilbert_polynomial()
             s[1, 1] + s[3]
+
+            sage: P = DiagonalPolynomialRing(QQ,5,2)
+            sage: F = P.harmonic_space_by_shape(Partition([3,2]),use_lie='multipolarization', verbose=True)
         """
         mu = Partition(mu)
         r = self._r
@@ -1587,8 +1735,14 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 			    return lambda x: [q for (q,word) in self.highest_weight_vectors_decomposition(f(x))]
             operators = {d: [post_compose(op) for op in ops]
                          for d, ops in operators.iteritems()}
-        elif use_lie == 'intersection':
-            raise NotImplementedError
+        elif use_lie == 'multipolarization':
+            F = HighestWeightSubspace(generators,
+                     ambient=self,
+                     add_degrees=self._add_degree, degree=self.multidegree,
+                     hilbert_parent = hilbert_parent,
+                     antisymmetries=antisymmetries,
+                     verbose=verbose)
+            return F
 
         operators_by_degree = {}
         for degree,ops in operators.iteritems():
@@ -1612,9 +1766,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         add_degree = self._add_degree_symmetric if use_symmetry else self._add_degree
         F = Subspace(generators, operators=operators,
                      add_degrees=add_degree, degree=self.multidegree,
+                     hilbert_parent = hilbert_parent,
                      extend_word=extend_word, verbose=verbose)
-        F._hilbert_parent = hilbert_parent
-        F.antisymmetries = antisymmetries
+        F._antisymmetries = antisymmetries
         return F
 
 
@@ -1637,7 +1791,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                                          use_commutativity=use_commutativity)
         F.finalize()
 
-        if not (use_lie and 'intersection' in use_lie):
+        if use_lie != "euler+intersection":
             return F.hilbert_polynomial()
         # Otherwise:
         # The hilbert polynomial is expressed directly in terms of the
@@ -1648,7 +1802,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         # i.e. the joint kernel of the f operators of the lie algebra
         # which are the polarization operators of degree 0 with i_2 < i_1
         operators = [functools.partial(self.polarization, i1=i1, i2=i2, d=1,
-                                       antisymmetries=F.antisymmetries)
+                                       antisymmetries=F._antisymmetries)
                      for i1 in range(1, self._r)
                      for i2 in range(i1)]
         return F._hilbert_parent({mu: len(annihilator_basis(basis._basis, operators, action=lambda b, op: op(b), ambient=self))
@@ -2064,3 +2218,32 @@ def string_matrix(d, l):
     `e^(j-i)p^{(j)}`.
     """
     return matrix(l, l, lambda i,j: fiej(i,j,d+2*j))
+
+"""
+Consistency checks::
+
+    sage: P = DiagonalPolynomialRing(QQ,2,1)
+    sage: for mu in Partitions(2):
+    ....:     assert P.harmonic_space_by_shape(mu,use_lie='multipolarization').hilbert_polynomial() == harmonic_character(mu)
+
+    sage: P = DiagonalPolynomialRing(QQ,3,2)
+    sage: for mu in Partitions(3):
+    ....:     assert P.harmonic_space_by_shape(mu,use_lie='multipolarization').hilbert_polynomial() == harmonic_character(mu)
+
+This does not work yet::
+
+    sage: P = DiagonalPolynomialRing(QQ,4,3)
+    sage: for mu in Partitions(4):
+    ....:     assert P.harmonic_space_by_shape(mu,use_lie='multipolarization').hilbert_polynomial() == harmonic_character(mu)
+    AssertionError
+
+    sage: mu
+    [2, 1, 1]
+    sage: harmonic_character(mu)
+    s[1, 1] + s[2, 1] + s[3] + s[3, 1] + s[4] + s[5]
+    sage: P.harmonic_space_by_shape(mu,use_lie='multipolarization').hilbert_polynomial()
+    s[1, 1] + s[2, 1] + s[3] + s[4] + s[5]
+
+Somehow missing 3,1 by polarizing from 5???
+
+"""
