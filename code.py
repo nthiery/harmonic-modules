@@ -51,7 +51,8 @@ class func_persist:
     definition to cache values it computes to disk.
 
     -- ``key`` - a function that normalizes the input arguments into a unique key
-    -- ``hash`` - a function that takes this key and make it into a string (will be used for the name of the file name storing the result)
+    -- ``hash`` - a function that takes this key and make it into a string (will be used for the name of the file name storing the result) # TODO: file_name? cache_name?
+                  TODO: Document that it shall be injective
 
     """
     def __init__(self, f, dir='func_persist', prefix=None, hash=hash, key=None):
@@ -113,6 +114,13 @@ class MatrixOfVectors:
         [0 2 0]
         [0 1 1]
         [2 1 1]
+
+
+    .. NOTE::
+
+        - Currently, adding a new vector is linear in the size of the matrix.
+          This could probably be fixed by changing the matrix in place.
+        - Currently, the matrix is dense
     """
     def __init__(self, vectors=None, ambient=None, stats={}):
         if vectors is None and not isinstance(ambient, Parent):
@@ -368,6 +376,9 @@ class Subspace(object):
     - ``generators`` -- a list of vectors in some ambient vector space `V`
     - ``operators`` -- a list of linear endomorphism `V` (default: ``[]``)
 
+    - ``hilbert_parent`` -- a function that, given the dimensions of the subspaces
+      given as a dictionary { degree: dim } returns the hilbert polynomial
+
     Return the smallest subspace of `V` containing ``generators`` and
     stable under the action of the operators.
 
@@ -602,7 +613,7 @@ class Subspace(object):
             self._bar.set_postfix({'todo': len(self._todo), 'dimension': self._stats['dimension'],  'zero': self._stats['zero']})
 
     @cached_method
-    def finalize(self):
+    def finalize(self):   # compute?
         todo = self._todo
         if not todo:
             return
@@ -617,6 +628,10 @@ class Subspace(object):
             self._bar.set_postfix({'dimension': self._stats['dimension'], 'zero': self._stats['zero']})
             self._bar.close()
             #print "  dimension: %s  extensions: %s"%(self._stats["dimension"], self._stats["extend"])
+
+
+
+
 
 class HighestWeightSubspace(Subspace):
     def __init__(self, generators,
@@ -1025,7 +1040,7 @@ def higher_specht(R, P, Q=None, harmonic=False, use_antisymmetry=False):
     m = R.prod(X[i-1]**d for (d,i) in zip(exponents.entries(), Q.entries()))
     return apply_young_idempotent(m, Q, use_antisymmetry=use_antisymmetry)
 
-def reverse_sorting_permutation(t):
+def reverse_sorting_permutation(t): # TODO: put "stable sorting" as keyword somewhere
     r"""
     Return a permutation `p` such that  is decreasing
 
@@ -1060,6 +1075,8 @@ def reverse_sorting_permutation(t):
 
 class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     """
+
+    Also the coordinate space of `r\times n` matrices
 
     EXAMPLES::
 
@@ -2132,7 +2149,7 @@ def polynomial_derivative(p, q): # this just extends a function by bilinearity; 
             result += R({e3: c1*c2*c3})
     return result
 
-def fiej(i, j, d):
+def fiej(i, j, d): # fiejcoeff_on_highest_weight
     """
     INPUT:
 
