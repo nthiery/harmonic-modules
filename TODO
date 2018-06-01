@@ -1,0 +1,195 @@
+
+# TODO:
+
+## Code reorganization
+
+- utilities.pyx
+- cython file for diagonal antisymmetric utilities
+- funcpersist.py
+- subspace.py
+- combinatorics.py?
+- diagonal_polynomial_ring.py # Avec une classe DiagonalHarmonic?
+
+
+class DiagonalPolynomialRing:
+    """
+
+        sage: DiagonalPolynomialRing(QQ, n, r, inert=0)
+    ...
+
+    """
+    def young_idempotent()
+
+    def polarization()
+
+class DiagonalAntisymmetricPolynomials:
+    """
+
+    """
+    def from_polynomial():
+        ... ...
+
+    def young_idempotent()
+
+    def polarization()
+
+
+def PolarizationSpace(P, generators, mu, r, use_symmetry=, verbose=, use_lie, use_commutativity???=):
+    """
+    P: a diagonal polynomial ring (or assymmetric version)
+    generators: polynomials in one set of variables (+inert) in the image of b_mu
+
+    """
+
+    ... P.polarization(p) ...
+
+
+## 
+
+- Setup binder
+- Add a setup.py to enable compilation once for all of code1.pyx
+- Rename the code files
+
+
+Questions:
+
+- For V a representation of S_n, name for e_T(V) for e_T a Young symmetrizer?
+
+
+
+.. TOPIC:: Objectif
+
+- Réaliser plein de (q,t)-fonctions symmétriques comme caractères de
+  bi-modules pour GL_2 \otimes S_n. Plus généralement, des
+  (q_1,...,q_k)-fonctions symmétriques comme caractères de bi-modules
+  pour GL_k\otimes S_n.
+
+- Stratégie: considérer les polynômes K[X] en k jeux de n variables
+  (matrices de variables à k lignes et n colonnes), et réaliser ces
+  modules comme sous-modules des coinvariants des polynômes multi
+  symmétriques, sous l'action de GL_k sur les lignes et S_n sur les
+  colonnes.
+
+- Candidat typique: le sous-module engendrés par le VDM sous l'action
+  des opérateurs de dérivation et polarisation
+
+.. TOPIC:: Remarque:
+
+    Soit p\in K[X] multi-homogène (par ligne), tel que p engendre un
+    module simple sous l'action de S_n, et M un bi-module engendré par
+    p sous l'action de S_n et d'un certain nombre d'opérateurs
+    multi-gradués qui commuttent à S_n (typiquement polarisation).
+    Alors le bi-caractère de M se lit directement sur les
+    multi-graduations des polynômes dans la base de M, celle-ci
+    pouvant être calculée par composante multi-graduée.
+
+.. TOPIC:: Definition: alterants (généralisations diagonale du Van Der Monde)
+
+    A diagram `D` is a n-tuple of elements of `\NN^k`. Or equivalently
+    an ordered collection of `n` monomials / exponent vectors in `k`
+    variables. It models the *alternant*:
+
+        \Delta_D = det (  X_{*,j}^{D_j}  )
+
+.. TOPIC:: Conjecture / Theorem?
+
+    The space of alternating diagonal harmonic polynomials is spanned
+    by the van-der-monde in the first variables and E polarization
+    operators.
+
+.. TOPIC:: Remarks
+
+    - Applying a polarization operator on some alternant \Delta_D
+      gives a simple linear combination of alternants.
+
+    - Relations between the alternants: swaping two exponent vectors
+      in `D` multiplies the alternant by `-1`. If two exponent vectors
+      coincide, the alternant is zero. Otherwise, there are no linear
+      relations.
+
+.. TOPIC:: Lemma
+
+    The *space of diagrams* is the n-fold exterior product of $\K.\NN^k$.
+    (i.e. the n-fold exterior product of the polynomial ring in k variables).
+
+    The map `\Delta` extends by linearity into an isomorphism from the
+    space of diagrams into the space spanned by alternants in K[X].
+
+    In other words, diagrams provides a combinatorial model for the
+    action of polarisation on alternants.
+
+.. TOPIC:: Remark
+
+    There is no know similar combinatorial model for the derivatives
+    of alternants.
+
+.. TOPIC:: Question
+
+    Connait-on l'équivalent des Spechts en plusieurs jeux de
+    variables? Des Hyper Spechts?
+
+.. TOPIC:: Clarify
+
+    Relation between the action of GL_k and polarization
+
+    If S is a subspace of K[X], then the closure of S under
+    polarization is a GL_k module?
+
+
+.. TOPIC:: To check
+
+    Let P,Q be a pair of tableaux, and p and q be respectively the
+    corresponding hyper specht and harmonic polynomials in
+    K[x_1,\dots,x_n]. Then `p` and `q` span bi-modules with the same
+    character under the action of S_n and polarization.
+
+    No: without being in the harmonics one may obtain by polarization
+    linearly independent polynomials which are equal in the
+    coinvariants
+
+.. TOPIC:: Remark
+
+    In two sets of variables, the module spaned by a polynomial in one
+    set of variable under the action of the polarization operators
+    coincide with that under the action of just the E polarization
+    operators.
+
+.. TOPIC:: To explore
+
+    Combinatorial model for the space spanned by (hyper) Specht
+    polynomials:
+
+    In other words: alternants are diagonal analogue of the
+    van-der-monde. Find the analogue of alternants for general
+    (hyper-)specht polynomials.
+
+-- TOPIC:: To explore
+
+    What is the `GL_k` character of the space spanned by an (hyper)
+    Specht polyomial under polarization?
+
+.. TODO::
+
+
+    repr / latex pour les diagrames as a matrix
+
+    00,10,20  -> 012
+                 000
+
+
+
+For which diagrams, H_D is of dimension divisible par n! ?
+
+
+
+
+Théorème I.1, Lattice diagrams & Extended Pieri rules
+
+
+Théorème:
+
+nabla: opérateur qui est diagonalisé par les macdo avec val propres simples
+à t=1, c'est un morphisme d'algèbre
+
+nabla(e_n) = frobenius caractère de la fermeture par polarisation et dérivation à partir du VDM (i.e. coinvariants diagonaux en deux jeux de variables)
+
