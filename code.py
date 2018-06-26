@@ -586,7 +586,12 @@ class Subspace(object):
 
     def basis(self):
         self.finalize()
-        return sum((basis.vectors() for basis in self._bases.values()), ())
+        basis = {}
+        for i,val in self._bases.iteritems() : 
+            if val.vectors() != () :
+                basis[i] = val.vectors()
+        #return sum((basis.vectors() for basis in self._bases.values()), ())
+        return basis
 
     def hilbert_polynomial(self):
         return self._hilbert_parent(self.dimensions())
@@ -873,6 +878,8 @@ def apply_young_idempotent(p, t, use_antisymmetry=False):
     return p
 
 def antisymmetries_of_tableau(Q):
+    if not isinstance(Q,StandardTableau) :
+        Q = Partition(Q).initial_tableau()
     return [[i-1 for i in column] for column in Q.conjugate()]
 
 @cached_function
