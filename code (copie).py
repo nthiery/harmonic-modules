@@ -44,122 +44,293 @@ from sage.functions.other import factorial
 
 load("code1.pyx")
 
-def annihilator_basis(B, S, action=operator.mul, side='right', ambient=None):
-    """
-    A generalization of :meth:`Modules.FiniteDimensional.WithBasis.ParentMethods.annihilator_basis`
+### Dans class DiagonalPolynomialRing
+def e(self, i):
+        return functools.partial(self.polarization, i1=i, i2=i+1, d=1)
 
-    Return a basis of the annihilator of a finite set of elements in the span of ``B``
+    def f(self, i):
+        return functools.partial(self.polarization, i1=i+1, i2=i, d=1)
 
-    INPUT:
+    def is_highest_weight_vector(self, p, _assert=False):
+        for i2 in range(self._r):
+            for i1 in range(i2):
+                if self.polarization(p, i2, i1, 1):
+                    if _assert:
+                        assert False
+                    else:
+                        return False
+        return True
 
-    - ``B`` -- a finite iterable of vectors (linearly independent???)
+    def test_highest_weight_vector(self, p):
+        self.is_highest_weight_vector(p, _assert=True)
 
-    - ``S`` -- a finite iterable of objects
+    def highest_weight_vectors(self, p, i1=None, i2=None):
+        """
+        Return the "unique" highest weight vectors `p_j, j\geq 0` such
+        that `p = \sum e^j p_j`.
 
-    - ``action`` -- a function (default: :obj:`operator.mul`)
+        EXAMPLES::
 
-    - ``side`` -- 'left' or 'right' (default: 'right'):
-      on which side of ``self`` the elements of `S` acts.
+            sage: P = DiagonalPolynomialRing(QQ, 4, 2)
+            sage: X = P.algebra_generators()
+            sage: P.highest_weight_vectors(X[0,0], 0, 1)
+            [x00]
+            sage: P.highest_weight_vectors(X[0,0], 1, 0)
+            [0, x10]
 
-    See :meth:`annihilator` for the assumptions and definition
-    of the annihilator.
+            sage: P.highest_weight_vectors(X[1,0]^3, 0, 1)
+            [0, 0, 0, 1/6*x00^3]
+            sage: P.test_highest_weight_vectors(X[1,0]^3, 0, 1)
 
-    EXAMPLES:
+            sage: P.highest_weight_vectors(p, 0, 1)  # not tested
+            [-x01*x10 + x00*x11, x00^2 - x01^2]
+            sage: P.test_highest_weight_vectors(p, 0, 1)   # not tested
 
-    By default, the action is the standard `*` operation. So
-    our first example is about an algebra::
+        A random example::
 
-        sage: F = FiniteDimensionalAlgebrasWithBasis(QQ).example(); F
-        An example of a finite dimensional algebra with basis:
-        the path algebra of the Kronecker quiver
-        (containing the arrows a:x->y and b:x->y) over Rational Field
-        sage: x,y,a,b = F.basis()
+            sage: P = DiagonalPolynomialRing(QQ, 4, 3)
+            sage: P.inject_variables()
+            Defining x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23
+            sage: x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23 = P._P.gens()
+            sage: p = 1/2*x10^2*x11*x20 + 3*x10*x11*x12*x20 + 1/3*x11^2*x12*x20 + 1/2*x10*x11*x12*x21 + x10*x11^2*x22 + 1/15*x10*x11*x12*x22 - 2*x11^2*x12*x22 - 2*x12^3*x22
+            sage: res = P.highest_weight_vectors(p); res
+            [1/48*x00^2*x01*x10 + 1/4*x00*x01*x02*x10 - 1/48*x01^2*x02*x10 - 1/360*x01*x02^2*x10 - 1/48*x00^3*x11 - 1/8*x00^2*x02*x11 - 5/72*x00*x01*x02*x11 - 1/360*x00*x02^2*x11 + 1/6*x01*x02^2*x11 - 1/8*x00^2*x01*x12 + 13/144*x00*x01^2*x12 + 1/180*x00*x01*x02*x12 - 1/6*x01^2*x02*x12,
+            1/48*x00^3*x01 + 1/8*x00^2*x01*x02 + 11/144*x00*x01^2*x02 + 1/360*x00*x01*x02^2 - 1/12*x01^2*x02^2 - 1/12*x02^4]
+            sage: [P.multidegree(q) for q in res]
+            [(3, 1, 0), (4, 0, 0)]
+            sage: for q in res:
+            ....:     P.test_highest_weight_vector(q)
 
-    In this algebra, multiplication on the right by `x`
-    annihilates all basis elements but `x`::
+        .. TODO:: Check that p is indeed in the span of res
 
-        sage: x*x, y*x, a*x, b*x
-        (x, 0, 0, 0)
+        Failing for the strategy of clearing HW for i1,i2 in increasing revlex  order:
 
-    So the annihilator is the subspace spanned by `y`, `a`, and `b`::
+            sage: p = 11*x01*x12*x20*x21^2 + 1/3*x00*x12*x20^2*x22 - 1/8*x02*x11*x20*x22^2
 
-        sage: annihilator_basis(F.basis(), [x])
-        (y, a, b)
 
-    The same holds for `a` and `b`::
+        Failing for the strategy of taking the reduced word 1,0,1, or any repeat thereof:
 
-        sage: x*a, y*a, a*a, b*a
-        (a, 0, 0, 0)
-        sage: annihilator_basis(F.basis(), [a])
-        (y, a, b)
+            sage: p = 891/2097152*x01^3*x02*x10 + 27/1048576*x00^2*x02^2*x10 - 81/16777216*x01*x02^3*x10 + 891/1048576*x00*x01^2*x02*x11 + 243/16777216*x00*x02^3*x11 - 2673/2097152*x00*x01^3*x12 - 27/1048576*x00^3*x02*x12 - 81/8388608*x00*x01*x02^2*x12
+        """
+        # Define HW_{i1,i2}(q) as the predicate
+        #   q highest weight for i1, i2; namely: e_{i1,i2}.q = 0
+        # Define HW_{<i1,i2}(q) as the predicate
+        #   HW_{i1',i2'}(q) for i1'<i2' with (i1',i2') <_{revlex} (i1,i2)
+        # Define similarly HW_{≤i1,i2}(q)
+        if i1 is None and i2 is None:
+            ps = [p]
+            # HR:
+            # - p is in the span of ps upon application of e_i,j operators
+            # - for any q in ps, HW_{<i1,i2}(q)
+            for zut in range(5):
+                for i2 in range(self._r-1):
+                    for i1 in range(self._r-2,i2-1,-1):
+                        ps = [r
+                                  for q in ps
+                                  for r in self.highest_weight_vectors(q, i1, i1+1)
+                                  if r]
+            return ps
 
-    On the other hand, `y` annihilates only `x`::
+        # Precondition: HW_{<i1,i2}(p)
+        # Goal: produce pjs such that:
+        # - p = \sum_j e^j pjs[j]
+        # - HW_{≤ i1, i2}(q) for q in pjs
+        e = functools.partial(self.polarization, i1=i1, i2=i2, d=1)
+        f = functools.partial(self.polarization, i1=i2, i2=i1, d=1)
+        D = self.multidegree(p)
+        w = D[i1] - D[i2]
 
-        sage: annihilator_basis(F.basis(), [y])
-        (x,)
+        # Invariant: fis[i]: f^i(p)
+        fip = p
+        fis = []
+        while fip:
+            fis.append(fip)
+            fip = f(fip)
 
-    Here is a non trivial annihilator::
+        # Invariants:
+        # pjs[j]: None or p_j
+        # pijs[j]: None or e^(j-i) p_j
+        pjs = [ None for j in range(len(fis)) ]
+        epjs = [ None for j in range(len(fis)) ]
+        for i in range(len(fis)-1, -1, -1):
+            for j in range(i+1, len(pjs)):
+                epjs[j] = e(epjs[j])
+            r = fis[i] - sum(fiej(i,j,w+2*j) * epjs[j] for j in range(i+1, len(epjs)))
+            if r:
+                pjs[i] = r / fiej(i,i,w+2*i)
+            else:
+                pjs[i] = r
+            epjs[i] = pjs[i]
+        # for i2p in range(i2+1):
+        #     for i1p in range(i2p):
+        #         for q in pjs:
+        #             assert self.polarization(q, i2p, i1p, d=1) == 0
+        return pjs
 
-        sage: annihilator_basis(F.basis(), [a + 3*b + 2*y])
-        (-1/2*a - 3/2*b + x,)
+    def test_highest_weight_vectors(self, p, i1, i2):
+        e = functools.partial(self.polarization, i1=i1, i2=i2, d=1)
+        f = functools.partial(self.polarization, i1=i2, i2=i1, d=1)
+        pjs = list(self.highest_weight_vectors(p, i1, i2))
+        for q in pjs:
+            assert f(q) == 0
+        for j in range(len(pjs)):
+            for i in range(j):
+                pjs[j] = e(pjs[j])
+        assert p == sum(pjs)
 
-    Let's check it::
+    def strip_highest_weight_vector(self, p):
+        """
+        EXAMPLES::
 
-        sage: (-1/2*a - 3/2*b + x) * (a + 3*b + 2*y)
-        0
+            sage: R = DiagonalPolynomialRing(QQ, 3, 3)
+            sage: R.inject_variables()
+            Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
+            sage: x00, x01, x02, x10, x11, x12, x20, x21, x22 = R._P.gens()
+            sage: R.strip_highest_weight_vector(x00)
+            (x00, [], 0)
+            sage: R.strip_highest_weight_vector(x20)
+            (x00, [[1, 1], [0, 1]], 0)
+            sage: R.strip_highest_weight_vector(x20^2)
+            (4*x00^2, [[1, 2], [0, 2]], 0)
+        """
+        W = SymmetricGroup(range(self._r))
+        w0 = W.long_element().reduced_word()
+        word = []
+        q = p
+        for i in w0:
+            l = 0
+            while True:
+                q2 = self.polarization(q, i+1, i, 1)
+                if q2:
+                    q = q2
+                    l += 1
+                else:
+                    break
+            if l:
+                word.append([i,l])
+        q2 = q
+        for i,l in reversed(word):
+            D = self.multidegree(q2)
+            w = D[i] - D[i+1]
+            for l2 in range(l):
+                q2 = self.polarization(q2, i, i+1, 1)
+            q2 /= fiej(l, l, w)
+        self.test_highest_weight_vector(q)
+        return q, word, p-q2
 
-    Doing the same calculations on the left exchanges the
-    roles of `x` and `y`::
+    def highest_weight_vectors_decomposition(self, p):
+        """
+        EXAMPLES::
 
-        sage: annihilator_basis(F.basis(), [y], side="left")
-        (x, a, b)
-        sage: annihilator_basis(F.basis(), [a], side="left")
-        (x, a, b)
-        sage: annihilator_basis(F.basis(), [b], side="left")
-        (x, a, b)
-        sage: annihilator_basis(F.basis(), [x], side="left")
-        (y,)
-        sage: annihilator_basis(F.basis(), [a+3*b+2*x], side="left")
-        (-1/2*a - 3/2*b + y,)
+            sage: R = DiagonalPolynomialRing(QQ, 3, 3)
+            sage: R.inject_variables()
+            Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
+            sage: x00, x01, x02, x10, x11, x12, x20, x21, x22 = R._P.gens()
+            sage: e0 = R.e(0); e1 = R.e(1)
+            sage: p = e1(e0(e0(3*x00^3))) + e0(e1(e0(x01*x02^2)))
+            sage: R.highest_weight_vectors_decomposition(p)
+            [[36*x00^3 + 6*x01*x02^2, [[0, 1], [1, 1], [0, 1]]]]
 
-    By specifying an inner product, this method can be used to
-    compute the orthogonal of a subspace::
+            sage: p = 1/2*x10^2*x11*x20 + 3*x10*x11*x12*x20 + 1/3*x11^2*x12*x20 + 1/2*x10*x11*x12*x21 + x10*x11^2*x22 + 1/15*x10*x11*x12*x22 - 2*x11^2*x12*x22 - 2*x12^3*x22
+            sage: R.highest_weight_vectors_decomposition(p)
+            [[3*x00^3*x01 + 18*x00^2*x01*x02 + 11*x00*x01^2*x02 + 2/5*x00*x01*x02^2 - 12*x01^2*x02^2 - 12*x02^4,
+            [[0, 3], [1, 1], [0, 1]]],
+            [3/4*x00^2*x01*x10 + 9*x00*x01*x02*x10 - 3/4*x01^2*x02*x10 - 1/10*x01*x02^2*x10 - 3/4*x00^3*x11 - 9/2*x00^2*x02*x11 - 5/2*x00*x01*x02*x11 - 1/10*x00*x02^2*x11 + 6*x01*x02^2*x11 - 9/2*x00^2*x01*x12 + 13/4*x00*x01^2*x12 + 1/5*x00*x01*x02*x12 - 6*x01^2*x02*x12,
+            [[0, 3], [1, 1]]]]
 
-        sage: x,y,a,b = F.basis()
-        sage: def scalar(u,v): return vector([sum(u[i]*v[i] for i in F.basis().keys())])
-        sage: annihilator_basis(F.basis(), [x+y, a+b], scalar)
-        (x - y, a - b)
+        On a non trivial highest weight vector::
 
-    By specifying the standard Lie bracket as action, one can
-    compute the commutator of a subspace of `F`::
+            sage: f0 = R.f(0)
+            sage: f1 = R.f(1)
+            sage: p = 891/2097152*x01^3*x02*x10 + 27/1048576*x00^2*x02^2*x10 - 81/16777216*x01*x02^3*x10 + 891/1048576*x00*x01^2*x02*x11 + 243/16777216*x00*x02^3*x11 - 2673/2097152*x00*x01^3*x12 - 27/1048576*x00^3*x02*x12 - 81/8388608*x00*x01*x02^2*x12
+            sage: f0(p)
+            0
+            sage: f1(p)
+            0
+            sage: R.multidegree(p)
+            (4, 1, 0)
+            sage: R.highest_weight_vectors_decomposition(p) == [[p, []]]
+            True
 
-        sage: annihilator_basis(F.basis(), [a+b], action=F.bracket)
-        (x + y, a, b)
+        Found while computing harmonic::
 
-    In particular one can compute a basis of the center of the
-    algebra. In our example, it is reduced to the identity::
+            sage: R = DiagonalPolynomialRing(QQ, 4, 3)
+            sage: R.inject_variables()
+            Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
+            sage: p = 1/2*x02*x10*x20 - 1/2*x03*x10*x20 - 5/2*x02*x11*x20 + 5/2*x03*x11*x20 - 3/2*x00*x12*x20 - 1/2*x01*x12*x20 + 2*x02*x12*x20 + 3/2*x00*x13*x20 + 1/2*x01*x13*x20 - 2*x03*x13*x20 - 2*x02*x10*x21 + 2*x03*x10*x21 + 2*x00*x12*x21 - 2*x03*x12*x21 - 2*x00*x13*x21 + 2*x02*x13*x21 - 2*x00*x10*x22 + 1/2*x01*x10*x22 + 3/2*x02*x10*x22 + 5/2*x00*x11*x22 - 5/2*x03*x11*x22 - 1/2*x00*x12*x22 + 1/2*x03*x12*x22 - 1/2*x01*x13*x22 - 3/2*x02*x13*x22 + 2*x03*x13*x22 + 2*x00*x10*x23 - 1/2*x01*x10*x23 - 3/2*x03*x10*x23 - 5/2*x00*x11*x23 + 5/2*x02*x11*x23 + 1/2*x01*x12*x23 - 2*x02*x12*x23 + 3/2*x03*x12*x23 + 1/2*x00*x13*x23 - 1/2*x02*x13*x23
 
-        sage: annihilator_basis(F.basis(), F.algebra_generators(), action=F.bracket)
-        (x + y,)
+            sage: p = x02*x10*x20 - x00*x12*x20
+            sage: R.multidegree(p)
+            (1, 1, 1)
 
-    But see also
-    :meth:`FiniteDimensionalAlgebrasWithBasis.ParentMethods.center_basis`.
-    """
-    if side == 'right':
-        action_left = action
-        action = lambda b,s: action_left(s, b)
-    B = list(B)
-    S = list(S)
-    if ambient is None:
-        ambient = action(S[0], B[0]).parent()
-    mat = matrix(ambient.base_ring(), len(B), 0)
+            sage: q
+            x00*x02*x10 - x00^2*x12
+            sage: e0(e1(q))
+            x02*x10*x20 + x00*x12*x20 - 2*x00*x10*x22
+            sage: e1(e0(q))
+            2*x02*x10*x20 - x00*x12*x20 - x00*x10*x22
 
-    for s in S:
-        mat = mat.augment(
-            MatrixOfVectors([action(s, b) for b in B], ambient=ambient)._matrix)
 
-    return tuple(sum(c * B[i] for i,c in v.iteritems())
-                 for v in mat.left_kernel().basis())
+        """
+        result = []
+        while p:
+            q, word, p = self.strip_highest_weight_vector(p)
+            result.append([q, word])
+        return result
+
+    def higher_specht(self, P, Q=None, harmonic=False, use_antisymmetry=False):
+        r"""
+        Return the hyper specht polynomial indexed by `P` and `Q` in the first row of variables
+
+        See :func:`higher_specht` for details.
+
+        EXAMPLES::
+
+            sage: R = DiagonalPolynomialRing(QQ, 3, 2)
+            sage: R.algebra_generators()
+            [x00 x01 x02]
+            [x10 x11 x12]
+
+            sage: for la in Partitions(3):
+            ....:     for P in StandardTableaux(la):
+            ....:         print ascii_art(la, R.higher_specht(P), sep="    ")
+            ....:         print
+            ....:
+            ***    6
+            <BLANKLINE>
+            *
+            **    -x00*x01 + x01*x02
+            <BLANKLINE>
+            *
+            **    -2*x00 + 2*x02
+            <BLANKLINE>
+            *
+            *
+            *    -x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2
+
+            sage: for la in Partitions(3):
+            ....:     for P in StandardTableaux(la):
+            ....:         print ascii_art(la, R.higher_specht(P, use_antisymmetry=True), sep="    ")
+            ....:         print
+            ....:
+            ***    6
+            <BLANKLINE>
+            *
+            **    -x00*x01
+            <BLANKLINE>
+            *
+            **    -2*x00
+            <BLANKLINE>
+            *
+            *
+            *    -x00^2*x01
+        """
+        X = self.algebra_generators()
+        # the self._n forces a multivariate polynomial ring even if n=1
+        R = PolynomialRing(self.base_ring(), self._n, list(X[0]))
+        H = higher_specht(R, P, Q, harmonic=harmonic, use_antisymmetry=use_antisymmetry)
+        return self(H)
+
 
 
 def e_polarization_degrees(D1, D2):
@@ -196,81 +367,6 @@ def e_polarization_degrees(D1, D2):
     if any(D[j] < 0 for j in range(i)):
         return None
     return i, D
-
-def apply_young_idempotent(p, t, use_antisymmetry=False):
-    """
-    Apply the Young idempotent indexed by `t` on the polynomial `p`
-
-    INPUT::
-
-    - `t` -- a standard tableau or a partition
-    - `p` -- a polynomial on as many variables as there are cells in `t`
-
-    The Young idempotent first symmetrizes `p` according to the
-    row stabilizer of `t` and then antisymmetrizes the result according
-    to the column stabilizer of `t` (a cell containing `i` in `t`
-    being associated to the `i`-th variable (starting at `i=1`)
-    of the polynomial ring containing `p`.
-
-    .. TODO:: normalize result
-
-    EXAMPLES::
-
-        sage: x,y,z = QQ['x,y,z'].gens()
-        sage: p = x^2 * y
-        sage: t = StandardTableau([[1],[2],[3]])
-        sage: apply_young_idempotent(p, t)
-        x^2*y - x*y^2 - x^2*z + y^2*z + x*z^2 - y*z^2
-
-        sage: apply_young_idempotent(p, Partition([1,1,1]))
-        x^2*y - x*y^2 - x^2*z + y^2*z + x*z^2 - y*z^2
-
-        sage: t = StandardTableau([[1,2,3]])
-        sage: apply_young_idempotent(p, t)
-        x^2*y + x*y^2 + x^2*z + y^2*z + x*z^2 + y*z^2
-
-        sage: apply_young_idempotent(p, Partition([3]))
-        x^2*y + x*y^2 + x^2*z + y^2*z + x*z^2 + y*z^2
-
-        sage: t = StandardTableau([[1,2],[3]])
-        sage: p = x*y*y^2
-        sage: apply_young_idempotent(p, t)
-        x^3*y + x*y^3 - y^3*z - y*z^3
-
-        sage: p = x*y*z^2
-        sage: apply_young_idempotent(p, t)
-        -2*x^2*y*z + 2*x*y*z^2
-    """
-    if isinstance(t, Partition):
-        t = t.initial_tableau()
-    p = sum(act(Permutation(sigma),p) for sigma in t.row_stabilizer() )
-    if use_antisymmetry:
-        antisymmetries = antisymmetries_of_tableau(t)
-        p = antisymmetric_normal(p, t.size(), 1, antisymmetries)
-    else:
-        p = sum(sigma.sign()*act(Permutation(sigma),p) for sigma in t.column_stabilizer() )
-    return p
-
-def act(sigma,v) :
-    """
-    Return sigma(v).
-
-    INPUT:
-
-    - `sigma` -- a permutation
-    - `v` -- a polynomial 
-
-    """
-    
-    X = v.parent().gens()
-    r = len(X)/len(sigma)
-    n = len(sigma)
-    sub = {}
-    for j in range(0,r) :
-        sub.update({X[i+n*j]:X[sigma[i]-1+n*j] for i in range (0,n) if i!=sigma[i]-1})
-    return v.subs(sub)
-
-
 
 @cached_function
 def higher_specht(R, P, Q=None, harmonic=False, use_antisymmetry=False):

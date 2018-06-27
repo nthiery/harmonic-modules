@@ -242,9 +242,6 @@ class Subspace(object):
         return {d: basis.cardinality() for d, basis in self._bases.iteritems() 
                         if basis.cardinality() != 0}
 
-
-
-
     def matrix(self):
         self.finalize()
         assert self._bases.keys() == [0] # only handle the non graded case
@@ -277,9 +274,6 @@ class Subspace(object):
             self._bar.set_postfix({'dimension': self._stats['dimension'], 'zero': self._stats['zero']})
             self._bar.close()
             #print "  dimension: %s  extensions: %s"%(self._stats["dimension"], self._stats["extend"])
-
-
-
 
 
 class HighestWeightSubspace(Subspace):

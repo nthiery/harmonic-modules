@@ -61,13 +61,12 @@ class DiagonalPolynomialRingInert(DiagonalPolynomialRing):
         return self._Theta
         
     def multidegree(self,p):
-    # Already exists in code.py ?? 
         """
             Return the multidegree of the multihomogeneous polynomial `p`
             
             EXAMPLES::
                 sage: DP = DiagonalPolynomialRingInert(QQ,3,3)
-                sage: p = DP.vandermonde([3])[0]
+                sage: p = DP.vandermonde([3])
                 sage: p
                 -x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2
                 sage: DP.multidegree(p)
@@ -100,7 +99,7 @@ class DiagonalPolynomialRingInert(DiagonalPolynomialRing):
         """
         return d1[0]+d2[0], d2[1]
         
-    def vandermonde(self,mu): # deux fonctions 
+    def vandermonde(self,mu):
         """
             Let `mu` be a diagram (of a partition or no) and $X=(x_i)$ and 
             $\Theta = (\theta_i)$ two sets of n variables.
@@ -111,15 +110,14 @@ class DiagonalPolynomialRingInert(DiagonalPolynomialRing):
             
             OUTPUT: 
                 - The determinant Delta
-                - The degree of Delta
             
-            EXAMPLES::
+            EXAMPLES:: 
                 sage: DP.vandermonde([3])
-                (-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2, 3)
+                -x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2
                 sage: DP.vandermonde([2,1])
-                (-x01*x20 + x02*x20 + x00*x21 - x02*x21 - x00*x22 + x01*x22, 1)
+                -x01*x20 + x02*x20 + x00*x21 - x02*x21 - x00*x22 + x01*x22
                 sage: DP.vandermonde([1,1,1])
-                (-x20^2*x21 + x20*x21^2 + x20^2*x22 - x21^2*x22 - x20*x22^2 + x21*x22^2, 0)
+                -x20^2*x21 + x20*x21^2 + x20^2*x22 - x21^2*x22 - x20*x22^2 + x21*x22^2
 
         """
         X = self._X
@@ -127,8 +125,10 @@ class DiagonalPolynomialRingInert(DiagonalPolynomialRing):
         if not isinstance(mu,Diagram):
             mu = Diagram(mu)
         Delta = matrix([[x**i[1]*theta**i[0] for i in mu.cells()] for x,theta in zip(X[0],Theta[0])]).determinant()
-        dim = sum([i[1] for i in mu.cells()])
-        return Delta,dim
+        return Delta
+        
+    def dimension_vandermonde(self,mu) :
+        return sum([i[1] for i in mu.cells()])
         
     def sym_derivative(self,p,a,b,X,Y):
         """
@@ -144,7 +144,7 @@ class DiagonalPolynomialRingInert(DiagonalPolynomialRing):
                 
             EXAMPLES::
                 sage: X = DP.variables()[0]
-                sage: DP.sym_derivative(DP.vandermonde([3])[0],2,0,X[0],X[1])
+                sage: DP.sym_derivative(DP.vandermonde([3]),2,0,X[0],X[1])
                 0
                 sage: DP.sym_derivative(x00^3+x01^3+x10^2+x12,2,1,X[0],X[1])
                 0
@@ -201,7 +201,6 @@ class DiagonalPolynomialRingInert(DiagonalPolynomialRing):
         n = self._n
         return {-1:[attrcall("derivative", x[i]) for i in range(0,n) for x in X]}
 
-                    
     def polarizators_by_degree(self):
         """
             Returns a dictonnary containing the polarization operators indexed by degree.
@@ -224,7 +223,6 @@ class DiagonalPolynomialRingInert(DiagonalPolynomialRing):
             else:
                 res[sum(d)] += op
         return res
- 
         
     def central_projector(self,mu,V): 
         # TODO NOT TESTED
@@ -264,7 +262,8 @@ class DiagonalPolynomialRingInert(DiagonalPolynomialRing):
         X = self._X
         charac = 0
         s = SymmetricFunctions(self._R).s()
-        Delta,dim = self.vandermonde(mu)
+        Delta = self.vandermonde(mu)
+        dim = self.dimension_vandermonde(mu)
         operators = {}
         for nu in Partitions(n): 
             operators[(-1,nu)] = [make_deriv_comp_young(X[0][i],nu) for i in range(0,n)]
@@ -472,26 +471,6 @@ def multipower(d,q):
             q0^4*q1^3*q2^2*q3
     """
     return prod(q[i]**d[i] for i in range(0,len(q)))
-
-def sigma_lambda(n):
-    """
-        Return a permutation of `n` for each cycle type of size `n`.
-        
-        EXAMPLES::
-            sage: sigma_lambda(3)
-            [[1, 2, 3], [1, 3, 2], [2, 3, 1]]
-            sage: sigma_lambda(4)
-            [[1, 2, 3, 4], [1, 2, 4, 3], [1, 3, 4, 2], [2, 1, 4, 3], [2, 3, 4, 1]]
-
-    """
-    
-    l_sig = []
-    l_type = []
-    for mu in Permutations(n):
-        if mu.cycle_type() not in l_type:
-            l_sig += [mu]
-            l_type += [mu.cycle_type()]
-    return l_sig
 
 def basis_by_component(basis,nu):
     """
