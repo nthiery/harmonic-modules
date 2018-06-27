@@ -607,6 +607,7 @@ class Subspace(object):
 
 
 
+
     def matrix(self):
         self.finalize()
         assert self._bases.keys() == [0] # only handle the non graded case
@@ -869,13 +870,32 @@ def apply_young_idempotent(p, t, use_antisymmetry=False):
     """
     if isinstance(t, Partition):
         t = t.initial_tableau()
-    p = sum( p*sigma for sigma in t.row_stabilizer() )
+    p = sum(act(Permutation(sigma),p) for sigma in t.row_stabilizer() )
     if use_antisymmetry:
         antisymmetries = antisymmetries_of_tableau(t)
         p = antisymmetric_normal(p, t.size(), 1, antisymmetries)
     else:
-        p = sum( p*sigma*sigma.sign() for sigma in t.column_stabilizer() )
+        p = sum(sigma.sign()*act(Permutation(sigma),p) for sigma in t.column_stabilizer() )
     return p
+
+def act(sigma,v) :
+    """
+    Return sigma(v).
+
+    INPUT:
+
+    - `sigma` -- a permutation
+    - `v` -- a polynomial 
+
+    """
+    
+    X = v.parent().gens()
+    r = len(X)/len(sigma)
+    n = len(sigma)
+    sub = {}
+    for j in range(0,r) :
+        sub.update({X[i+n*j]:X[sigma[i]-1+n*j] for i in range (0,n) if i!=sigma[i]-1})
+    return v.subs(sub)
 
 def antisymmetries_of_tableau(Q):
     if not isinstance(Q,StandardTableau) :
