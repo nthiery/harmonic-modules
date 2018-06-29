@@ -1629,7 +1629,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             result.append([q, word])
         return result
 
-
     def higher_specht(self, P, Q=None, harmonic=False, use_antisymmetry=False):
         r"""
         Return the hyper specht polynomial indexed by `P` and `Q` in the first row of variables
@@ -1820,7 +1819,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                      extend_word=extend_word, verbose=verbose)
         F._antisymmetries = antisymmetries
         return F
-
 
     def harmonic_character(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
         """

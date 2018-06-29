@@ -217,7 +217,7 @@ def reverse_sorting_permutation(t): # TODO: put "stable sorting" as keyword some
     return ~(Word([-i for i in t]).standard_permutation())
 
 
-def destandardize(self):
+cpdef destandardize(self):
     """
     Return the smallest word whose standard permutation is ``self``
 
@@ -250,7 +250,7 @@ def destandardize(self):
             c += 1
     return w
 
-def index_filling(t):
+cpdef index_filling(t):
     """
     Return the index filling of this standard tableau.
 

@@ -2,6 +2,11 @@ from sage.structure.parent cimport Parent
 from sage.structure.element cimport Element
 from sage.rings.polynomial.polydict cimport ETuple
 
+from sage.combinat.partition import Partition, Partitions
+import sage.combinat.tableau
+from sage.combinat.tableau import StandardTableau, StandardTableaux
+
+cimport utilities
 from utilities cimport diagonal_cmp
 from utilities cimport diagonal_swap
 from utilities cimport items_of_vector
