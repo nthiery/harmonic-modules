@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import functools
 from sage.structure.parent import Parent
 from sage.structure.unique_representation import UniqueRepresentation
 
 load("funcpersist.py")
-
+load("diagram.py")
+load("subspace.py")
 
 ##############################################################################
 # Polynomial ring with diagonal action
@@ -22,8 +24,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         sage: 
     """
     def __init__(self, R, n, r, inert=0):
-        names = ["x%s%s"%(i,j) for i in range(r) for j in range(n)]
-        P = PolynomialRing(R, n*r, names)
+        names = ["x%s%s"%(i,j) for i in range(r+inert) for j in range(n)]
+        P = PolynomialRing(R, n*(r+inert), names)
         self._n = n
         self._r = r
         self._inert = inert
@@ -31,15 +33,12 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         self._P = P
         self._R = R
         self._Q = PolynomialRing(QQ,'q',r-inert)
-        self._grading_set = cartesian_product([ZZ for i in range(r-inert)])
+        self._grading_set = cartesian_product([ZZ for i in range(r)])
         self._hilbert_parent = PolynomialRing(ZZ, r, 'q')
-        self._vars = matrix([[vars[i*n+j] for j in range(n)] for i in range(r)])
-        self._X = matrix([[vars[i*n+j] for j in range(n)] for i in range(r-k)])
-        self._Theta = matrix([[vars[i*n+j] for j in range(n)] for i in range(r-k,r)])
+        self._vars = matrix([[vars[i*n+j] for j in range(n)] for i in range(r+inert)])
+        self._X = matrix([[vars[i*n+j] for j in range(n)] for i in range(r)])
+        self._Theta = matrix([[vars[i*n+j] for j in range(n)] for i in range(r,r+inert)])
         Parent.__init__(self, facade=(P,), category=Algebras(QQ).Commutative())
-
-    def monomial(self, *args):
-        return self._P.monomial(*args)
 
     def _repr_(self):
         """
@@ -47,13 +46,16 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             Diagonal polynomial ring with 3 rows of 5 variables over Rational Field
 
         """
-        if self._inert = 0 :
+        if self._inert == 0 :
             return "Diagonal polynomial ring with %s rows of %s variables over %s"%(self._r, self._n, self.base_ring())
         else :
             return "Diagonal polynomial ring with %s rows of %s variables and %s row(s) of inert variables over %s"%(self._r, self._n, self._inert, self.base_ring())
 
     def base_ring(self):
         return self._P.base_ring()
+        
+    def monomial(self, *args):
+        return self._P.monomial(*args)
 
     def algebra_generators(self):
         return self._vars
@@ -80,7 +82,10 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                 [x20 x21 x22]
 
         """
-        return self._Theta
+        if self._inert != 0 :
+            return self._Theta
+        else : 
+            return "No inert variables"
 
     def inject_variables(self):
         self._P.inject_variables()
@@ -104,10 +109,40 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             return -1
         n = self._n
         r = self._r
-        k = self._inert
         v = p.exponents()[0]
         return self._grading_set([sum(v[n*i+j] for j in range(n))
-                                  for i in range(r-k)])
+                                  for i in range(r)])
+                                  
+    def vandermonde(self,mu):
+        """
+            Let `mu` be a diagram (of a partition or no) and $X=(x_i)$ and 
+            $\Theta = (\theta_i)$ two sets of n variables.
+            Then $\Delta$ is the determinant of the matrix $(x_i^a\theta_i^b)$ 
+            for (a,b) the cells of `mu`.
+            
+            INPUT: A partition `mu`
+            
+            OUTPUT: The determinant Delta
+            
+            EXAMPLES:: 
+                sage: vandermonde([3])
+                -x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2
+                sage: vandermonde([2,1])
+                -x01*x20 + x02*x20 + x00*x21 - x02*x21 - x00*x22 + x01*x22
+                sage: vandermonde([1,1,1])
+                -x20^2*x21 + x20*x21^2 + x20^2*x22 - x21^2*x22 - x20*x22^2 + x21*x22^2
+
+        """
+        n = self._n
+        X = self.variables_X()
+        Theta = self.variables_Theta()
+        if not isinstance(mu,Diagram):
+            mu = Diagram(mu)
+        Delta = matrix([[x**i[1]*theta**i[0] for i in mu.cells()] for x,theta in zip(X[0],Theta[0])]).determinant()
+        return Delta
+        
+    def dimension_vandermonde(self,mu) :
+        return sum([i[1] for i in mu.cells()])
 
     def random_monomial(self, D):
         """
@@ -167,7 +202,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                                         for c in sigma.cycle_tuples()
                                         for j in range(n) ])
 
-    def polarization(self, p, i1, i2, d, use_symmetry=False, antisymmetries=None):
+    def polarization(self, p, i1, i2, d, use_symmetry=False):
         """
         Return the polarization `P_{d,i_1,i_2}. p` of `p`.
 
@@ -203,14 +238,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                 s = reverse_sorting_permutation(d)
                 ss = self.row_permutation(s)
                 result = act_on_polynomial(result, ss)
-                #substitution = \
-                #    dict(sum((zip(X[s[i]-1], X[i])
-                #              for i in range(r) if s[i]-1 != i), []
-                #            ))
-                #result = result.substitute(substitution)
-            Partition(self.multidegree(result))
-        if antisymmetries and result:
-            result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
         return result
 
     @cached_method
@@ -222,7 +249,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             res.extend([X[i,j],D[i]])
         return res
 
-    def multi_polarization(self, p, D, i2, antisymmetries=None):
+    def multi_polarization(self, p, D, i2):
         """
         Return the multi polarization `P_{D,i_2}. p` of `p`.
 
@@ -260,8 +287,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         D = tuple(D)
         result = self.sum(X[i2,j]*p.derivative(*(self.derivative_input(D, j)))
                           for j in range(n))
-        if antisymmetries and result:
-            result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
         return result
 
     
@@ -322,10 +347,10 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             3*x00*x10^2*x11*x20 + x00*x10^3*x21
         """
         n = self._n
-        r = self._r-self._inert
+        r = self._r
         grading_set = self._grading_set
         return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
-                [functools.partial(self.polarization, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry, antisymmetries=antisymmetries)]
+                [functools.partial(self.polarization, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry)]
                 for d in range(min_degree+1, n)
                 for i1 in range(0,r)
                 for i2 in range(0, r)
@@ -333,8 +358,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                 if (i1<i2 if side == 'down' else i1!=i2)
                }
                
-    def polarizators_by_degree(self):
-        pol = self.polarization_operators_by_degree()
+    def polarization_operators_by_degree(self,side=None, use_symmetry=False, min_degree=0):
+        pol = self.polarization_operators_by_multidegree(side=side,use_symmetry=use_symmetry,min_degree=min_degree)
         res = {}
         for d,op in pol.iteritems(): 
             if sum(d) not in res.keys():
@@ -342,7 +367,25 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             else:
                 res[sum(d)] += op
         return res
+        
+    def derivatives_by_degree(self): #useless ? 
+        """
+            Returns a dictonnary containing the derivative operators. 
+            
+            EXAMPLES::
+                sage: DP.derivatives_by_degree()
 
+                {-1: [*.derivative(x00),
+                  *.derivative(x10),
+                  *.derivative(x01),
+                  *.derivative(x11),
+                  *.derivative(x02),
+                  *.derivative(x12)]}
+
+        """
+        X = self._X
+        n = self._n
+        return {-1:[attrcall("derivative", x[i]) for i in range(0,n) for x in X]}
 
     def _add_degree(self, d1,d2):
         d = d1 + d2
@@ -389,6 +432,41 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
         """
         return d1[0]+d2[0], d2[1]
+    
+    @cached_method
+    def isotypic_basis(self,mu,verbose=True):
+        """
+            Let $W$ be the smallest submodule generated by a Vandermonde $\Delta$ depending on 
+            a partition`mu` and closed under partial derivatives.
+            Then $W$ can be decomposed into isotypic components for the action of $S_n$. This function 
+            compute the basis of W using the Young idempotents to project on isotypic components.
+            
+            EXAMPLES::
+                sage: DP = DiagonalPolynomialRing(QQ,3,2,inert=1)
+                sage: DP.isotypic_basis(Partition([2,1]),use_antisymmetries=True,verbose=False)
+                {(0, [2, 1]): [-3*x20], (1, [1, 1, 1]): [x00*x21]}
+                sage: DP.isotypic_basis(Partition([3]),use_antisymmetries=True,verbose=False)
+
+                {(0, [3]): [108],
+                 (1, [2, 1]): [-18*x00],
+                 (2, [2, 1]): [-3*x00^2 + 6*x00*x01],
+                 (3, [1, 1, 1]): [-x00^2*x01]}
+
+        """
+        n = self._n
+        r = self._r
+        X = self._X
+        charac = 0
+        s = SymmetricFunctions(self._R).s()
+        Delta = self.vandermonde(mu)
+        dim = self.dimension_vandermonde(mu)
+        operators = {}
+        for nu in Partitions(n): 
+            operators[(-1,nu)] = [make_deriv_comp_young(X[0][i],nu) for i in range(0,n)]
+        F = Subspace(generators={(dim,Partition([1 for i in range(n)])):[Delta]},operators=operators, 
+                                    add_degrees=self.add_degree_isotyp, verbose=verbose)
+        basis = F.basis()
+        return basis
 
     def harmonic_space_by_shape(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
         """
@@ -500,7 +578,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         F._antisymmetries = antisymmetries
         return F
 
-
     def harmonic_character(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
         """
         Return the `GL_r` character of the space of diagonally harmonic polynomials
@@ -563,6 +640,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         #char = parallel()(char)
         #return sum( res[1] for res in char(Partitions(self._n).list()) )
         return sum(char(mu) for mu in Partitions(self._n))
+
 
 
 
@@ -638,205 +716,33 @@ def act(sigma,v) :
     for j in range(0,r) :
         sub.update({X[i+n*j]:X[sigma[i]-1+n*j] for i in range (0,n) if i!=sigma[i]-1})
     return v.subs(sub)
-
-
-
-def harmonic_character_plain(mu, verbose=False, parallel=False):
-    import tqdm
-    mu = Partition(mu)
-    n = mu.size()
-    if len(mu) == n:
-        r = n-1
-    else:
-        r = n-2
-    r = max(r, 1)
-    R = DiagonalPolynomialRing(QQ, n, r)
-    if verbose:
-        progressbar = tqdm.tqdm(unit=" extensions", leave=True, desc="harmonic character for "+str(mu).ljust(mu.size()*3), position=mu.rank() if parallel else 1)
-    else:
-        progressbar = False
-    result = R.harmonic_character(mu, verbose=progressbar,
-                                  use_symmetry=True,
-                                  use_lie=True,
-                                  use_antisymmetry=True)
-    return {tuple(degrees): dim
-            for degrees, dim in result}
-
-def harmonic_character_plain_key(mu, **args):
-    return tuple(Partition(mu))
-def harmonic_character_plain_hash(mu):
-    return str(list(mu)).replace(" ","")[1:-1]
-harmonic_character_plain = func_persist(harmonic_character_plain,
-                                        hash=harmonic_character_plain_hash,
-                                        key= harmonic_character_plain_key)
-
-"""
-Migrating persistent database from previous format::
-
-    sage: SymmetricFunctions(ZZ).inject_shorthands()             # not tested
-    sage: myhash=lambda mu: str(list(mu)).replace(" ","")[1:-1]
-    sage: cd func_persist                                        # not tested
-    sage: for filename in glob.glob("harmonic_character*.sobj"): # not tested
-    ....:     obj = load(filename)
-    ....:     key = obj[0][0][0]
-    ....:     value = obj[1]
-    ....:     chi = s(m.sum_of_terms([Partition(nu), c] for nu, c in value.iteritems())).restrict_partition_lengths(max(4, len(key)-1), exact=False)
-    ....:     print key, chi
-    ....:     value = {tuple(nu):c for nu,c in chi }
-    ....:     save((key,value), "plain/harmonic_character_plain_%s"%(myhash(key)))
-
-Inserting François's value for the character for `1^6` in the database::
-
-    sage: S = SymmetricFunctions(ZZ)
-    sage: s = S.s()
-    sage: res = s[1, 1, 1, 1, 1] + s[3, 1, 1, 1] + s[4, 1, 1, 1] + s[4, 2, 1] + s[4, 3, 1] + s[4, 4] + s[4, 4, 1] + s[5, 1, 1, 1] + s[5, 2, 1] + s[5, 3, 1] + s[6, 1, 1] + s[6,1, 1, 1] + s[6, 2, 1] + s[6, 3] + s[6, 3, 1] + s[6, 4] + s[7, 1, 1] + s[7, 2] +s[7, 2, 1] + s[7, 3] + s[7, 4] + 2*s[8, 1, 1] + s[8, 2] + s[8, 2, 1] + s[8, 3] + s[9, 1, 1] + s[9, 2] + s[9, 3] + s[10, 1] + s[10, 1, 1] + s[10, 2] + s[11, 1] + s[11, 2] + s[12, 1] + s[13, 1] + s[15]
-    sage: key=tuple([1,1,1,1,1,1])
-    sage: value = {tuple(mu):c for mu,c in res}
-    sage: myhash=lambda mu: str(list(mu)).replace(" ","")[1:-1]
-    sage: save((key,value), "func_persist/harmonic_character_plain_%s"%(myhash(key))) # not tested
-"""
-
-def harmonic_character(mu):
+        
+def make_deriv_comp_young(x,mu):
     """
-    Return the `GL_n` character of an `S_n` isotypic component in the
-    diagonal harmonic polynomials
+        Return a function which corresponds to a partial derivative in `x`
+        composed with the young idempotent for the partition `mu`.
+        
+        INPUT: 
+            - `x` -- a variable for the derivation
+            - `mu` -- a partition
+        
+        EXAMPLES::
+        sage: P = DiagonalPolynomialRing(QQ,3,3)
+        sage: X = P.algebra_generators()
+        sage: [make_deriv_comp_young(x,mu) for x in X[0] for mu in Partitions(3)]
 
-    Let `H` be the space of diagonal harmonic harmonic polynomials on
-    `k\times n` variables, with `k` large enough.  Write its `GL_k
-    \times S_n` bicharacter as `\sum f_\mu \otimes s_\mu`.  This
-    computes `f_\mu`.
+        [<function f at 0x7f7f64111f50>,
+         <function f at 0x7f7f64111140>,
+         <function f at 0x7f7f64111938>,
+         <function f at 0x7f7f64111320>,
+         <function f at 0x7f7f64111398>,
+         <function f at 0x7f7f641115f0>,
+         <function f at 0x7f7f641155f0>,
+         <function f at 0x7f7f64115668>,
+         <function f at 0x7f7f64115578>]
 
-    EXAMPLES::
-
-        sage: harmonic_character([6])
-        s[]
-        sage: harmonic_character([5, 1])
-        s[1] + s[2] + s[3] + s[4] + s[5]
-        sage: harmonic_character([4, 2])
-        s[2] + s[2, 1] + s[2, 2] + s[3] + s[3, 1] + s[3, 2] + 2*s[4] + 2*s[4, 1] + s[4, 2] + s[5] + s[5, 1] + 2*s[6] + s[6, 1] + s[7] + s[8]
-        sage: harmonic_character([4, 1, 1])
-        s[1, 1] + s[2, 1] + s[3] + 2*s[3, 1] + s[3, 2] + s[3, 3] + s[4] + 2*s[4, 1] + s[4, 2] + 2*s[5] + 2*s[5, 1] + s[5, 2] + 2*s[6] + s[6, 1] + 2*s[7] + s[7, 1] + s[8] + s[9]
-        sage: harmonic_character([3, 3])
-        s[2, 2] + s[2, 2, 1] + s[3] + s[3, 1] + s[3, 2] + s[4, 1] + s[4, 1, 1] + s[4, 2] + s[5] + s[5, 1] + s[5, 2] + s[6] + s[6, 1] + s[7] + s[7, 1] + s[9]
-        sage: harmonic_character([2, 2, 2])
-        s[2, 2] + s[2, 2, 1] + s[3, 1, 1] + s[3, 1, 1, 1] + s[3, 2, 1] + s[3, 3, 1] + s[4, 1] + s[4, 1, 1] + 2*s[4, 2] + s[4, 2, 1] + s[4, 3] + s[4, 4] + s[5, 1] + 2*s[5, 1, 1] + 2*s[5, 2] + s[5, 2, 1] + s[5, 3] + s[6] + 2*s[6, 1] + s[6, 1, 1] + 2*s[6, 2] + s[6, 3] + 2*s[7, 1] + s[7, 1, 1] + s[7, 2] + s[8] + 2*s[8, 1] + s[8, 2] + s[9] + s[9, 1] + s[10] + s[10, 1] + s[12]
-        sage: harmonic_character([3, 1, 1, 1])
-        s[1, 1, 1] + s[2, 1, 1] + s[3, 1] + 2*s[3, 1, 1] + s[3, 2] + s[3, 2, 1] + 2*s[3, 3] + s[3, 3, 1] + 2*s[4, 1] + 2*s[4, 1, 1] + 2*s[4, 2] + s[4, 2, 1] + 2*s[4, 3] + 3*s[5, 1] + 2*s[5, 1, 1] + 3*s[5, 2] + s[5, 2, 1] + 2*s[5, 3] + s[6] + 4*s[6, 1] + s[6, 1, 1] + 3*s[6, 2] + s[6, 3] + s[7] + 4*s[7, 1] + s[7, 1, 1] + 2*s[7, 2] + 2*s[8] + 3*s[8, 1] + s[8, 2] + 2*s[9] + 2*s[9, 1] + 2*s[10] + s[10, 1] + s[11] + s[12]
-        sage: harmonic_character([3, 2, 1])
-        s[2, 1] + s[2, 1, 1] + s[2, 2] + s[2, 2, 1] + 2*s[3, 1] + 2*s[3, 1, 1] + 3*s[3, 2] + 2*s[3, 2, 1] + s[3, 3] + s[4] + 3*s[4, 1] + 2*s[4, 1, 1] + 4*s[4, 2] + s[4, 2, 1] + 2*s[4, 3] + 2*s[5] + 5*s[5, 1] + 2*s[5, 1, 1] + 4*s[5, 2] + s[5, 3] + 2*s[6] + 5*s[6, 1] + s[6, 1, 1] + 3*s[6, 2] + 3*s[7] + 4*s[7, 1] + s[7, 2] + 3*s[8] + 3*s[8, 1] + 2*s[9] + s[9, 1] + 2*s[10] + s[11]
-        sage: harmonic_character([2, 1, 1, 1, 1])
-        s[1, 1, 1, 1] + s[2, 1, 1, 1] + s[3, 1, 1] + s[3, 1, 1, 1] + s[3, 2, 1] + s[3, 3, 1] + 2*s[4, 1, 1] + s[4, 1, 1, 1] + s[4, 2] + 2*s[4, 2, 1] + 2*s[4, 3] + 2*s[4, 3, 1] + s[4, 4] + 3*s[5, 1, 1] + s[5, 1, 1, 1] + s[5, 2] + 2*s[5, 2, 1] + 2*s[5, 3] + s[5, 3, 1] + s[5, 4] + s[6, 1] + 3*s[6, 1, 1] + 3*s[6, 2] + 2*s[6, 2, 1] + 3*s[6, 3] + s[6, 4] + 2*s[7, 1] + 3*s[7, 1, 1] + 3*s[7, 2] + s[7, 2, 1] + 2*s[7, 3] + 3*s[8, 1] + 2*s[8, 1, 1] + 3*s[8, 2] + s[8, 3] + 3*s[9, 1] + s[9, 1, 1] + 2*s[9, 2] + s[10] + 3*s[10, 1] + s[10, 2] + s[11] + 2*s[11, 1] + s[12] + s[12, 1] + s[13] + s[14]
-        sage: harmonic_character([2, 2, 1, 1])
-        s[2, 1, 1] + s[2, 1, 1, 1] + s[2, 2, 1] + s[3, 1, 1] + s[3, 1, 1, 1] + s[3, 2] + 2*s[3, 2, 1] + s[3, 3] + s[3, 3, 1] + s[4, 1] + 3*s[4, 1, 1] + s[4, 1, 1, 1] + 2*s[4, 2] + 3*s[4, 2, 1] + 2*s[4, 3] + s[4, 3, 1] + s[4, 4] + 2*s[5, 1] + 3*s[5, 1, 1] + 4*s[5, 2] + 2*s[5, 2, 1] + 3*s[5, 3] + s[5, 4] + 3*s[6, 1] + 4*s[6, 1, 1] + 4*s[6, 2] + s[6, 2, 1] + 2*s[6, 3] + s[7] + 4*s[7, 1] + 2*s[7, 1, 1] + 4*s[7, 2] + s[7, 3] + s[8] + 4*s[8, 1] + s[8, 1, 1] + 2*s[8, 2] + 2*s[9] + 4*s[9, 1] + s[9, 2] + s[10] + 2*s[10, 1] + 2*s[11] + s[11, 1] + s[12] + s[13]
-        sage: harmonic_character([1, 1, 1, 1, 1, 1])
-        s[1, 1, 1, 1, 1] + s[3, 1, 1, 1] + s[4, 1, 1, 1] + s[4, 2, 1] + s[4, 3, 1] + s[4, 4] + s[4, 4, 1] + s[5, 1, 1, 1] + s[5, 2, 1] + s[5, 3, 1] + s[6, 1, 1] + s[6, 1, 1, 1] + s[6, 2, 1] + s[6, 3] + s[6, 3, 1] + s[6, 4] + s[7, 1, 1] + s[7, 2] + s[7, 2, 1] + s[7, 3] + s[7, 4] + 2*s[8, 1, 1] + s[8, 2] + s[8, 2, 1] + s[8, 3] + s[9, 1, 1] + s[9, 2] + s[9, 3] + s[10, 1] + s[10, 1, 1] + s[10, 2] + s[11, 1] + s[11, 2] + s[12, 1] + s[13, 1] + s[15]
     """
-    mu = tuple(mu)
-    result = harmonic_character_plain(mu)
-    S = SymmetricFunctions(ZZ)
-    s = S.s()
-    return s.sum_of_terms([Partition(d), c] for d,c in result.iteritems())
-
-@parallel()
-def harmonic_character_paral(mu):
-    r"""
-    Utility to parallelize the computation of the `GL_r` character of
-    the `S_n` isotypic components in the diagonal harmonic
-    polynomials.
-    """
-    t1 = datetime.datetime.now()
-    result = harmonic_character_plain(mu, verbose=True, parallel=True)
-    t2 = datetime.datetime.now()
-    return result, t2-t1
-
-def harmonic_characters(n):
-    r"""
-    Compute in parallel the `GL_r` character of all `S_n` isotypic
-    components in the diagonal harmonic polynomials.
-    """
-    S = SymmetricFunctions(ZZ)
-    s = S.s()
-    for (((nu,),_), (result, t)) in harmonic_character_paral((tuple(mu),) for mu in Partitions(n)):
-        import tqdm
-        tqdm.tqdm.write("\r%s\t("%Partition(nu)+str(t)[:-7]+"): %s"%
-                                                     s.sum_of_terms([Partition(d), c]
-                                                                    for d,c in result.iteritems()))
-
-def harmonic_bicharacter(n):
-    s = SymmetricFunctions(ZZ).s()
-    ss = tensor([s,s])
-    return ss.sum(tensor([harmonic_character(mu), s.term(mu)])
-                  for mu in Partitions(n))
-
-def harmonic_bicharacter_truncated_series():
-    """
-    Return the diagonal harmonic bicharacter series, truncated to
-    whatever has already been computed and stored in the database.
-
-    OUTPUT: a sum `\sum c_{\lambda,\mu} s_\lambda \tensor s_\mu`
-
-    EXAMPLES::
-
-        sage: Harm = harmonic_bicharacter_truncated_series()
-
-        sage: Sym = SymmetricFunctions(ZZ)
-        sage: s = Sym.s(); e = Sym.e(); h = Sym.h()
-
-    Extracting the `S_n` character for a given `GL_r` representation::
-
-        sage: def chi1(mu, p):
-        ....:     return s.sum_of_terms([nu,c] for ((mu1,nu),c) in p if mu1 == mu)
-        sage: def chi2(nu, p):
-        ....:     return e.sum_of_terms([mu,c] for ((mu,nu1),c) in p if nu1 == nu)
-        sage: chi1([1,1], Harm)
-        s[1, 1, 1] + s[2, 1, 1] + s[3, 1, 1] + s[4, 1, 1]
-
-    Some steps toward recovering it as a product H * finite sum.
-    Let's define `H` and its inverse::
-
-        sage: H = sum(h[i] for i in range(0, 10)); H
-        h[] + h[1] + h[2] + h[3] + h[4] + h[5] + h[6] + h[7] + h[8] + h[9]
-        sage: Hinv = s(1-e[1]+e[2]-e[3]+e[4]-e[5]+e[6])
-
-        sage: truncate(H*Hinv,6)
-        h[]
-
-        sage: truncate((1-chi1([1], Harm)    ) * Hinv, 7)
-        s[] - s[1]
-
-        sage: truncate((1+chi1([1,1], Harm)  ) * Hinv, 7)
-        s[] - s[1] + s[1, 1]
-
-        sage: truncate((1-chi1([1,1,1], Harm)) * Hinv, 7)
-        s[] - s[1] + s[1, 1] - s[1, 1, 1]
-
-
-
-        sage: bitruncate(Harm * tensor([s.one(), (1-s[1]+s[2]-s[3]+s[4]-s[5])]), 6)
-        s[] # s[] - s[] # s[1, 1] + s[] # s[2] + s[] # s[2, 2] - s[] # s[3, 1] + s[] # s[4] + s[1] # s[1, 1] - s[1] # s[1, 1, 1] - s[1] # s[2, 2] + s[1] # s[2, 2, 1] + s[1] # s[3, 1] - s[1] # s[3, 1, 1] + s[1, 1] # s[1, 1, 1] - s[1, 1] # s[1, 1, 1, 1] - s[1, 1] # s[2, 2, 1] + s[1, 1] # s[3, 1, 1] + s[1, 1, 1] # s[1, 1, 1, 1] - s[1, 1, 1] # s[1, 1, 1, 1, 1] + s[1, 1, 1, 1] # s[1, 1, 1, 1, 1] + s[2] # s[2, 1] - s[2] # s[2, 1, 1] + s[2] # s[4, 1] + s[2, 1] # s[2, 1, 1] - s[2, 1] # s[2, 1, 1, 1] + s[2, 1] # s[2, 2] - s[2, 1] # s[2, 2, 1] + s[2, 1, 1] # s[2, 1, 1, 1] + s[2, 1, 1] # s[2, 2, 1] + s[2, 2] # s[2, 2, 1] + s[2, 2] # s[3, 2] + s[3] # s[1, 1, 1] - s[3] # s[1, 1, 1, 1] - s[3] # s[2, 2, 1] + s[3] # s[3, 1] + s[3, 1] # s[1, 1, 1, 1] - s[3, 1] # s[1, 1, 1, 1, 1] + s[3, 1] # s[2, 1, 1] - s[3, 1] # s[2, 1, 1, 1] + s[3, 1] # s[3, 1, 1] + s[3, 1] # s[3, 2] + s[3, 1, 1] # s[1, 1, 1, 1, 1] + s[3, 1, 1] # s[2, 1, 1, 1] + s[3, 1, 1] # s[2, 2, 1] + s[3, 2] # s[2, 1, 1, 1] + s[3, 2] # s[2, 2, 1] + s[3, 2] # s[3, 1, 1] + s[4] # s[2, 1, 1] - s[4] # s[2, 1, 1, 1] + s[4] # s[2, 2] - s[4] # s[2, 2, 1] + s[4] # s[4, 1] + s[4, 1] # s[1, 1, 1, 1] - s[4, 1] # s[1, 1, 1, 1, 1] + s[4, 1] # s[2, 1, 1, 1] + 2*s[4, 1] # s[2, 2, 1] + s[4, 1] # s[3, 1, 1] + s[4, 1] # s[3, 2] + s[5] # s[2, 1, 1] - s[5] # s[2, 1, 1, 1] + s[5] # s[3, 1, 1] + s[5] # s[3, 2]
-
-    Not quite::
-
-        sage: bitruncate(Harm * tensor([s.one(), Hinv]), 6)
-        s[] # s[] + s[1] # s[1, 1] - s[1] # s[1, 1, 1] + s[1] # s[1, 1, 1, 1] - s[1] # s[1, 1, 1, 1, 1] + s[1, 1] # s[1, 1, 1] - s[1, 1] # s[1, 1, 1, 1] + s[1, 1] # s[1, 1, 1, 1, 1] + s[1, 1, 1] # s[1, 1, 1, 1] - s[1, 1, 1] # s[1, 1, 1, 1, 1] + s[1, 1, 1, 1] # s[1, 1, 1, 1, 1] + s[2] # s[2, 1] - s[2] # s[2, 1, 1] + s[2] # s[2, 1, 1, 1] + s[2, 1] # s[2, 1, 1] - s[2, 1] # s[2, 1, 1, 1] + s[2, 1] # s[2, 2] - s[2, 1] # s[2, 2, 1] + s[2, 1, 1] # s[2, 1, 1, 1] + s[2, 1, 1] # s[2, 2, 1] + s[2, 2] # s[2, 2, 1] + s[2, 2] # s[3, 2] + s[3] # s[1, 1, 1] - s[3] # s[1, 1, 1, 1] + s[3] # s[1, 1, 1, 1, 1] + s[3] # s[3, 1] - s[3] # s[3, 1, 1] + s[3, 1] # s[1, 1, 1, 1] - s[3, 1] # s[1, 1, 1, 1, 1] + s[3, 1] # s[2, 1, 1] - s[3, 1] # s[2, 1, 1, 1] + s[3, 1] # s[3, 1, 1] + s[3, 1] # s[3, 2] + s[3, 1, 1] # s[1, 1, 1, 1, 1] + s[3, 1, 1] # s[2, 1, 1, 1] + s[3, 1, 1] # s[2, 2, 1] + s[3, 2] # s[2, 1, 1, 1] + s[3, 2] # s[2, 2, 1] + s[3, 2] # s[3, 1, 1] + s[4] # s[2, 1, 1] - s[4] # s[2, 1, 1, 1] + s[4] # s[2, 2] - s[4] # s[2, 2, 1] + s[4] # s[4, 1] + s[4, 1] # s[1, 1, 1, 1] - s[4, 1] # s[1, 1, 1, 1, 1] + s[4, 1] # s[2, 1, 1, 1] + 2*s[4, 1] # s[2, 2, 1] + s[4, 1] # s[3, 1, 1] + s[4, 1] # s[3, 2] + s[5] # s[2, 1, 1] - s[5] # s[2, 1, 1, 1] + s[5] # s[3, 1, 1] + s[5] # s[3, 2]
-
-
-    Substituting `q_n=1` (which should be equivalent to computing the plethysm on `X+1`)
-    gives an e-positive expression (TODO: see why this is currently broken)::
-
-        sage: res = tensor([s,e])( sum(c*tensor( [s[mu](s[1] + 1), s[nu]] ) for ((mu, nu), c) in Harm) )   # not tested
-        sage: set(res.coefficients())                                                                      # not tested
-        {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12}
-    """
-    s = SymmetricFunctions(ZZ).s()
-    ss = tensor([s,s])
-    return ss.sum_of_terms([(Partition(mu), Partition(nu)), c]
-                           for nu,d in harmonic_character_plain.dict().iteritems()
-                           for mu,c in d.iteritems())
-
-def truncate(f,d):
-    return f.map_support_skip_none(lambda mu: mu if mu.size() < d else None)
-
-def bitruncate(f,d):
-    return f.map_support_skip_none(lambda (mu,nu): (mu,nu) if mu.size() < d and nu.size() < d else None)
+    def f(p): 
+        return apply_young_idempotent(derivative(p,x),mu)
+    return f
 

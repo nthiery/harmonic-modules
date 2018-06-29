@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 load("utilities.pyx")
-load("matrixofvectors.py")
+load("matrix_of_vectors.py")
 
 class Subspace(object):
     """
