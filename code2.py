@@ -368,6 +368,8 @@ class DiagonalPolynomialRingInert(DiagonalPolynomialRing):
         else:
             basis = self.isotypic_basis(mu)
             for (((nu,_),_),res) in self.character_isotypic([(nu,basis) for nu in Partitions(n)]):
+                #print "nu : ",nu
+                #print "res : ",res
                 charac += res*s(nu)
             return charac
         
