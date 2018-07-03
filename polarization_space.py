@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-load("diagonal_polynomial_ring.py")
-load("subspace.py")
+from diagonal_polynommial_ring import *
 
 def polarizationSpace(P, generators, mu, r, use_symmetry=False, verbose=False):
     # mu? r? use_symmetry?

@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-load("utilities.pyx")
-load("matrix_of_vectors.py")
+from sage.misc.constant_function import ConstantFunction
+from sage.misc.cachefunc import cached_method, cached_function
+
+from matrix_of_vectors import *
+
 
 class Subspace(object):
     """
