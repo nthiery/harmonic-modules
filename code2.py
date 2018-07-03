@@ -303,11 +303,9 @@ class DiagonalPolynomialRingInert(DiagonalPolynomialRing):
             return 0
         else:
             basis_nu = basis_by_component(basis,nu)
-            result = []
             charac = 0
             S = Subspace(generators={d:B for d,B in basis_nu.iteritems()},operators=self.polarizators_by_degree())
-            result += S.basis().values()
-            for b in result:
+            for b in S.basis().values():
                 charac += sum(multipower(self.multidegree(p),self._Q.gens()) for p in b)
             return charac
        
