@@ -388,13 +388,13 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         n = self._n
         return {-1:[attrcall("derivative", x[i]) for i in range(0,n) for x in X]}
 
-    def _add_degree(self, d1,d2):
+    def add_degree(self, d1,d2):
         d = d1 + d2
         if not all(i>=0 for i in d):
             raise ValueError("invalid degree")
         return d
 
-    def _add_degree_symmetric(self, d1,d2):
+    def add_degree_symmetric(self, d1,d2):
         """
         EXAMPLES::
 

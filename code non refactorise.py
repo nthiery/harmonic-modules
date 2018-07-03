@@ -45,8 +45,8 @@ from sage.functions.other import factorial
 load("code1.pyx")
 
 ### Dans class DiagonalPolynomialRing
-def e(self, i):
-        return functools.partial(self.polarization, i1=i, i2=i+1, d=1)
+    def e(self, i):
+            return functools.partial(self.polarization, i1=i, i2=i+1, d=1)
 
     def f(self, i):
         return functools.partial(self.polarization, i1=i+1, i2=i, d=1)
@@ -710,7 +710,6 @@ def fiej(i, j, d): # fiejcoeff_on_highest_weight
     """
     return binomial(j, i) * binomial(d-j+i,i) * factorial(i)**2
     #return prod( k*d - 2*binomial(k,2) for k in range(j-i+1,j+1) )
-
 
 def string_matrix(d, l):
     """
