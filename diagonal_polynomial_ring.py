@@ -4,14 +4,18 @@
 import functools
 from sage.structure.parent import Parent
 from sage.structure.unique_representation import UniqueRepresentation
+from sage.structure.sage_object import load
+from sage.parallel.decorate import parallel
 
 from funcpersist import *
 from diagram import *
 from subspace import *
 
-import pyximport
-pyximport.install()
-from antisymmetric_utilities import *
+#import pyximport
+#pyximport.install()
+#import antisymmetric_utilities
+
+load("antisymmetric_utilities.pyx")
 
 ##############################################################################
 # Polynomial ring with diagonal action

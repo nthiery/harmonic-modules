@@ -1,3 +1,5 @@
+from sage.parallel.decorate import parallel
+
 from diagonal_polynomial_ring import *
 
 ##################################################

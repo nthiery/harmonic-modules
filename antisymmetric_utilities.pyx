@@ -7,9 +7,9 @@ import sage.combinat.tableau
 from sage.combinat.tableau import StandardTableau, StandardTableaux
 
 cimport utilities
-from utilities cimport diagonal_cmp
-from utilities cimport diagonal_swap
-from utilities cimport items_of_vector
+#from utilities cimport diagonal_cmp
+#from utilities cimport diagonal_swap
+#from utilities cimport items_of_vector
 
 cpdef diagonal_antisort(exponents, int n, int r, list positions_list):
     """
@@ -70,11 +70,11 @@ cpdef diagonal_antisort(exponents, int n, int r, list positions_list):
     for positions in positions_list:
         for i in range(1, len(positions)):
             for j in range(i-1, -1, -1):
-                c = diagonal_cmp(_exponents, n, r, positions[j], positions[j+1])
+                c = utilities.diagonal_cmp(_exponents, n, r, positions[j], positions[j+1])
                 if not c:
                     return None
                 if c < 0:
-                    diagonal_swap(_exponents, n, r, positions[j], positions[j+1])
+                    utilities.diagonal_swap(_exponents, n, r, positions[j], positions[j+1])
                     sign = -sign
                 else:
                     continue
@@ -107,7 +107,7 @@ cpdef is_diagonal_antisorted(exponents, int n, int r, list positions_list):
     for positions in positions_list:
         for i in range(1, len(positions)):
             for j in range(i-1, -1, -1):
-                c = diagonal_cmp(_exponents, n, r, positions[j], positions[j+1])
+                c = utilities.diagonal_cmp(_exponents, n, r, positions[j], positions[j+1])
                 if c < 0:
                     return False
                 else:
@@ -172,7 +172,7 @@ def antisymmetric_normal(p, int n, int r, list positions):
     cdef dict d = {}
     cdef ETuple exponent
     cdef Element c
-    for exponent, c in items_of_vector(p):
+    for exponent, c in utilities.items_of_vector(p):
         res = diagonal_antisort(exponent, n, r, positions)
         if res:
             exponent, sign = res
@@ -206,7 +206,7 @@ def reduce_antisymmetric_normal(p, int n, int r, list positions):
     """
     X = p.parent().gens()
     res = 0
-    for exposent, c in items_of_vector(p) :
+    for exposent, c in utilities.items_of_vector(p) :
         if is_diagonal_antisorted(exposent,n,r,positions) :
             product = 1
             for (x,a) in zip(X,exposent) :
