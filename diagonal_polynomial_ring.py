@@ -6,6 +6,7 @@ from sage.structure.parent import Parent
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.structure.sage_object import load
 from sage.parallel.decorate import parallel
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 
 from funcpersist import *
 from diagram import *
@@ -13,9 +14,7 @@ from subspace import *
 
 #import pyximport
 #pyximport.install()
-#import antisymmetric_utilities
-
-load("antisymmetric_utilities.pyx")
+import antisymmetric_utilities
 
 ##############################################################################
 # Polynomial ring with diagonal action
@@ -29,7 +28,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     EXAMPLES::
 
         sage: P = DiagonalPolynomialRing(QQ, 4, 3)
-        sage: 
     """
     def __init__(self, R, n, r, inert=0):
         names = ["x%s%s"%(i,j) for i in range(r+inert) for j in range(n)]
