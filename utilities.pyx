@@ -188,7 +188,7 @@ cpdef int diagonal_cmp(list exponents, int n, int r, int j1, int j2):
             return c
     return 0
 
-def reverse_sorting_permutation(t): # TODO: put "stable sorting" as keyword somewhere
+cpdef reverse_sorting_permutation(t): # TODO: put "stable sorting" as keyword somewhere
     r"""
     Return a permutation `p` such that  is decreasing
 
