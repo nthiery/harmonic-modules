@@ -12,7 +12,7 @@ Variant::
     sage: polarization_character(P, generators)  # Qui en interne appelle polarization_space
 """
 
-load("diagonal_polynomial_ring.py")
+from diagonal_polynomial_ring import *
 
 def polarizationSpace(P, generators, use_symmetry=False, verbose=False):
     # mu? r? use_symmetry?
