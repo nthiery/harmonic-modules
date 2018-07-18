@@ -1,9 +1,20 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Potential user interface::
+
+    sage: P = ...
+    sage: generators = ...(mu, nu, ...)
+    sage: space = polarizationSpace(P, generators)
+    sage: space.character()  # the GL_n character
+
+Variant::
+
+    sage: polarization_character(P, generators)  # Qui en interne appelle polarization_space
+"""
 
 from diagonal_polynomial_ring import *
 
-def polarizationSpace(P, generators, mu, r, use_symmetry=False, verbose=False):
+def polarizationSpace(P, generators, use_symmetry=False, verbose=False):
     # mu? r? use_symmetry?
     """
     Starting from  polynomials (=generators) in the mu-isotypic component of the polynomial ring in one set of variables (possibly with additional inert variables), construct the space obtained by polarization.
@@ -13,6 +24,4 @@ def polarizationSpace(P, generators, mu, r, use_symmetry=False, verbose=False):
     """
 
     S = Subspace(generators=generators,operators=P.polarization_operators_by_degree(),verbose=verbose)
-    # add_degree? 
-    
-    
+    # add_degree?
