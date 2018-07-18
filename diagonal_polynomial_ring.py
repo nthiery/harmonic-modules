@@ -12,8 +12,6 @@ from funcpersist import *
 from diagram import *
 from subspace import *
 
-#import pyximport
-#pyximport.install()
 import antisymmetric_utilities
 
 ##############################################################################
@@ -23,7 +21,7 @@ import antisymmetric_utilities
 class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     """
 
-     The ring of diagonal polynomials in n x r variables + n inert variables
+     The ring of diagonal polynomials in n x r variables and n x k inert variables
 
     EXAMPLES::
 
@@ -60,13 +58,10 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     def base_ring(self):
         return self._P.base_ring()
 
-    def monomial(self, *args):
-        return self._P.monomial(*args)
-
     def algebra_generators(self):
         return self._vars
 
-    def variables_X(self): #classic_variables ?
+    def variables(self):
         """
             EXAMPLES::
                 sage: DP = DiagonalPolynomialRingInert(QQ,3,3)
@@ -79,7 +74,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         """
         return self._X
 
-    def variables_Theta(self): #inert_variables ?
+    def inert_variables(self):
         """
             EXAMPLES::
                 sage: DP = DiagonalPolynomialRingInert(QQ,3,3)
@@ -119,37 +114,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         return self._grading_set([sum(v[n*i+j] for j in range(n))
                                   for i in range(r)])
 
-    def vandermonde(self,mu):
-        """
-            Let `mu` be a diagram (of a partition or no) and $X=(x_i)$ and
-            $\Theta = (\theta_i)$ two sets of n variables.
-            Then $\Delta$ is the determinant of the matrix $(x_i^a\theta_i^b)$
-            for (a,b) the cells of `mu`.
-
-            INPUT: A partition `mu`
-
-            OUTPUT: The determinant Delta
-
-            EXAMPLES::
-                sage: vandermonde([3])
-                -x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2
-                sage: vandermonde([2,1])
-                -x01*x20 + x02*x20 + x00*x21 - x02*x21 - x00*x22 + x01*x22
-                sage: vandermonde([1,1,1])
-                -x20^2*x21 + x20*x21^2 + x20^2*x22 - x21^2*x22 - x20*x22^2 + x21*x22^2
-
-        """
-        n = self._n
-        X = self.variables_X()
-        Theta = self.variables_Theta()
-        if not isinstance(mu,Diagram):
-            mu = Diagram(mu)
-        Delta = matrix([[x**i[1]*theta**i[0] for i in mu.cells()] for x,theta in zip(X[0],Theta[0])]).determinant()
-        return Delta
-
-    def dimension_vandermonde(self,mu) :
-        return sum([i[1] for i in mu.cells()])
-
+    def monomial(self, *args): 
+        return self._P.monomial(*args)
+    
     def random_monomial(self, D):
         """
         Return a random monomial of multidegree `D`
@@ -184,7 +151,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         return sum(K.random_element() * self.random_monomial(D)
                    for i in range(l))
 
-    def row_permutation(self, sigma):
+    def row_permutation(self, sigma): # this method should be moved elsewhere ?? in a utilities file ? 
         """
         Return the permutation of the variables induced by a permutation of the rows
 
@@ -208,6 +175,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                                         for c in sigma.cycle_tuples()
                                         for j in range(n) ])
 
+    ############################################################
+    # Polarization methods : in polarization_space.py
     def polarization(self, p, i1, i2, d, use_symmetry=False):
         """
         Return the polarization `P_{d,i_1,i_2}. p` of `p`.
@@ -247,7 +216,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         return result
 
     @cached_method
-    def derivative_input(self, D, j):
+    def derivative_input(self, D, j): 
         r = self._r
         X = self.algebra_generators()
         res = []
@@ -373,6 +342,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                 res[sum(d)] += op
         return res
 
+    ############################################################
+    
     def derivatives_by_degree(self): #useless ?
         """
             Returns a dictonnary containing the derivative operators.
@@ -438,6 +409,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         """
         return d1[0]+d2[0], d2[1]
 
+
+    # Move the following methods elsewhere, maybe in DiagonalHarmonicPolynomialsInert
     @cached_method
     def isotypic_basis(self,mu,verbose=True):
         """
@@ -618,15 +591,119 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             return self.into_schur(self.character_q(mu))
 
 
-
 ##############################################################################
-# Harmonic Polynomial ring
+# Polynomial ring with diagonal action with antisymmetries
 ##############################################################################
 
-class DiagonalHarmonicPolynomialRing(DiagonalPolynomialRing):
+class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
     """
 
-        The ring of diagonal hamonic polynomials in n x r variables.
+    The ring of diagonal polynomials in n x r variables + n inert variables
+    with antisymmetries
+
+    EXAMPLES::
+
+        sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3)
+        sage:
+    """
+    def __init__(self, R, n, r, inert=0, antisymmetries=None):
+        DiagonalPolynomialRing.__init__(self, R, n, r, inert=inert)
+        self._antisymmetries = antisymmetries
+
+    def _repr_(self):
+        """
+
+        """
+        if self._inert == 0 :
+            return "Diagonal antisymmetric polynomial ring with %s rows of %s variables over %s"%(self._r, self._n, self.base_ring())
+        else :
+            return "Diagonal antisymmetric polynomial ring with %s rows of %s variables and %s row(s) of inert variables over %s"%(self._r, self._n, self._inert, self.base_ring())
+
+
+    def polarization(self, p, i1, i2, d, use_symmetry=False):
+        """
+
+        """
+        antisymmetries = self._antisymmetries
+        result = self.polarization(p, i1, i2, d, use_symmetry=use_symmetry)
+        if antisymmetries and result:
+            result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
+        return result
+
+    def multi_polarization(self, p, D, i2):
+        """
+
+        """
+        antisymmetries = self._antisymmetries
+        result = self.multi_polarization(p, D, i2)
+        if antisymmetries and result:
+            result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
+        return result
+
+
+    def polarization_operators_by_multidegree(self, side=None, use_symmetry=False, min_degree=0):
+        """
+
+        """
+        n = self._n
+        r = self._r
+        grading_set = self._grading_set
+        antisymmetries = self._antisymmetries
+        return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
+                [functools.partial(self.polarization_antisym, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry,antisymmetries=antisymmetries)]
+                for d in range(min_degree+1, n)
+                for i1 in range(0,r)
+                for i2 in range(0, r)
+                if (i1<i2 if side == 'down' else i1!=i2)
+               }
+
+    def polarization_operators_by_degree(self,side=None, use_symmetry=False, min_degree=0):
+        antisymmetries = self._antisymmetries
+        pol = self.polarization_operators_by_multidegree_antisym(side=side,use_symmetry=use_symmetry,antisymmetries=antisymmetries,min_degree=min_degree)
+        res = {}
+        for d,op in pol.iteritems():
+            if sum(d) not in res.keys():
+                res[sum(d)] = op
+            else:
+                res[sum(d)] += op
+        return res
+
+    @cached_method
+    def isotypic_basis(self,mu,verbose=True):
+        """
+            Let $W$ be the smallest submodule generated by a Vandermonde $\Delta$ depending on
+            a partition`mu` and closed under partial derivatives.
+            Then $W$ can be decomposed into isotypic components for the action of $S_n$. This function
+            compute the basis of W using the Young idempotents to project on isotypic components.
+
+            EXAMPLES::
+                sage: DP = DiagonalPolynomialRing(QQ,3,2,inert=1)
+                sage: DP.isotypic_basis(Partition([2,1]),use_antisymmetries=True,verbose=False)
+                {(0, [2, 1]): [-3*x20], (1, [1, 1, 1]): [x00*x21]}
+                sage: DP.isotypic_basis(Partition([3]),use_antisymmetries=True,verbose=False)
+
+                {(0, [3]): [108],
+                 (1, [2, 1]): [-18*x00],
+                 (2, [2, 1]): [-3*x00^2 + 6*x00*x01],
+                 (3, [1, 1, 1]): [-x00^2*x01]}
+
+        """
+        basis = self.isotypic_basis(mu,verbose=verbose)
+        for d,B in basis.iteritems():
+                pos = antisymmetries_of_tableau(d[1])
+                res = [reduce_antisymmetric_normal(p,n,r,pos) for p in B]
+                basis[d] = res
+        return basis
+
+
+##############################################################################
+# Harmonic Polynomials
+##############################################################################
+
+class DiagonalHarmonicPolynomials():
+    """
+
+        The space diagonal hamonic polynomials in n x r variables.
 
         EXAMPLES::
 
@@ -634,17 +711,25 @@ class DiagonalHarmonicPolynomialRing(DiagonalPolynomialRing):
             sage:
     """
 
-    def __init__(self, R, n, r, antisymmetric=False):
-        DiagonalPolynomialRing.__init__(self, R, n, r, inert=0)
+    def __init__(self, R, n, r, antisymmetries=None):
         self._antisymmetric = antisymmetric
-
+        self._R = R
+        self._n = n
+        self._r = r
+        self._antisymmetries = antisymmetries
+        if antisymmetries: 
+            self._polRing = DiagonalAntisymmetricPolynomialRing(R, n, r, inert, antisymmetries)
+        else:
+            self._polRing = DiagonalPolynomialRing(R, n, r, inert)
+            
+            
     def _repr_(self):
         """
 
         """
-        return "Diagonal harmonic polynomial ring with %s rows of %s variables over %s"%(self._r, self._n, self.base_ring())
+        return "Diagonal harmonic polynomials with %s rows of %s variables over %s"%(self._r, self._n, self._polRing.base_ring())
 
-    def harmonic_space_by_shape(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
+    def harmonic_space_by_shape(self, mu, verbose=False, use_symmetry=False, use_lie=False, use_commutativity=False):
         """
         Return the projection under the Young idempotent for the
         partition / tableau `mu` of the space of diagonal harmonic
@@ -681,7 +766,7 @@ class DiagonalHarmonicPolynomialRing(DiagonalPolynomialRing):
         generators = [self.higher_specht(t, harmonic=True, use_antisymmetry=use_antisymmetry)
                       for t in StandardTableaux(mu)]
 
-        if use_antisymmetry:
+        if antisymmetries: #TODO fix this : antisymmetries are given at the begin or compute in this function ?
             # FIXME: duplicated logic for computing the
             # antisymmetrization positions, here and in apply_young_idempotent
             antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
@@ -818,106 +903,71 @@ class DiagonalHarmonicPolynomialRing(DiagonalPolynomialRing):
         return sum(char(mu) for mu in Partitions(self._n))
 
 
-
-
 ##############################################################################
-# Polynomial ring with diagonal action with antisymmetries
+# Harmonic Polynomials With Inert Variables
 ##############################################################################
 
-class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
+#TODO : find a (short) name for those polynomials
+class DiagonalHarmonicPolynomialsInert():
     """
 
-    The ring of diagonal polynomials in n x r variables + n inert variables
-    with antisymmetries
+        The space of diagonal hamonic polynomials in n x r variables and k rows of inert variables
 
-    EXAMPLES::
+        EXAMPLES::
 
-        sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3)
-        sage:
+            sage: 
     """
-    def __init__(self, R, n, r, inert=0):
-        DiagonalPolynomialRing.__init__(self, R, n, r, inert=inert)
 
+    def __init__(self, R, n, r, inert=0, antisymmetries=None):
+        self._antisymmetric = antisymmetric
+        self._R = R
+        self._n = n
+        self._r = r
+        self._k = inert
+        self._inert = inert
+        self._antisymmetries = antisymmetries
+        if antisymmetries: 
+            self._polRing = DiagonalAntisymmetricPolynomialRing(R, n, r, inert, antisymmetries)
+        else:
+            self._polRing = DiagonalPolynomialRing(R, n, r, inert)
+            
+            
     def _repr_(self):
         """
 
         """
-        if self._inert == 0 :
-            return "Diagonal antisymmetric polynomial ring with %s rows of %s variables over %s"%(self._r, self._n, self.base_ring())
-        else :
-            return "Diagonal antisymmetric polynomial ring with %s rows of %s variables and %s row(s) of inert variables over %s"%(self._r, self._n, self._inert, self.base_ring())
+        return "Diagonal harmonic polynomials with %s rows of %s variables and %s rows of inert variables over %s"%(self._r, self._n, self._k, self._polRing.base_ring())
 
-
-    def polarization(self, p, i1, i2, d, use_symmetry=False, antisymmetries=None):
+    def vandermonde(self,mu):
         """
+            Let `mu` be a diagram (of a partition or no) and $X=(x_i)$ and
+            $\Theta = (\theta_i)$ two sets of n variables.
+            Then $\Delta$ is the determinant of the matrix $(x_i^a\theta_i^b)$
+            for (a,b) the cells of `mu`.
 
-        """
-        result = self.polarization(p, i1, i2, d, use_symmetry=use_symmetry)
-        if antisymmetries and result:
-            result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
-        return result
+            INPUT: A partition `mu`
 
-    def multi_polarization(self, p, D, i2, antisymmetries=None):
-        """
+            OUTPUT: The determinant Delta
 
-        """
-        result = self.multi_polarization(p, D, i2)
-        if antisymmetries and result:
-            result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
-        return result
-
-
-    def polarization_operators_by_multidegree(self, side=None, use_symmetry=False, antisymmetries=None, min_degree=0):
-        """
+            EXAMPLES::
+                sage: vandermonde([3])
+                -x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2
+                sage: vandermonde([2,1])
+                -x01*x20 + x02*x20 + x00*x21 - x02*x21 - x00*x22 + x01*x22
+                sage: vandermonde([1,1,1])
+                -x20^2*x21 + x20*x21^2 + x20^2*x22 - x21^2*x22 - x20*x22^2 + x21*x22^2
 
         """
         n = self._n
-        r = self._r
-        grading_set = self._grading_set
-        return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
-                [functools.partial(self.polarization_antisym, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry,antisymmetries=antisymmetries)]
-                for d in range(min_degree+1, n)
-                for i1 in range(0,r)
-                for i2 in range(0, r)
-                if (i1<i2 if side == 'down' else i1!=i2)
-               }
+        X = self._polRing.variables()
+        Theta = self._polRing.inert_variables()
+        if not isinstance(mu,Diagram):
+            mu = Diagram(mu)
+        Delta = matrix([[x**i[1]*theta**i[0] for i in mu.cells()] for x,theta in zip(X[0],Theta[0])]).determinant()
+        return Delta
 
-    def polarization_operators_by_degree(self,side=None, use_symmetry=False, antisymmetries=None, min_degree=0):
-        pol = self.polarization_operators_by_multidegree_antisym(side=side,use_symmetry=use_symmetry,antisymmetries=antisymmetries,min_degree=min_degree)
-        res = {}
-        for d,op in pol.iteritems():
-            if sum(d) not in res.keys():
-                res[sum(d)] = op
-            else:
-                res[sum(d)] += op
-        return res
-
-    @cached_method
-    def isotypic_basis(self,mu,verbose=True):
-        """
-            Let $W$ be the smallest submodule generated by a Vandermonde $\Delta$ depending on
-            a partition`mu` and closed under partial derivatives.
-            Then $W$ can be decomposed into isotypic components for the action of $S_n$. This function
-            compute the basis of W using the Young idempotents to project on isotypic components.
-
-            EXAMPLES::
-                sage: DP = DiagonalPolynomialRing(QQ,3,2,inert=1)
-                sage: DP.isotypic_basis(Partition([2,1]),use_antisymmetries=True,verbose=False)
-                {(0, [2, 1]): [-3*x20], (1, [1, 1, 1]): [x00*x21]}
-                sage: DP.isotypic_basis(Partition([3]),use_antisymmetries=True,verbose=False)
-
-                {(0, [3]): [108],
-                 (1, [2, 1]): [-18*x00],
-                 (2, [2, 1]): [-3*x00^2 + 6*x00*x01],
-                 (3, [1, 1, 1]): [-x00^2*x01]}
-
-        """
-        basis = self.isotypic_basis(mu,verbose=verbose)
-        for d,B in basis.iteritems():
-                pos = antisymmetries_of_tableau(d[1])
-                res = [reduce_antisymmetric_normal(p,n,r,pos) for p in B]
-                basis[d] = res
-        return basis
+    def dimension_vandermonde(self,mu) :
+        return sum([i[1] for i in mu.cells()])
 
 
 ##############################################################################
