@@ -29,6 +29,7 @@ from sage.combinat.tableau import StandardTableau, StandardTableaux
 import sage.combinat.tableau
 from sage.combinat.words.word import Word
 from sage.functions.other import binomial
+from sage.combinat.permutation import Permutation
 
 from sage.groups.perm_gps.permgroup_named import SymmetricGroup
 from sage.sets.set import Set
