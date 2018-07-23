@@ -2077,6 +2077,27 @@ def harmonic_bicharacter_truncated_series():
                            for nu,d in harmonic_character_plain.dict().iteritems()
                            for mu,c in d.iteritems())
 
+@cached_function
+def harmonic_hilbert_series(n, r):
+    return sum( harmonic_character(mu).expand(r, 'q') * StandardTableaux(mu).cardinality()
+                for mu in Partitions(n) )
+
+@cached_function
+def harmonic_dimension(n, r):
+    """
+    Return the dimension of the harmonic space for r sets of n variables
+
+    EXAMPLES::
+
+        sage: [ harmonic_dimension(n, n-1) for n in range(7) ]
+        [1, 2, 16, 400, 25769, 3751076]
+    """
+    f = sum( harmonic_character(mu) * StandardTableaux(mu).cardinality()
+             for mu in Partitions(n) )
+    # Do the expansion on the alphabet 1^r by hand ...
+    fp = SymmetricFunctions(QQ).p()(f)
+    return sum( c * r**len(nu) for nu, c in fp )
+
 def truncate(f,d):
     return f.map_support_skip_none(lambda mu: mu if mu.size() < d else None)
 
