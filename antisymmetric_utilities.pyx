@@ -3,6 +3,7 @@ from sage.structure.element cimport Element
 from sage.rings.polynomial.polydict cimport ETuple
 
 from sage.combinat.partition import Partition, Partitions
+from sage.groups.perm_gps.permgroup_element import PermutationGroupElement
 import sage.combinat.tableau
 from sage.combinat.tableau import StandardTableau, StandardTableaux
 
@@ -218,3 +219,26 @@ def antisymmetries_of_tableau(Q):
     if not isinstance(Q,StandardTableau) :
         Q = Partition(Q).initial_tableau()
     return [[i-1 for i in column] for column in Q.conjugate()]
+    
+    
+def row_permutation(n, sigma):
+    """
+    Return the permutation of the variables induced by a permutation of the rows
+
+    INPUT:
+
+    - ``sigma`` -- a permutation of the rows, as a permutation of `\{1,\ldots,r\}`
+
+    OUTPUT:
+
+    a permutation of the variables, as a permutation of `\{1,\ldots,nr\}`
+
+    EXAMPLES::
+
+        sage: s = PermutationGroupElement([(1,2,4),(3,5)])
+        sage: row_permutation(3,s)
+        (1,4,10)(2,5,11)(3,6,12)(7,13)(8,14)(9,15)
+    """
+    return PermutationGroupElement([tuple((i-1)*n + 1 + j for i in c)
+                                    for c in sigma.cycle_tuples()
+                                    for j in range(n) ])
