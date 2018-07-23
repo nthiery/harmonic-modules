@@ -765,7 +765,7 @@ class DiagonalHarmonicPolynomialsInert():
 
 
 ##############################################################################
-# Young idempotent
+# Young idempotent and other usefull functions
 ##############################################################################
 
 
