@@ -135,20 +135,4 @@ def add_degree_symmetric(self,d1,d2):
         raise ValueError("invalid degree")
     return self._grading_set(sorted(d, reverse=True))
 
-def add_degree_isotyp(d1,d2):
-    """
-        INPUT:
-            - ``d1``,``d2`` -- lists containing an integer and a partition
 
-        OUTPUT:
-            a list containing the sum of the integers of
-            `d1` and `d2` and the partition contained in `d2`
-
-        EXAMPLES::
-            sage: d1 = (3,[2,1])
-            sage: d2 = (-1,[3])
-            sage: DP.add_degree_isotyp(d1,d2)
-            (2, [3])
-
-    """
-    return d1[0]+d2[0], d2[1]
