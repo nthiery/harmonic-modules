@@ -113,6 +113,27 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         v = p.exponents()[0]
         return self._grading_set([sum(v[n*i+j] for j in range(n))
                                   for i in range(r)])
+    
+    def multipower(self,d):
+    """
+        Return the product of the terms $q_i^{d_i}$.
+        
+        INPUT:
+            - `d` -- a multidegree
+            
+        EXAMPLES::
+            sage: q = PolynomialRing(QQ,'q',4).gens()
+            sage: q
+            (q0, q1, q2, q3)
+            sage: d = [1,0,2,0]
+            sage: multipower(d,q)
+            q0*q2^2
+            sage: d = [4,3,2,1]
+            sage: multipower(d,q)
+            q0^4*q1^3*q2^2*q3
+    """
+        q = self._Q.algebra_generators()
+        return prod(q[i]**d[i] for i in range(0,len(q)))
 
     def monomial(self, *args): 
         return self._P.monomial(*args)
@@ -240,7 +261,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         return result
 
 
-    # Move the following methods elsewhere, maybe in DiagonalHarmonicPolynomialsInert
+    # Move the following methods elsewhere : polarization_space
+    ##############################################################################
     @parallel()
     def character_isotypic(self,nu,basis):
         """
@@ -266,14 +288,17 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         if nu not in [d[1] for d in basis]:
             return 0
         else:
-            basis_nu = basis_by_component(basis,nu)
+            nu_basis = {}
+            for d,B in basis.iteritems():
+                if d[1]==nu: 
+                    basis_nu.update({d[0]:B})
             charac = 0
-            S = Subspace(generators={d:B for d,B in basis_nu.iteritems()},operators=self.polarizators_by_degree())
+            S = Subspace(generators={d:B for d,B in basis_nu.iteritems()},operators=polarization_operators_by_degree())
             for b in S.basis().values():
-                charac += sum(multipower(self.multidegree(p),self._Q.gens()) for p in b)
+                charac += sum(self.multipower(self.multidegree(p),self._Q.gens()) for p in b)
             return charac
 
-    def character_q(self,mu,verbose=True):
+    def character_q(self,mu,parallel=False):
         """
             Computes the character and returns the result as a sum of tensor products
             of polynomials in $q$ variables for the action of $GL_r$ and Schur functions
@@ -299,92 +324,63 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             print "Given partition doesn't have the right size."
         else:
             basis = self.isotypic_basis(mu)
-            for nu in Partitions(n):
-                charac += self.character_isotypic(nu,basis)*s(nu)
-            return charac
-
-    def character_q_parallel(self,mu,verbose=True):
-        """
-            Computes the character and returns the result as a sum of tensor products
-            of polynomials in q variables for the action of $GL_r$ and Schur functions
-            for the action of $S_n$ using parallel computation.
-
-            INPUT: `mu` a partition
-
-            EXAMPLES::
-                sage: DP.character_q_parallel(Partition([1,1,1]))
-                s[1, 1, 1]
-                sage: DP.character_q_parallel(Partition([2,1]))
-                (q0+q1)*s[1, 1, 1] + s[2, 1]
-                sage: DP.character_q_parallel(Partition([3]))
-                (q0^3+q0^2*q1+q0*q1^2+q1^3+q0^2+2*q0*q1+q1^2)*s[1, 1, 1] + (q0^2+q0*q1+q1^2+q0+q1)*s[2, 1] + s[3]
-
-        """
-        n = self._n
-        s = SymmetricFunctions(self._Q).s()
-        charac = 0
-        if not isinstance(mu,Diagram):
-            mu = Diagram(mu)
-        if mu.size() != n:
-            print "Given partition doesn't have the right size."
-        else:
-            basis = self.isotypic_basis(mu)
-            for (((nu,_),_),res) in self.character_isotypic([(nu,basis) for nu in Partitions(n)]):
-                #print "nu : ",nu
-                #print "res : ",res
+            if parallel:
+                for (((nu,_),_),res) in self.character_isotypic([(nu,basis) for nu in Partitions(n)]):
                 charac += res*s(nu)
+            else:
+                for nu in Partitions(n):
+                    charac += self.character_isotypic(nu,basis)*s(nu)
             return charac
 
-    def into_schur(self,charac):
-        """
-            Convert a character `charac` written as a sum of tensor products of polynomials in q
-            variables and Schur functions into a character written as a sum of tensor products
-            of Schur functions.
+def into_schur(P,charac):
+    """
+        Convert a character `charac` written as a sum of tensor products of polynomials in q
+        variables and Schur functions into a character written as a sum of tensor products
+        of Schur functions.
 
-            INPUT: `charac` a sum of tensor products
+        INPUT: `charac` a sum of tensor products
 
-            EXAMPLES::
-                sage: for c in [DP.character_q_parallel(p) for p in Partitions(3)]:
-                ....:     print DP.into_schur(c)
-                s[] # s[3] + s[1] # s[2, 1] + s[1, 1] # s[1, 1, 1] + s[2] # s[1, 1, 1] + s[2] # s[2, 1] + s[3] # s[1, 1, 1]
-                s[] # s[2, 1] + s[1] # s[1, 1, 1]
-                s[] # s[1, 1, 1]
-
-        """
-        nb_rows = self._n - self._k
-        s = SymmetricFunctions(self._Q).s()
-        ss = SymmetricFunctions(QQ).s()
-        sym_char = 0
-        for supp in charac.support():
-            if charac.coefficient(supp)==1:
-                sym_char += tensor([s[0],s[supp]])
-            else:
-                sym_char += tensor([s(ss.from_polynomial(self._Q(charac.coefficient(supp))))
-                                    .restrict_partition_lengths(nb_rows,exact=False),s[supp]])
-        return sym_char
-
-    def character_schur(self,mu,parallel=True,verbose=True):
-        """
-            Return the complete character of the smallest submodule generated by $\Delta_{\mu}$
-            and closed under partial derivatives and polarization operators for the double action
-            of $GL_r \times S_n$.
-            The result is given as a sum of tensor product of Schur functions.
-
-            EXAMPLES::
-            sage: DP = DiagonalPolynomialRingInert(QQ,3,3)
-            sage: DP.character_schur(Partition([3]))
+        EXAMPLES::
+            sage: for c in [DP.character_q_parallel(p) for p in Partitions(3)]:
+            ....:     print DP.into_schur(c)
             s[] # s[3] + s[1] # s[2, 1] + s[1, 1] # s[1, 1, 1] + s[2] # s[1, 1, 1] + s[2] # s[2, 1] + s[3] # s[1, 1, 1]
-            sage: DP = DiagonalPolynomialRingInert(QQ,4,4)
-            sage: DP.character_schur(Partition([2,2]))
-            s[] # s[2, 2] + s[1] # s[2, 1, 1] + s[2] # s[1, 1, 1, 1]
+            s[] # s[2, 1] + s[1] # s[1, 1, 1]
+            s[] # s[1, 1, 1]
 
-        """
-
-        if parallel:
-            return self.into_schur(self.character_q_parallel(mu))
+    """
+    
+    nb_rows = P._n - P._k
+    s = SymmetricFunctions(P._Q).s()
+    ss = SymmetricFunctions(QQ).s()
+    sym_char = 0
+    for supp in charac.support():
+        if charac.coefficient(supp)==1:
+            sym_char += tensor([s[0],s[supp]])
         else:
-            return self.into_schur(self.character_q(mu))
+            sym_char += tensor([s(ss.from_polynomial(P._Q(charac.coefficient(supp))))
+                                .restrict_partition_lengths(nb_rows,exact=False),s[supp]])
+    return sym_char
 
+def character_schur(P,mu,parallel=True,verbose=True):
+    """
+        Return the complete character of the smallest submodule generated by $\Delta_{\mu}$
+        and closed under partial derivatives and polarization operators for the double action
+        of $GL_r \times S_n$.
+        The result is given as a sum of tensor product of Schur functions.
+
+        EXAMPLES::
+        sage: DP = DiagonalPolynomialRingInert(QQ,3,3)
+        sage: DP.character_schur(Partition([3]))
+        s[] # s[3] + s[1] # s[2, 1] + s[1, 1] # s[1, 1, 1] + s[2] # s[1, 1, 1] + s[2] # s[2, 1] + s[3] # s[1, 1, 1]
+        sage: DP = DiagonalPolynomialRingInert(QQ,4,4)
+        sage: DP.character_schur(Partition([2,2]))
+        s[] # s[2, 2] + s[1] # s[2, 1, 1] + s[2] # s[1, 1, 1, 1]
+
+    """
+
+    return into_schur(P,self.character_q(mu,parallel=parallel))
+    
+    ##############################################################################
 
 ##############################################################################
 # Polynomial ring with diagonal action with antisymmetries

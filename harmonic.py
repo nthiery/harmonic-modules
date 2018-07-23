@@ -230,7 +230,7 @@ def character_with_inert(mu,parallel=True):
     n = mu.size()
     r = mu.size()
     DPRI = DiagonalPolynomialRingInert(QQ,n,r)
-    return DPRI.character_schur(mu,parallel=parallel)
+    return character_schur(DPRI,mu,parallel=parallel)
         
 def character_key(mu, **args):
     return tuple(Composition(mu))
