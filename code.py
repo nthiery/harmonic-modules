@@ -1900,7 +1900,7 @@ def harmonic_character_plain(mu, verbose=False, parallel=False):
         progressbar = False
     result = R.harmonic_character(mu, verbose=progressbar,
                                   use_symmetry=True,
-                                  use_lie=True,
+                                  use_lie="euler+intersection",
                                   use_antisymmetry=True)
     return {tuple(degrees): dim
             for degrees, dim in result}
