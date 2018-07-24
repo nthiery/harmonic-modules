@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import functools
+
 from sage.misc.constant_function import ConstantFunction
 from sage.misc.cachefunc import cached_method, cached_function
+from sage.structure.parent import Parent
+from sage.combinat.partition import Partition, Partitions
 
 from matrix_of_vectors import *
+from young_idempotent import *
 
 
 class Subspace(object):
@@ -16,7 +21,9 @@ class Subspace(object):
     - ``generators`` -- a list of vectors in some ambient vector space `V`
     - ``operators`` -- a list of linear endomorphism `V` (default: ``[]``)
 
-    - ``hilbert_parent`` -- a function that, given the dimensions of the subspaces
+    - ``hilbert_parent`` -- a function that, g
+    
+    iven the dimensions of the subspaces
       given as a dictionary { degree: dim } returns the hilbert polynomial
 
     Return the smallest subspace of `V` containing ``generators`` and
@@ -88,11 +95,10 @@ class Subspace(object):
         sage: def young_idempotent(t):
         ....:     return A.sum_of_terms((S(sigma), sigma.sign()) for sigma in t.column_stabilizer()) * \
         ....:            A.sum_of_monomials(S(sigma) for sigma in t.row_stabilizer())
-
         sage: for t in T:
-        ....:     print t.shape(), t.shape().dimension(), \
+        ....:     print(t.shape(), t.shape().dimension(), \
         ....:          Subspace([young_idempotent(t)], \
-        ....:                   [functools.partial(operator.mul, s) for s in A.algebra_generators()]).dimension()
+        ....:                   [functools.partial(operator.mul, s) for s in A.algebra_generators()]).dimension())
         [4] 1 1
         [3, 1] 3 3
         [3, 1] 3 3
