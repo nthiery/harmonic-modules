@@ -100,8 +100,8 @@ def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, min_
             if (i1<i2 if side == 'down' else i1!=i2)
            }
 
-def polarization_operators_by_degree(side=None, use_symmetry=False, min_degree=0):
-    pol = polarization_operators_by_multidegree(side=side,use_symmetry=use_symmetry,min_degree=min_degree)
+def polarization_operators_by_degree(P, side=None, use_symmetry=False, min_degree=0):
+    pol = polarization_operators_by_multidegree(P, side=side, use_symmetry=use_symmetry, min_degree=min_degree)
     res = {}
     for d,op in pol.iteritems():
         if sum(d) not in res.keys():

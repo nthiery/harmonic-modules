@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 
 from sage.parallel.decorate import parallel
+from sage.combinat.ranker import rank_from_list
 
 from utilities import index_filling
 from diagonal_polynomial_ring import *
 from polynomial_derivative import *
+from polarization_space import add_degree_symmetric, add_degree
+from polarization_space import *
 
 
 ####################################################
@@ -76,7 +79,7 @@ class DiagonalHarmonicPolynomials():
         generators = [self.higher_specht(t, harmonic=True, use_antisymmetry=use_antisymmetry)
                       for t in StandardTableaux(mu)]
 
-        if antisymmetries: #TODO fix this : antisymmetries are given at the begin or compute in this function ?
+        if use_antisymmetry: #TODO fix this : antisymmetries are given at the begin or compute in this function ?
             # FIXME: duplicated logic for computing the
             # antisymmetrization positions, here and in apply_young_idempotent
             antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
@@ -99,9 +102,8 @@ class DiagonalHarmonicPolynomials():
                 return s(S.from_polynomial(self._hilbert_parent(dimensions))
                         ).restrict_partition_lengths(r,exact=False)
 
-        operators = self.polarization_operators_by_degree(side='down',
+        operators = polarization_operators_by_degree(self._polRing, side='down',
                                                           use_symmetry=use_symmetry,
-                                                          antisymmetries=antisymmetries,
                                                           min_degree=1 if use_lie else 0)
         if use_lie == "euler+intersection":
             operators[self._grading_set.zero()] = [
@@ -124,7 +126,7 @@ class DiagonalHarmonicPolynomials():
 
         operators_by_degree = {}
         for degree,ops in operators.iteritems():
-            d = sum(degree)
+            d = sum([degree])
             operators_by_degree.setdefault(d,[])
             operators_by_degree[d].extend(ops)
         ranks = {}
@@ -141,7 +143,8 @@ class DiagonalHarmonicPolynomials():
             #print new_word
             return new_word
         # print operators
-        add_degree = self._add_degree_symmetric if use_symmetry else self._add_degree
+        # PROBLEM HERE with add_degree
+        add_degree = add_degree_symmetric if use_symmetry else add_degree
         F = Subspace(generators, operators=operators,
                      add_degrees=add_degree, degree=self.multidegree,
                      hilbert_parent = hilbert_parent,
@@ -433,7 +436,8 @@ class DiagonalHarmonicPolynomials():
         # the self._n forces a multivariate polynomial ring even if n=1
         R = PolynomialRing(self._polRing.base_ring(), self._n, list(X[0]))
         H = higher_specht(R, P, Q, harmonic=harmonic, use_antisymmetry=use_antisymmetry)
-        return self(H)
+        #return self(H)
+        return H
 
     def harmonic_character(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
         """
