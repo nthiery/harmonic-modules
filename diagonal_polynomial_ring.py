@@ -2,11 +2,18 @@
 # -*- coding: utf-8 -*-
 
 import functools
+
 from sage.structure.parent import Parent
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.structure.sage_object import load
+
 from sage.parallel.decorate import parallel
+
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.integer_ring import ZZ
+from sage.rings.rational_field import QQ
+from sage.categories.algebras import Algebras
+from sage.categories.cartesian_product import cartesian_product
 
 from funcpersist import *
 from diagram import *
