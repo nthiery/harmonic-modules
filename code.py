@@ -1782,7 +1782,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                 ]
         elif use_lie == 'decompose':
             def post_compose(f):
-			    return lambda x: [q for (q,word) in self.highest_weight_vectors_decomposition(f(x))]
+                return lambda x: [q for (q,word) in self.highest_weight_vectors_decomposition(f(x))]
             operators = {d: [post_compose(op) for op in ops]
                          for d, ops in operators.iteritems()}
         elif use_lie == 'multipolarization':
