@@ -61,8 +61,6 @@ def harmonic_bicharacter(self, verbose=False, use_symmetry=False, use_antisymmet
     #return sum( res[1] for res in char(Partitions(self._n).list()) )
     return sum(char(mu) for mu in Partitions(self._n))
 
-
-
 ##################################################
 # Harmonic characters
 ##################################################
