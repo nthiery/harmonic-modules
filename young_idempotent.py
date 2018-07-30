@@ -4,6 +4,8 @@
 from sage.combinat.partition import Partition, Partitions
 from sage.combinat.permutation import Permutation
 
+from sage.calculus.functional import derivative
+
 
 ##############################################################################
 # Young idempotent and related functions

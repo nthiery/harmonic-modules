@@ -41,7 +41,3 @@ from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.semirings.non_negative_integer_semiring import NN
 
 from sage.functions.other import factorial
-
-load("code1.pyx")
-
-

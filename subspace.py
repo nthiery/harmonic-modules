@@ -7,6 +7,7 @@ from sage.misc.constant_function import ConstantFunction
 from sage.misc.cachefunc import cached_method, cached_function
 from sage.structure.parent import Parent
 from sage.combinat.partition import Partition, Partitions
+from sage.rings.semirings.non_negative_integer_semiring import NN
 
 from matrix_of_vectors import *
 from young_idempotent import *
