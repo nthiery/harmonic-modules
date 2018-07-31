@@ -321,8 +321,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                           for j in range(n))
         return result
         
-        
-         def is_highest_weight_vector(self, p, _assert=False):
+    def is_highest_weight_vector(self, p, _assert=False):
         for i2 in range(self._r):
             for i1 in range(i2):
                 if self.polarization(p, i2, i1, 1):

@@ -18,17 +18,13 @@ Variant::
     sage: polarization_character(P, generators)  # Qui en interne appelle polarization_space
 """
 
-from diagonal_polynomial_ring import *
-
-
 ####################################################
 # Polarization Space
 ####################################################
 
 #TODO use_symmetry a implementer
 
-#class PolarizationSpace():
-def polarizationSpace(P, generators, verbose=False, with_inert=False, use_antisymmetry=False, use_symmetry=False, use_lie=False, use_commutativity=False):
+def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, use_antisymmetry=False, use_symmetry=False, use_lie=False, use_commutativity=False):
     """
     TODO : Faire le tri dans la doc 
     
@@ -67,11 +63,18 @@ def polarizationSpace(P, generators, verbose=False, with_inert=False, use_antisy
         sage: F = P.harmonic_space_by_shape(Partition([3,2]),use_lie='multipolarization', verbose=True)
     
     """
-    #mu = Partition(mu) # necessaire ??? 
+    mu = Partition(mu) # necessaire ??? Oui si calcul des antisymetries ici
     r = P._r
     S = SymmetricFunctions(ZZ)
     s = S.s()
     m = S.m()
+    
+    # Change of ring (one set on variables to multisets of variables)
+    # To be able to use polarization
+    #for g in generators :
+    #    print g.parent()
+    #    g = P(g)
+    #    print g.parent()
 
     if use_antisymmetry: #TODO fix this : antisymmetries are given at the begin or compute in this function ?
         # FIXME: duplicated logic for computing the
@@ -80,7 +83,6 @@ def polarizationSpace(P, generators, verbose=False, with_inert=False, use_antisy
     else:
         antisymmetries = None
         
-    # Can I use this in my case ??? Comprendre hilbert_parent et voir si utilisable pour moi 
     if use_lie:
         # The hilbert series will be directly expressed in terms of the
         # dimensions of the highest weight spaces, thus as a symmetric
@@ -93,40 +95,47 @@ def polarizationSpace(P, generators, verbose=False, with_inert=False, use_antisy
             return s(m.sum_of_terms([Partition(d), c]
                                      for d,c in dimensions.iteritems())
                     ).restrict_partition_lengths(r, exact=False)
+    ##### A TESTER #####
+    elif with_inert:
+        def hilbert_parent(dimensions):
+            return s.sum_of_terms([Partition(d), c] for d,c in dimension.iteritems())
     else:
         def hilbert_parent(dimensions):
             return s(S.from_polynomial(P._hilbert_parent(dimensions))
                     ).restrict_partition_lengths(r,exact=False)
 
 
-    operators = polarization_operators_by_degree(P._polRing, side='down',
-                                                      use_symmetry=use_symmetry,
-                                                      min_degree=1 if use_lie else 0)
-    if use_lie == "euler+intersection":
-        operators[P._grading_set.zero()] = [
-            functools.partial(lambda v,i: P.polarization(P.polarization(v, i+1,i, 1,antisymmetries=antisymmetries), i,i+1, 1,antisymmetries=antisymmetries), i=i)
-            for i in range(r-1)
-            ]
-    elif use_lie == 'decompose':
-        def post_compose(f):
-            return lambda x: [q for (q,word) in P.highest_weight_vectors_decomposition(f(x))]
-        operators = {d: [post_compose(op) for op in ops]
-                     for d, ops in operators.iteritems()}
-    elif use_lie == 'multipolarization':
-        F = HighestWeightSubspace(generators,
-                 ambient=self,
-                 add_degrees=add_degree, degree=P.multidegree,
-                 hilbert_parent = hilbert_parent,
-                 antisymmetries=antisymmetries,
-                 verbose=verbose)
-        return F
+    if with_inert:
+        operators_by_degree = polarization_operators_by_degree(P, use_symmetry=use_symmetry)
+    else:
+        operators = polarization_operators_by_multidegree(P, side='down',
+                                                          use_symmetry=use_symmetry,
+                                                          min_degree=1 if use_lie else 0)
+        if use_lie == "euler+intersection":
+            operators[P._grading_set.zero()] = [
+                functools.partial(lambda v,i: P.polarization(P.polarization(v, i+1,i, 1,antisymmetries=antisymmetries), i,i+1, 1,antisymmetries=antisymmetries), i=i)
+                for i in range(r-1)
+                ]
+        elif use_lie == 'decompose':
+            def post_compose(f):
+                return lambda x: [q for (q,word) in P.highest_weight_vectors_decomposition(f(x))]
+            operators = {d: [post_compose(op) for op in ops]
+                         for d, ops in operators.iteritems()}
+        elif use_lie == 'multipolarization':
+            F = HighestWeightSubspace(generators,
+                     ambient=self,
+                     add_degrees=add_degree, degree=P.multidegree,
+                     hilbert_parent = hilbert_parent,
+                     antisymmetries=antisymmetries,
+                     verbose=verbose)
+            return F    
+        operators_by_degree = {}
+        for degree,ops in operators.iteritems():
+            d = sum([degree])
+            operators_by_degree.setdefault(d,[])
+            operators_by_degree[d].extend(ops)
+            
 
-    ##### REGARDER CETTE PARTIE ######
-    operators_by_degree = {}
-    for degree,ops in operators.iteritems():
-        d = sum([degree])
-        operators_by_degree.setdefault(d,[])
-        operators_by_degree[d].extend(ops)
     ranks = {}
     for d, ops in operators_by_degree.iteritems():
         ranker = rank_from_list(ops)
@@ -136,64 +145,24 @@ def polarizationSpace(P, generators, verbose=False, with_inert=False, use_antisy
     def extend_word(word, op):
         new_word = word + [ranker(op)]
         if use_commutativity and sorted(new_word) != new_word:
-            #print "rejected: %s"% new_word
             return None
-        #print new_word
         return new_word
-    # print operators
-    #########################
-    add_degree = add_degree_symmetric if use_symmetry else add_degree
-    F = Subspace(generators, operators=operators,
+    if use_symmetry:
+        add_degree = add_degree_symmetric
+    elif with_inert:
+        add_degree = add_degree_polarization
+    else:
+        add_degree = add_degree
+        
+    F = Subspace(generators, operators=operators_by_degree,
                  add_degrees=add_degree, degree=P.multidegree,
                  hilbert_parent = hilbert_parent,
                  extend_word=extend_word, verbose=verbose)
+    # Subspace n'a pas d'argument antisymmetries ?? 
     F._antisymmetries = antisymmetries
     return F
     
         
-def e(P, i):
-    return functools.partial(P.polarization, i1=i, i2=i+1, d=1)
-
-def f(P, i):
-    return functools.partial(P.polarization, i1=i+1, i2=i, d=1)
-    
-    
-def e_polarization_degrees(D1, D2):
-    """
-    Return the degree of an e-multipolarization operator from degree D1 to degree D2
-
-    EXAMPLES::
-
-        sage: e_polarization_degrees([5,0,0],[3,1,0])
-        (1, [2, 0])
-        sage: e_polarization_degrees([5,0,0],[3,1,0])
-        (1, [2, 0])
-        sage: e_polarization_degrees([5,0,0],[3,2,0])
-        sage: e_polarization_degrees([5,1,0],[3,2,0])
-        (1, [2, 0])
-        sage: e_polarization_degrees([5,4,0,1],[1,1,0,2])
-        (3, [4, 3, 0, 0])
-        sage: e_polarization_degrees([5,4,0,1,0,0],[1,1,0,2,0,0])
-        (3, [4, 3, 0, 0, 0, 0])
-        sage: e_polarization_degrees([5,4,0,1,0,0],[1,1,0,2,0,1])
-        sage: e_polarization_degrees([5,4,0,1,0,1],[1,1,0,2,0,0])
-
-
-    """
-    D = [D1i-D2i for D1i,D2i in zip(D1, D2)]
-    for i in reversed(range(len(D))):
-        if D[i] == -1:
-            break
-        if D[i] != 0:
-            return None
-    if i <= 0:
-        return None
-    D[i] = 0
-    if any(D[j] < 0 for j in range(i)):
-        return None
-    return i, D
-
-
 
 ####################################################
 # Polarization Operators
@@ -277,5 +246,44 @@ def polarization_operators_by_degree(P, side=None, use_symmetry=False, min_degre
             res[sum(d)] += op
     return res
 
+def e(P, i):
+    return functools.partial(P.polarization, i1=i, i2=i+1, d=1)
 
+def f(P, i):
+    return functools.partial(P.polarization, i1=i+1, i2=i, d=1)
+    
+def e_polarization_degrees(D1, D2):
+    """
+    Return the degree of an e-multipolarization operator from degree D1 to degree D2
+
+    EXAMPLES::
+
+        sage: e_polarization_degrees([5,0,0],[3,1,0])
+        (1, [2, 0])
+        sage: e_polarization_degrees([5,0,0],[3,1,0])
+        (1, [2, 0])
+        sage: e_polarization_degrees([5,0,0],[3,2,0])
+        sage: e_polarization_degrees([5,1,0],[3,2,0])
+        (1, [2, 0])
+        sage: e_polarization_degrees([5,4,0,1],[1,1,0,2])
+        (3, [4, 3, 0, 0])
+        sage: e_polarization_degrees([5,4,0,1,0,0],[1,1,0,2,0,0])
+        (3, [4, 3, 0, 0, 0, 0])
+        sage: e_polarization_degrees([5,4,0,1,0,0],[1,1,0,2,0,1])
+        sage: e_polarization_degrees([5,4,0,1,0,1],[1,1,0,2,0,0])
+
+
+    """
+    D = [D1i-D2i for D1i,D2i in zip(D1, D2)]
+    for i in reversed(range(len(D))):
+        if D[i] == -1:
+            break
+        if D[i] != 0:
+            return None
+    if i <= 0:
+        return None
+    D[i] = 0
+    if any(D[j] < 0 for j in range(i)):
+        return None
+    return i, D
 
