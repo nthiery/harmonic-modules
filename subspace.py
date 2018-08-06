@@ -283,7 +283,7 @@ class Subspace(object):
         if self._verbose is not False:
             self._bar.set_postfix({'dimension': self._stats['dimension'], 'zero': self._stats['zero']})
             self._bar.close()
-            #print "  dimension: %s  extensions: %s"%(self._stats["dimension"], self._stats["extend"])
+            # "  dimension: %s  extensions: %s"%q(self._stats["dimension"], self._stats["extend"])
 
 
 class HighestWeightSubspace(Subspace):

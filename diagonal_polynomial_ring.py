@@ -43,7 +43,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
     """
     def __init__(self, R, n, r, inert=0):
-        names = ["x%s%s"%(i,j) for i in range(r+inert) for j in range(n)]
+        names = ["x%s%s"%(i,j) for i in range(r) for j in range(n)]+["theta%s%s"%(i,j) for i in range(inert) for j in range(n)]
         P = PolynomialRing(R, n*(r+inert), names)
         self._n = n
         self._r = r
@@ -261,21 +261,25 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             x01
         """
         n = self._n
-        X = self.algebra_generators()
-        result = self.sum(X[i2,j]*p.derivative(X[i1,j],d)
-                          for j in range(n))
-        if use_symmetry and result:
-            d = self.multidegree(result)
-            if list(d) != sorted(d, reverse=True):
-                s = reverse_sorting_permutation(d)
-                ss = self.row_permutation(s)
-                result = act_on_polynomial(result, ss)
-        return result
+        X = self.variables()
+        if i1>=self._r or i2 >=self._r:
+            print "Row number out of range."
+            return None
+        else:
+            result = self.sum(X[i2,j]*p.derivative(X[i1,j],d)
+                              for j in range(n))
+            if use_symmetry and result:
+                d = self.multidegree(result)
+                if list(d) != sorted(d, reverse=True):
+                    s = reverse_sorting_permutation(d)
+                    ss = self.row_permutation(s)
+                    result = act_on_polynomial(result, ss)
+            return result
 
     @cached_method
     def derivative_input(self, D, j): 
         r = self._r
-        X = self.algebra_generators()
+        X = self.variables()
         res = []
         for i in range(r):
             res.extend([X[i,j],D[i]])
@@ -315,11 +319,14 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             6*x10*x11*x20
         """
         n = self._n
-        X = self.algebra_generators()
+        X = self.variables()
         D = tuple(D)
-        result = self.sum(X[i2,j]*p.derivative(*(self.derivative_input(D, j)))
-                          for j in range(n))
-        return result
+        if i2>=self._r:
+            return None
+        else:
+            result = self.sum(X[i2,j]*p.derivative(*(self.derivative_input(D, j)))
+                              for j in range(n))
+            return result
         
     def is_highest_weight_vector(self, p, _assert=False):
         for i2 in range(self._r):

@@ -423,8 +423,8 @@ class DerivativeVandermondeSpaceWithInert():
 
         """
         basis = self.basis(verbose=verbose)
-        result = []
-        for d in basis.iterkeys():
+        result = {}
+        for d,b in basis.iteritems():
             if nu in d:
-                result += basis[d]
+                result[d] = b
         return result

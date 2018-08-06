@@ -71,10 +71,7 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, use_an
     
     # Change of ring (one set on variables to multisets of variables)
     # To be able to use polarization
-    #for g in generators :
-    #    print g.parent()
-    #    g = P(g)
-    #    print g.parent()
+    new_generators = {d:[P(gen) for gen in g] for (d,g) in generators.iteritems()}
 
     if use_antisymmetry: #TODO fix this : antisymmetries are given at the begin or compute in this function ?
         # FIXME: duplicated logic for computing the
@@ -154,7 +151,7 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, use_an
     else:
         add_degree = add_degree
         
-    F = Subspace(generators, operators=operators_by_degree,
+    F = Subspace(new_generators, operators=operators_by_degree,
                  add_degrees=add_degree, degree=P.multidegree,
                  hilbert_parent = hilbert_parent,
                  extend_word=extend_word, verbose=verbose)
