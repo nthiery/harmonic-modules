@@ -1,3 +1,7 @@
+#######################################################
+# Classic caracters of the Vandermonde Determinant
+#######################################################
+
 def harmonic_character(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
         """
         Return the `GL_r` character of the space of diagonally harmonic polynomials
@@ -265,9 +269,9 @@ def bitruncate(f,d):
     return f.map_support_skip_none(lambda (mu,nu): (mu,nu) if mu.size() < d and nu.size() < d else None)
 
 
-###########################################################
-# Characters with inert variables
-###########################################################
+#########################################################################
+# Caracters of generalized version of Vandermonde with inert variables
+#########################################################################
 
         
 def character_with_inert(mu,parallel=True): 
