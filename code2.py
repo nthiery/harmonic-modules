@@ -271,8 +271,8 @@ class DiagonalPolynomialRingInert(DiagonalPolynomialRing):
                                     add_degrees=self.add_degree_isotyp, verbose=verbose)
         basis = F.basis()
         if use_antisymmetries:
+            pos = antisymmetries_of_tableau(mu)
             for d,B in basis.iteritems():
-                pos = antisymmetries_of_tableau(d[1])
                 res = [reduce_antisymmetric_normal(p,n,r,pos) for p in B]
                 basis[d] = res
         return basis
@@ -305,6 +305,7 @@ class DiagonalPolynomialRingInert(DiagonalPolynomialRing):
             basis_nu = basis_by_component(basis,nu)
             charac = 0
             S = Subspace(generators={d:B for d,B in basis_nu.iteritems()},operators=self.polarizators_by_degree())
+            print S.basis()
             for b in S.basis().values():
                 charac += sum(multipower(self.multidegree(p),self._Q.gens()) for p in b)
             return charac
