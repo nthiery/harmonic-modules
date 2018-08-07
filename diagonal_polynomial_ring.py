@@ -9,6 +9,8 @@ from sage.structure.sage_object import load
 
 from sage.parallel.decorate import parallel
 
+from sage.misc.misc_c import prod
+
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ

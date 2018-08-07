@@ -41,6 +41,9 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, use_an
 
     This is represented as a collection of subspaces corresponding
     to the row-multidegree (aka `GL_r` weight spaces).
+    
+    mu = partage avec lequel on travail
+    basis = depend de la composante isotypique (nu) dans laquelle on se trouve
 
     EXAMPLES::
 
@@ -92,7 +95,7 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, use_an
             return s(m.sum_of_terms([Partition(d), c]
                                      for d,c in dimensions.iteritems())
                     ).restrict_partition_lengths(r, exact=False)
-    ##### A TESTER #####
+    ##### A TESTER with_inert #####
     elif with_inert:
         def hilbert_parent(dimensions):
             return s.sum_of_terms([Partition(d), c] for d,c in dimension.iteritems())
@@ -131,7 +134,6 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, use_an
             d = sum([degree])
             operators_by_degree.setdefault(d,[])
             operators_by_degree[d].extend(ops)
-            
 
     ranks = {}
     for d, ops in operators_by_degree.iteritems():
