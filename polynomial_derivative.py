@@ -193,28 +193,28 @@ def string_matrix(d, l):
     return matrix(l, l, lambda i,j: fiej(i,j,d+2*j))
 
 """
+
 Consistency checks::
+    sage: P = DiagonalPolynomialRing(QQ,2,1) #not tested
+    sage: for mu in Partitions(2): #not tested
+    ....:     assert P.harmonic_space_by_shape(mu,use_lie='multipolarization').hilbert_polynomial() == harmonic_character(mu) #not tested
 
-    sage: P = DiagonalPolynomialRing(QQ,2,1)
-    sage: for mu in Partitions(2):
-    ....:     assert P.harmonic_space_by_shape(mu,use_lie='multipolarization').hilbert_polynomial() == harmonic_character(mu)
-
-    sage: P = DiagonalPolynomialRing(QQ,3,2)
-    sage: for mu in Partitions(3):
-    ....:     assert P.harmonic_space_by_shape(mu,use_lie='multipolarization').hilbert_polynomial() == harmonic_character(mu)
+    sage: P = DiagonalPolynomialRing(QQ,3,2) #not tested
+    sage: for mu in Partitions(3): #not tested
+    ....:     assert P.harmonic_space_by_shape(mu,use_lie='multipolarization').hilbert_polynomial() == harmonic_character(mu) #not tested
 
 This does not work yet::
 
-    sage: P = DiagonalPolynomialRing(QQ,4,3)
-    sage: for mu in Partitions(4):
-    ....:     assert P.harmonic_space_by_shape(mu,use_lie='multipolarization').hilbert_polynomial() == harmonic_character(mu)
+    sage: P = DiagonalPolynomialRing(QQ,4,3) #not tested
+    sage: for mu in Partitions(4): #not tested
+    ....:     assert P.harmonic_space_by_shape(mu,use_lie='multipolarization').hilbert_polynomial() == harmonic_character(mu) #not tested
     AssertionError
 
-    sage: mu
+    sage: mu #not tested
     [2, 1, 1]
-    sage: harmonic_character(mu)
+    sage: harmonic_character(mu) #not tested
     s[1, 1] + s[2, 1] + s[3] + s[3, 1] + s[4] + s[5]
-    sage: P.harmonic_space_by_shape(mu,use_lie='multipolarization').hilbert_polynomial()
+    sage: P.harmonic_space_by_shape(mu,use_lie='multipolarization').hilbert_polynomial() #not tested
     s[1, 1] + s[2, 1] + s[3] + s[4] + s[5]
 
 Somehow missing 3,1 by polarizing from 5???

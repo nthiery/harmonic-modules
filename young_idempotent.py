@@ -68,12 +68,31 @@ def apply_young_idempotent(p, t, use_antisymmetry=False):
 
 def act(sigma,v) :
     """
-    Return sigma(v).
+    Compute the action of the permutation sigma on the element v.
 
     INPUT:
 
-    - `sigma` -- a permutation
-    - `v` -- a polynomial
+        - `sigma` -- a permutation
+        - `v` -- a polynomial 
+        
+    EXAMPLES::
+    
+        sage: P = PolynomialRing(QQ,5,'x')
+        sage: X = P.gens()
+        sage: X
+        (x0, x1, x2, x3, x4)
+        sage: v = X[0]*X[1]+X[2]^2-X[4]
+        sage: v
+        x0*x1 + x2^2 - x4
+        sage: sigma = (2,1,3,4,5)
+        sage: act(sigma,v)
+        x0*x1 + x2^2 - x4
+        sage: sigma = (2,1,4,3,5)
+        sage: act(sigma,v)
+        x0*x1 + x3^2 - x4
+        sage: sigma = (3,1,2,4,5)
+        sage: act(sigma,v)
+        x1^2 + x0*x2 - x4
 
     """
 
@@ -87,14 +106,14 @@ def act(sigma,v) :
 
 def make_deriv_comp_young(x,mu):
     """
-        Return a function which corresponds to a partial derivative in `x`
-        composed with the young idempotent for the partition `mu`.
+    Return a function which corresponds to a partial derivative in `x`
+    composed with the young idempotent for the partition `mu`.
 
-        INPUT:
-            - `x` -- a variable for the derivation
-            - `mu` -- a partition
+    INPUT:
+        - `x` -- a variable for the derivation
+        - `mu` -- a partition
 
-        EXAMPLES::
+    EXAMPLES::
         sage: P = DiagonalPolynomialRing(QQ,3,3) # not tested
         sage: X = P.algebra_generators() # not tested
         sage: [make_deriv_comp_young(x,mu) for x in X[0] for mu in Partitions(3)] # not tested
