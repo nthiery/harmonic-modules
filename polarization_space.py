@@ -24,7 +24,7 @@ Variant::
 
 #TODO use_symmetry a implementer
 
-def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, use_antisymmetry=False, use_symmetry=False, use_lie=False, use_commutativity=False):
+def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisymmetries=None, use_symmetry=False, use_lie=False, use_commutativity=False):
     """
     TODO : Faire le tri dans la doc 
     
@@ -44,6 +44,9 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, use_an
     
     mu = partage avec lequel on travail
     basis = depend de la composante isotypique (nu) dans laquelle on se trouve
+    
+    FIXME: duplicated logic for computing the
+    antisymmetrization positions, given here and computing in apply_young_idempotent
 
     EXAMPLES::
 
@@ -75,13 +78,6 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, use_an
     # Change of ring (one set on variables to multisets of variables)
     # To be able to use polarization
     new_generators = {d:[P(gen) for gen in g] for (d,g) in generators.iteritems()}
-
-    if use_antisymmetry: #TODO fix this : antisymmetries are given at the begin or compute in this function ?
-        # FIXME: duplicated logic for computing the
-        # antisymmetrization positions, here and in apply_young_idempotent
-        antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
-    else:
-        antisymmetries = None
         
     if use_lie:
         # The hilbert series will be directly expressed in terms of the
@@ -113,7 +109,7 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, use_an
                                                           min_degree=1 if use_lie else 0)
         if use_lie == "euler+intersection":
             operators[P._grading_set.zero()] = [
-                functools.partial(lambda v,i: P.polarization(P.polarization(v, i+1,i, 1,antisymmetries=antisymmetries), i,i+1, 1,antisymmetries=antisymmetries), i=i)
+                functools.partial(lambda v,i: P.polarization(P.polarization(v, i+1, i, 1, antisymmetries=antisymmetries), i, i+1, 1, antisymmetries=antisymmetries), i=i)
                 for i in range(r-1)
                 ]
         elif use_lie == 'decompose':

@@ -1,11 +1,19 @@
-#######################################################
-# Classic caracters of the Vandermonde Determinant
-#######################################################
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-def harmonic_character(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
+from derivative_space import *
+from polarization_space import *
+
+##################################################
+# Harmonic characters
+##################################################
+
+
+def harmonic_character_comp(P, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
         """
         Return the `GL_r` character of the space of diagonally harmonic polynomials
         contributed by a given `S_n` irreducible representation.
+        (comp = compute)
 
         EXAMPLES::
 
@@ -14,9 +22,17 @@ def harmonic_character(self, mu, verbose=False, use_symmetry=False, use_antisymm
             s[2] + s[2, 1] + s[2, 2] + s[3] + s[3, 1] + s[4] + s[4, 1] + s[5] + s[6]
         """
         mu = Partition(mu)
-        F = self.harmonic_space_by_shape(mu, verbose=verbose,
-                                         use_symmetry=use_symmetry,
-                                         use_antisymmetry=use_antisymmetry,
+        n = P._n
+        r = P._r
+        if use_antisymmetry:
+            antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+        else:
+            antisymmetries = None
+        generators = [higher_specht(P, t, harmonic=True, use_antisymmetry=use_antisymmetry)
+                      for t in StandardTableaux(mu)]
+        F = polarizationSpace(P, mu, generators, verbose=verbose, 
+                                         antisymmetries=antisymmetries, 
+                                         use_symmetry=use_symmetry, 
                                          use_lie=use_lie,
                                          use_commutativity=use_commutativity)
         F.finalize()
@@ -31,16 +47,19 @@ def harmonic_character(self, mu, verbose=False, use_symmetry=False, use_antisymm
         # We compute the intersection with the highest weight space,
         # i.e. the joint kernel of the f operators of the lie algebra
         # which are the polarization operators of degree 0 with i_2 < i_1
-        operators = [functools.partial(self.polarization, i1=i1, i2=i2, d=1,
+        operators = [functools.partial(P.polarization, i1=i1, i2=i2, d=1,
                                        antisymmetries=F._antisymmetries)
-                     for i1 in range(1, self._r)
+                     for i1 in range(1, r)
                      for i2 in range(i1)]
+        # basis._basis ??? 
         return F._hilbert_parent({mu: len(annihilator_basis(basis._basis, operators, action=lambda b, op: op(b), ambient=self))
                                   for mu, basis in F._bases.iteritems() if basis._basis})
 
-def harmonic_bicharacter(self, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False):
+# function never used in another one later ? 
+def harmonic_bicharacter_comp(P, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False):
     """
     Return the `GL_r-S_n` character of the space of diagonally harmonic polynomials
+    (comp = compute)
 
     EXAMPLES::
 
@@ -53,7 +72,7 @@ def harmonic_bicharacter(self, verbose=False, use_symmetry=False, use_antisymmet
     def char(mu):
         if verbose:
             print "%s:"%s(mu)
-        r = tensor([self.harmonic_space_by_shape(mu, verbose=verbose,
+        r = tensor([harmonic_space_by_shape(P, mu, verbose=verbose,
                                                  use_symmetry=use_symmetry,
                                                  use_antisymmetry=use_antisymmetry,
                                                  use_lie=use_lie,
@@ -64,10 +83,6 @@ def harmonic_bicharacter(self, verbose=False, use_symmetry=False, use_antisymmet
     #char = parallel()(char)
     #return sum( res[1] for res in char(Partitions(self._n).list()) )
     return sum(char(mu) for mu in Partitions(self._n))
-
-##################################################
-# Harmonic characters
-##################################################
 
 def harmonic_character_plain(mu, verbose=False, parallel=False):
     import tqdm
@@ -83,7 +98,7 @@ def harmonic_character_plain(mu, verbose=False, parallel=False):
         progressbar = tqdm.tqdm(unit=" extensions", leave=True, desc="harmonic character for "+str(mu).ljust(mu.size()*3), position=mu.rank() if parallel else 1)
     else:
         progressbar = False
-    result = R.harmonic_character(mu, verbose=progressbar,
+    result = harmonic_character_comp(R, mu, verbose=progressbar,
                                   use_symmetry=True,
                                   use_lie=True,
                                   use_antisymmetry=True)
@@ -269,9 +284,9 @@ def bitruncate(f,d):
     return f.map_support_skip_none(lambda (mu,nu): (mu,nu) if mu.size() < d and nu.size() < d else None)
 
 
-#########################################################################
-# Caracters of generalized version of Vandermonde with inert variables
-#########################################################################
+###########################################################################
+# Caracters for generalized version of Vandermonde with inert variables
+###########################################################################
 
         
 def character_with_inert(mu,parallel=True): 
