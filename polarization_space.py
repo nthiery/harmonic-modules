@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from sage.combinat.sf.sf import SymmetricFunctions
+from sage.combinat.ranker import rank_from_list
+
 from diagonal_polynomial_ring import *
 from add_degree import *
-from derivative_space import * #probablement inutile
 
 """
 Potential user interface::
