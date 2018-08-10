@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import inspect
+import os
 import sage.misc.persist as persist
 
 class func_persist:

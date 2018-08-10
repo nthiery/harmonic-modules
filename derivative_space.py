@@ -304,8 +304,10 @@ class DerivativeVandermondeSpaceWithInert():
 
     def __init__(self, R, mu, inert=1, use_antisymmetry=True):
         self._R = R
+        #if not isinstance(mu,Diagram):
+            #self._mu = Diagram(mu)
         self._mu = mu
-        self._n = Diagram(mu).size()
+        self._n = mu.size()
         self._inert = inert
         self._use_antisymmetry = use_antisymmetry
         self._polRing = DiagonalPolynomialRing(R, self._n, 1, inert)
@@ -344,15 +346,15 @@ class DerivativeVandermondeSpaceWithInert():
         mu = self._mu
         X = self._polRing.variables()
         Theta = self._polRing.inert_variables()
-        if not isinstance(mu,Diagram):
-            mu = Diagram(mu)
+        #if not isinstance(mu,Diagram):
+            #mu = Diagram(mu)
         Delta = matrix([[x**i[1]*theta**i[0] for i in mu.cells()] for x,theta in zip(X[0],Theta[0])]).determinant()
         return Delta
 
     def dimension_vandermonde(self):
         mu = self._mu
-        if not isinstance(mu,Diagram):
-            mu = Diagram(mu)
+        #if not isinstance(mu,Diagram):
+            #mu = Diagram(mu)
         return sum([i[1] for i in mu.cells()])
             
     @cached_method
@@ -412,7 +414,7 @@ class DerivativeVandermondeSpaceWithInert():
                 basis[d] = res
         return basis
     
-    @parallel    
+    @cached_method    
     def basis_by_shape(self, nu, verbose=False):
         """
             EXAMPLES::

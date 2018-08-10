@@ -75,5 +75,5 @@ class Diagram() :
         c = self._c
         res = []
         for i in range(len(c)) :
-            res += [(j,i) for j in range(c[i])]
+            res += [(i,j) for j in range(c[i])]
         return res
