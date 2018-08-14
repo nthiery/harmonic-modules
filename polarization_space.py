@@ -243,44 +243,4 @@ def polarization_operators_by_degree(P, side=None, use_symmetry=False, min_degre
             res[sum(d)] += op
     return res
 
-def e(P, i):
-    return functools.partial(P.polarization, i1=i, i2=i+1, d=1)
-
-def f(P, i):
-    return functools.partial(P.polarization, i1=i+1, i2=i, d=1)
-    
-def e_polarization_degrees(D1, D2):
-    """
-    Return the degree of an e-multipolarization operator from degree D1 to degree D2
-
-    EXAMPLES::
-
-        sage: e_polarization_degrees([5,0,0],[3,1,0])
-        (1, [2, 0])
-        sage: e_polarization_degrees([5,0,0],[3,1,0])
-        (1, [2, 0])
-        sage: e_polarization_degrees([5,0,0],[3,2,0])
-        sage: e_polarization_degrees([5,1,0],[3,2,0])
-        (1, [2, 0])
-        sage: e_polarization_degrees([5,4,0,1],[1,1,0,2])
-        (3, [4, 3, 0, 0])
-        sage: e_polarization_degrees([5,4,0,1,0,0],[1,1,0,2,0,0])
-        (3, [4, 3, 0, 0, 0, 0])
-        sage: e_polarization_degrees([5,4,0,1,0,0],[1,1,0,2,0,1])
-        sage: e_polarization_degrees([5,4,0,1,0,1],[1,1,0,2,0,0])
-
-
-    """
-    D = [D1i-D2i for D1i,D2i in zip(D1, D2)]
-    for i in reversed(range(len(D))):
-        if D[i] == -1:
-            break
-        if D[i] != 0:
-            return None
-    if i <= 0:
-        return None
-    D[i] = 0
-    if any(D[j] < 0 for j in range(i)):
-        return None
-    return i, D
 

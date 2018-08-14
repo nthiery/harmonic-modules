@@ -306,8 +306,8 @@ class DerivativeVandermondeSpaceWithInert():
         self._R = R
         #if not isinstance(mu,Diagram):
             #self._mu = Diagram(mu)
-        self._mu = mu
-        self._n = mu.size()
+        self._mu = Partition(mu)
+        self._n = Partition(mu).size()
         self._inert = inert
         self._use_antisymmetry = use_antisymmetry
         self._polRing = DiagonalPolynomialRing(R, self._n, 1, inert)

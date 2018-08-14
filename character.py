@@ -309,7 +309,11 @@ def character_with_inert(mu, verbose=False, use_antisymmetry=False, parallel=Tru
     """
     n = mu.size()
     r = mu.size()-1
-    P = DiagonalPolynomialRing(QQ, n, r, inert=1)
+    if use_antisymmetry : 
+        antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+        P = DiagonalAntisymmetricPolynomialRing(QQ, n, r, inert=1, antisymmetries=antisymmetries)
+    else :
+        P = DiagonalPolynomialRing(QQ, n, r, inert=1)
     charac = character_plain(P, mu, inert=1, verbose=verbose, use_antisymmetry=use_antisymmetry, parallel=parallel)
     return character_schur(P, charac)
         
