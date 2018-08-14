@@ -7,7 +7,7 @@ from sage.groups.perm_gps.permgroup_element import PermutationGroupElement
 import sage.combinat.tableau
 from sage.combinat.tableau import StandardTableau, StandardTableaux
 
-cimport utilities
+import utilities
 #from utilities cimport diagonal_cmp
 #from utilities cimport diagonal_swap
 #from utilities cimport items_of_vector
