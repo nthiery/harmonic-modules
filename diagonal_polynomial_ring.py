@@ -8,7 +8,6 @@ from sage.structure.unique_representation import UniqueRepresentation
 from sage.structure.sage_object import load
 
 from sage.parallel.decorate import parallel
-
 from sage.misc.misc_c import prod
 
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
@@ -16,13 +15,16 @@ from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ
 from sage.categories.algebras import Algebras
 from sage.categories.cartesian_product import cartesian_product
+from sage.functions.other import binomial
+
 
 from funcpersist import *
 from diagram import *
 from subspace import *
 from young_idempotent import *
+from polynomial_derivative import *
 
-import antisymmetric_utilities
+from antisymmetric_utilities import *
 
 ##############################################################################
 # Polynomial ring with diagonal action
@@ -31,7 +33,8 @@ import antisymmetric_utilities
 class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     """
 
-    The ring of diagonal polynomials in n x r variables and n x k inert variables
+    The ring of diagonal polynomials in n x r variables and n x k inert variables.
+    In order to distinguish the inert variables among the others, they are named `theta_ij`
 
     EXAMPLES::
 
@@ -39,7 +42,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         sage: P
         Diagonal polynomial ring with 3 rows of 4 variables over Rational Field
 
-        sage: P = DiagonalPolynomialRing(QQ,4,3,inert=1)
+        sage: P = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
         sage: P
         Diagonal polynomial ring with 3 rows of 4 variables and 1 row(s) of inert variables over Rational Field
 
@@ -63,10 +66,10 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
     def _repr_(self):
         """
-            sage: DiagonalPolynomialRing(QQ, 5, 3) # indirect doctest
-            Diagonal polynomial ring with 3 rows of 5 variables over Rational Field
-            sage: DiagonalPolynomialRing(QQ,4,3,inert=1) # indirect doctest
-            Diagonal polynomial ring with 3 rows of 4 variables and 1 row(s) of inert variables over Rational Field
+        sage: DiagonalPolynomialRing(QQ, 5, 3) # indirect doctest
+        Diagonal polynomial ring with 3 rows of 5 variables over Rational Field
+        sage: DiagonalPolynomialRing(QQ, 4, 3, inert=1) # indirect doctest
+        Diagonal polynomial ring with 3 rows of 4 variables and 1 row(s) of inert variables over Rational Field
 
         """
         if self._inert == 0 :
@@ -76,74 +79,75 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
     def base_ring(self):
         """
-            sage: D = DiagonalPolynomialRing(QQ,4,3)
-            sage: D.base_ring()
-            Rational Field
+        sage: D = DiagonalPolynomialRing(QQ, 4, 3)
+        sage: D.base_ring()
+        Rational Field
 
         """
         return self._P.base_ring()
         
     def polynomial_ring(self):
         """
-            sage: D = DiagonalPolynomialRing(QQ,4,3,inert=1)
-            sage: D.polynomial_ring()
-            Multivariate Polynomial Ring in q0, q1, q2 over Rational Field
+        sage: D = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
+        sage: D.polynomial_ring()
+        Multivariate Polynomial Ring in q0, q1, q2 over Rational Field
 
         """
         return self._Q
 
     def algebra_generators(self):
         """
-            Return all the variables, the classic ones and the inert ones. 
+        Return all the variables including the inert variables.
+        
+        EXAMPLES ::
+        
+            sage: D = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
+            sage: D
+            Diagonal polynomial ring with 3 rows of 4 variables and 1 row(s) of inert variables over Rational Field
+            sage: D.algebra_generators()
+            [    x00     x01     x02     x03]
+            [    x10     x11     x12     x13]
+            [    x20     x21     x22     x23]
+            [theta00 theta01 theta02 theta03]
+
             
-            EXAMPLES ::
-            
-                sage: D = DiagonalPolynomialRing(QQ,4,3,inert=1)
-                sage: D
-                Diagonal polynomial ring with 3 rows of 4 variables and 1 row(s) of inert variables over Rational Field
-                sage: D.algebra_generators()
-                [x00 x01 x02 x03]
-                [x10 x11 x12 x13]
-                [x20 x21 x22 x23]
-                [x30 x31 x32 x33]
-                
-                sage: D = DiagonalPolynomialRing(QQ,4,3)
-                sage: D
-                Diagonal polynomial ring with 3 rows of 4 variables over Rational Field
-                sage: D.algebra_generators()
-                [x00 x01 x02 x03]
-                [x10 x11 x12 x13]
-                [x20 x21 x22 x23]
+            sage: D = DiagonalPolynomialRing(QQ, 4, 3)
+            sage: D
+            Diagonal polynomial ring with 3 rows of 4 variables over Rational Field
+            sage: D.algebra_generators()
+            [x00 x01 x02 x03]
+            [x10 x11 x12 x13]
+            [x20 x21 x22 x23]
 
         """
         return self._vars
 
     def variables(self):
         """
-            Return only the classic variables.
-            
-            EXAMPLES::
-                sage: DP = DiagonalPolynomialRing(QQ,3,3,inert=1)
-                sage: DP.variables()
-                [x00 x01 x02]
-                [x10 x11 x12]
-                [x20 x21 x22]
+        Return only the classic variables.
+        
+        EXAMPLES::
+            sage: DP = DiagonalPolynomialRing(QQ, 3, 3, inert=1)
+            sage: DP.variables()
+            [x00 x01 x02]
+            [x10 x11 x12]
+            [x20 x21 x22]
                 
         """
         return self._X
 
     def inert_variables(self):
         """
-            Return only the inert variables. 
+        Return only the inert variables. 
+        
+        EXAMPLES::
+            sage: DP = DiagonalPolynomialRing(QQ, 3, 3, inert=1)
+            sage: DP.inert_variables()
+            [theta00 theta01 theta02]
             
-            EXAMPLES::
-                sage: DP = DiagonalPolynomialRing(QQ,3,3,inert=1)
-                sage: DP.inert_variables()
-                [x30 x31 x32]
-
-                sage: DP = DiagonalPolynomialRing(QQ,3,3)
-                sage: DP.inert_variables()
-                'No inert variables'
+            sage: DP = DiagonalPolynomialRing(QQ, 3, 3)
+            sage: DP.inert_variables()
+            'No inert variables'
 
         """
         if self._inert != 0:
@@ -157,17 +161,23 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     def multidegree(self, p):
         """
         Return the multidegree of a multihomogeneous polynomial.
-        The inert variables are of degree 0.
+        The inert variables are of degree 0 so they don't appaer in the multidegree.
 
         EXAMPLES::
 
-            sage: P = DiagonalPolynomialRing(QQ,3,2)
+            sage: P = DiagonalPolynomialRing(QQ, 3, 2)
             sage: X = P.algebra_generators()
             sage: p = X[0,0]*X[0,1]^2 * X[1,0]^2*X[1,1]^3
             sage: P.multidegree(p)
             (3, 5)
             sage: P.multidegree(P.zero())
             -1
+            sage: P = DiagonalPolynomialRing(QQ, 3, 2, inert=1)
+            sage: X = P.algebra_generators()
+            sage: p = X[0,0]*X[0,1] * X[1,1]^3 * X[2,0]*X[2,1]^2 
+            sage: P.multidegree(p)
+            (2, 3)
+
         """
         if not p:
             return -1
@@ -179,27 +189,30 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     
     def multipower(self,d):
         """
-            Return the product of the terms $q_i^{d_i}$.
+        Return the product of the terms $q_i^{d_i}$.
+        
+        INPUT:
+            - `d` -- a multidegree
             
-            INPUT:
-                - `d` -- a multidegree
-                
-            EXAMPLES::
-                sage: P = DiagonalPolynomialRing(QQ,4,3,inert=1)
-                sage: d = [1, 0, 2]
-                sage: P.multipower(d)
-                q0*q2^2
+        EXAMPLES::
+            sage: P = DiagonalPolynomialRing(QQ,4,3,inert=1)
+            sage: d = [1, 0, 2]
+            sage: P.multipower(d)
+            q0*q2^2
 
-                sage: P = DiagonalPolynomialRing(QQ,4,4)
-                sage: d = [4,3,2,1]
-                sage: P.multipower(d)
-                q0^4*q1^3*q2^2*q3
+            sage: P = DiagonalPolynomialRing(QQ,4,4)
+            sage: d = [4,3,2,1]
+            sage: P.multipower(d)
+            q0^4*q1^3*q2^2*q3
 
         """
         q = self._Q.gens()
         return prod(q[i]**d[i] for i in range(0,len(q)))
 
-    def monomial(self, *args): 
+    def monomial(self, *args):
+        """
+        
+        """
         return self._P.monomial(*args)
     
     def random_monomial(self, D):
@@ -279,7 +292,10 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             return result
 
     @cached_method
-    def derivative_input(self, D, j): 
+    def derivative_input(self, D, j):
+        """
+        
+        """
         r = self._r
         X = self.variables()
         res = []
@@ -331,6 +347,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             return result
         
     def is_highest_weight_vector(self, p, _assert=False):
+        """
+        
+        """
         for i2 in range(self._r):
             for i1 in range(i2):
                 if self.polarization(p, i2, i1, 1):
@@ -341,6 +360,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         return True
 
     def test_highest_weight_vector(self, p):
+        """
+        
+        """
         self.is_highest_weight_vector(p, _assert=True)
 
     def highest_weight_vectors(self, p, i1=None, i2=None):
@@ -447,6 +469,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         return pjs
 
     def test_highest_weight_vectors(self, p, i1, i2):
+        """
+        
+        """
         e = functools.partial(self.polarization, i1=i1, i2=i2, d=1)
         f = functools.partial(self.polarization, i1=i2, i2=i1, d=1)
         pjs = list(self.highest_weight_vectors(p, i1, i2))
@@ -501,11 +526,12 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         """
         EXAMPLES::
 
+
             sage: R = DiagonalPolynomialRing(QQ, 3, 3)
             sage: R.inject_variables()
             Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
             sage: x00, x01, x02, x10, x11, x12, x20, x21, x22 = R._P.gens()
-            sage: e0 = R.e(0); e1 = R.e(1)
+            sage: e0 = e(R, 0); e1 = e(R, 1)
             sage: p = e1(e0(e0(3*x00^3))) + e0(e1(e0(x01*x02^2)))
             sage: R.highest_weight_vectors_decomposition(p)
             [[36*x00^3 + 6*x01*x02^2, [[0, 1], [1, 1], [0, 1]]]]
@@ -519,8 +545,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
         On a non trivial highest weight vector::
 
-            sage: f0 = R.f(0)
-            sage: f1 = R.f(1)
+            sage: f0 = f(R, 0)
+            sage: f1 = f(R, 1)
             sage: p = 891/2097152*x01^3*x02*x10 + 27/1048576*x00^2*x02^2*x10 - 81/16777216*x01*x02^3*x10 + 891/1048576*x00*x01^2*x02*x11 + 243/16777216*x00*x02^3*x11 - 2673/2097152*x00*x01^3*x12 - 27/1048576*x00^3*x02*x12 - 81/8388608*x00*x01*x02^2*x12
             sage: f0(p)
             0
@@ -535,13 +561,15 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
             sage: R = DiagonalPolynomialRing(QQ, 4, 3)
             sage: R.inject_variables()
-            Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
+            Defining x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23
+            sage: x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23 = R._P.gens()
             sage: p = 1/2*x02*x10*x20 - 1/2*x03*x10*x20 - 5/2*x02*x11*x20 + 5/2*x03*x11*x20 - 3/2*x00*x12*x20 - 1/2*x01*x12*x20 + 2*x02*x12*x20 + 3/2*x00*x13*x20 + 1/2*x01*x13*x20 - 2*x03*x13*x20 - 2*x02*x10*x21 + 2*x03*x10*x21 + 2*x00*x12*x21 - 2*x03*x12*x21 - 2*x00*x13*x21 + 2*x02*x13*x21 - 2*x00*x10*x22 + 1/2*x01*x10*x22 + 3/2*x02*x10*x22 + 5/2*x00*x11*x22 - 5/2*x03*x11*x22 - 1/2*x00*x12*x22 + 1/2*x03*x12*x22 - 1/2*x01*x13*x22 - 3/2*x02*x13*x22 + 2*x03*x13*x22 + 2*x00*x10*x23 - 1/2*x01*x10*x23 - 3/2*x03*x10*x23 - 5/2*x00*x11*x23 + 5/2*x02*x11*x23 + 1/2*x01*x12*x23 - 2*x02*x12*x23 + 3/2*x03*x12*x23 + 1/2*x00*x13*x23 - 1/2*x02*x13*x23
 
             sage: p = x02*x10*x20 - x00*x12*x20
             sage: R.multidegree(p)
             (1, 1, 1)
 
+            sage: q = x00*x02*x10 - x00^2*x12
             sage: q
             x00*x02*x10 - x00^2*x12
             sage: e0(e1(q))
@@ -558,6 +586,47 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         return result
 
 
+def e(P, i):
+    return functools.partial(P.polarization, i1=i, i2=i+1, d=1)
+
+def f(P, i):
+    return functools.partial(P.polarization, i1=i+1, i2=i, d=1)
+    
+def e_polarization_degrees(D1, D2):
+    """
+    Return the degree of an e-multipolarization operator from degree D1 to degree D2
+
+    EXAMPLES::
+
+        sage: e_polarization_degrees([5,0,0],[3,1,0])
+        (1, [2, 0, 0])
+        sage: e_polarization_degrees([5,0,0],[3,1,0])
+        (1, [2, 0, 0])
+        sage: e_polarization_degrees([5,0,0],[3,2,0])
+        sage: e_polarization_degrees([5,1,0],[3,2,0])
+        (1, [2, 0, 0])
+        sage: e_polarization_degrees([5,4,0,1],[1,1,0,2])
+        (3, [4, 3, 0, 0])
+        sage: e_polarization_degrees([5,4,0,1,0,0],[1,1,0,2,0,0])
+        (3, [4, 3, 0, 0, 0, 0])
+        sage: e_polarization_degrees([5,4,0,1,0,0],[1,1,0,2,0,1])
+        sage: e_polarization_degrees([5,4,0,1,0,1],[1,1,0,2,0,0])
+
+
+    """
+    D = [D1i-D2i for D1i,D2i in zip(D1, D2)]
+    for i in reversed(range(len(D))):
+        if D[i] == -1:
+            break
+        if D[i] != 0:
+            return None
+    if i <= 0:
+        return None
+    D[i] = 0
+    if any(D[j] < 0 for j in range(i)):
+        return None
+    return i, D
+
 
 ##############################################################################
 # Polynomial ring with diagonal action with antisymmetries
@@ -566,8 +635,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
     """
 
-    The ring of diagonal polynomials in n x r variables + n inert variables
-    with antisymmetries
+    The ring of diagonal antisymmetric polynomials in n x r variables 
+    and n x k inert variables.
 
     EXAMPLES::
 
@@ -578,10 +647,17 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
     """
     def __init__(self, R, n, r, inert=0, antisymmetries=None):
         DiagonalPolynomialRing.__init__(self, R, n, r, inert=inert)
-        self._antisymmetries = antisymmetries
+        if antisymmetries:
+            self._antisymmetries = [list(a) for a in antisymmetries]
+        else:
+            self._antisymmetries = None
 
     def _repr_(self):
         """
+        sage: DiagonalAntisymmetricPolynomialRing(QQ, 5, 3)
+        Diagonal antisymmetric polynomial ring with 3 rows of 5 variables over Rational Field
+        sage: DiagonalAntisymmetricPolynomialRing(QQ, 5, 3, inert=1)
+        Diagonal antisymmetric polynomial ring with 3 rows of 5 variables and 1 row(s) of inert variables over Rational Field
 
         """
         if self._inert == 0 :
@@ -590,19 +666,38 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
             return "Diagonal antisymmetric polynomial ring with %s rows of %s variables and %s row(s) of inert variables over %s"%(self._r, self._n, self._inert, self.base_ring())
 
     def polarization(self, p, i1, i2, d, use_symmetry=False):
-        #TODO : trouver exemples pertinents pour cette fonction 
         """
-            EXAMPLES::
-            
-                sage: P = DiagonalAntisymmetricPolynomialRing(QQ,4,3)
-                sage: X = P.algebra_generators()
-                sage: p = X[0,0]*X[1,0]^3*X[1,1]^1 + X[2,1]; p
-                x00*x10^3*x11 + x21
-                sage: P.polarization(p,0,1,1)
-                x10^4*x11
-                sage: P.polarization(p,1,0,1)
-                x00*x01*x10^3 + 3*x00^2*x10^2*x11
+        Return the polarization `P_{d,i_1,i_2}. p` of `p`. 
+        The result is reduced with respect to the given antisymmetries. 
+        
+        EXAMPLES::
+            sage: mu = Partition([3])
+            sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+            sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
+            sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
+            sage: x = P.variables()
+            sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+            sage: P.polarization(v, 0, 1, 1)
+            -2*x00*x01*x10 + x01^2*x10 + 2*x00*x02*x10 - x02^2*x10 - x00^2*x11 + 2*x00*x01*x11 - 2*x01*x02*x11 + x02^2*x11 + x00^2*x12 - x01^2*x12 - 2*x00*x02*x12 + 2*x01*x02*x12
 
+                        
+            sage: mu = Partition([2,1])
+            sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+            sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
+            sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
+            sage: x = P.variables()
+            sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+            sage: P.polarization(v, 0, 1, 1)
+            -4*x00*x01*x10 + 2*x01^2*x10 + 4*x00*x02*x10 - 2*x00^2*x11 + 4*x00*x01*x11 + 2*x00^2*x12
+
+            sage: mu = Partition([1,1,1])
+            sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+            sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
+            sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
+            sage: x = P.variables()
+            sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+            sage: P.polarization(v, 0, 1, 1)
+            -12*x00*x01*x10 - 6*x00^2*x11
 
         """
         antisymmetries = self._antisymmetries
@@ -611,9 +706,21 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
             result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
         return result
 
-    def multi_polarization(self, p, D, i2):
-        #TODO : trouver exemples pertinents pour cette fonction 
+    def multi_polarization(self, p, D, i2): 
         """
+        Return the multi polarization `P_{D,i_2}. p` of `p`.
+        The result is reduced with respect to the given antisymmetries.
+        
+        EXAMPLES::
+            sage: mu = Partition([2,1])
+            sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+            sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
+            sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
+            sage: x = P.variables()
+            sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+            sage: P.multi_polarization(v, [1,0,0], 1)
+            -4*x00*x01*x10 + 2*x01^2*x10 + 4*x00*x02*x10 - 2*x00^2*x11 + 4*x00*x01*x11 + 2*x00^2*x12
+
 
         """
         antisymmetries = self._antisymmetries
