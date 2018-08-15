@@ -26,41 +26,41 @@ cpdef diagonal_antisort(exponents, int n, int r, tuple positions_list):
 
     EXAMPLES::
 
-        sage: diagonal_antisort([2,1], 2, 1, [[0,1]])
+        sage: diagonal_antisort([2,1], 2, 1, ((0,1),))
         ((2, 1), 1)
-        sage: diagonal_antisort([1,2], 2, 1, [[0,1]])
+        sage: diagonal_antisort([1,2], 2, 1, ((0,1),))
         ((2, 1), -1)
-        sage: diagonal_antisort([2,2], 2, 1, [[0,1]])
+        sage: diagonal_antisort([2,2], 2, 1, ((0,1),))
 
-        sage: diagonal_antisort([1,2,3,4], 2, 2, [[0,1]])
+        sage: diagonal_antisort([1,2,3,4], 2, 2, ((0,1),))
         ((2, 1, 4, 3), -1)
-        sage: diagonal_antisort([1,2,4,3], 2, 2, [[0,1]])
+        sage: diagonal_antisort([1,2,4,3], 2, 2, ((0,1),))
         ((2, 1, 3, 4), -1)
-        sage: diagonal_antisort([2,1,4,3], 2, 2, [[0,1]])
+        sage: diagonal_antisort([2,1,4,3], 2, 2, ((0,1),))
         ((2, 1, 4, 3), 1)
-        sage: diagonal_antisort([2,1,3,4], 2, 2, [[0,1]])
+        sage: diagonal_antisort([2,1,3,4], 2, 2, ((0,1),))
         ((2, 1, 3, 4), 1)
 
-        sage: diagonal_antisort([1,2,3], 3, 1, [[0,1,2]])
+        sage: diagonal_antisort([1,2,3], 3, 1, ((0,1,2),))
         ((3, 2, 1), -1)
-        sage: diagonal_antisort([1,3,2], 3, 1, [[0,1,2]])
+        sage: diagonal_antisort([1,3,2], 3, 1, ((0,1,2),))
         ((3, 2, 1), 1)
-        sage: diagonal_antisort([3,2,1], 3, 1, [[0,1,2]])
+        sage: diagonal_antisort([3,2,1], 3, 1, ((0,1,2),))
         ((3, 2, 1), 1)
-        sage: diagonal_antisort([1,2,3,4,5,6], 6, 1, [[0,2,4]])
+        sage: diagonal_antisort([1,2,3,4,5,6], 6, 1, ((0,2,4),))
         ((5, 2, 3, 4, 1, 6), -1)
 
     With unsorted list of positions, the order is relative to the
     order of positions::
 
-        sage: diagonal_antisort([1,2,3], 3, 1, [[2,1,0]])
+        sage: diagonal_antisort([1,2,3], 3, 1, ((2,1,0),))
         ((1, 2, 3), 1)
-        sage: diagonal_antisort([3,2,1], 3, 1, [[2,1,0]])
+        sage: diagonal_antisort([3,2,1], 3, 1, ((2,1,0),))
         ((1, 2, 3), -1)
 
     Two lists of positions::
 
-        sage: diagonal_antisort([1,2,3,4,5,6], 6, 1, [[0,2,4],[1,3,5]])
+        sage: diagonal_antisort([1,2,3,4,5,6], 6, 1, ((0,2,4),(1,3,5)))
         ((5, 6, 3, 4, 1, 2), 1)
 
     """
@@ -93,11 +93,11 @@ cpdef is_diagonal_antisorted(exponents, int n, int r, tuple positions_list):
 
     EXAMPLES::
 
-        sage: is_diagonal_antisorted([2,1], 2, 1, [[0,1]])
+        sage: is_diagonal_antisorted([2,1], 2, 1, ((0,1),))
         True
-        sage: is_diagonal_antisorted([1,2], 2, 1, [[0,1]])
+        sage: is_diagonal_antisorted([1,2], 2, 1, ((0,1),))
         False
-        sage: is_diagonal_antisorted([1,2,3,4,5,6], 6, 1, [[0,2,4],[1,3,5]])
+        sage: is_diagonal_antisorted([1,2,3,4,5,6], 6, 1, ((0,2,4),(1,3,5)))
         False
 
 
@@ -144,18 +144,18 @@ def antisymmetric_normal(p, int n, int r, tuple positions):
 
     EXAMPLES::
 
-        sage: load("code.py")
+        sage: load("diagonal_polynomial_ring.py")
         sage: R = DiagonalPolynomialRing(QQ, 4, 2)
         sage: X = R.algebra_generators()
         sage: p = 2 * X[0,0]*X[0,3]^2*X[1,1]*X[1,0]^3 + X[1,3] + 3
-        sage: antisymmetric_normal(p, 4, 2, [[0,1,2,3]])
+        sage: antisymmetric_normal(p, 4, 2, ((0,1,2,3),))
         -2*x00^2*x01*x11^3*x12
 
     TODO: check the result
 
-        sage: antisymmetric_normal(p, 4, 2, [[0,1]])
+        sage: antisymmetric_normal(p, 4, 2, ((0,1),))
         2*x00*x03^2*x10^3*x11
-        sage: antisymmetric_normal(p, 4, 2, [[0,3]])
+        sage: antisymmetric_normal(p, 4, 2, ((0,3),))
         -2*x00^2*x03*x11*x13^3 - x10
 
     An example with a collision in the result (failed at some point)::
@@ -164,7 +164,7 @@ def antisymmetric_normal(p, int n, int r, tuple positions):
         sage: R._P.inject_variables()
         Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
         sage: p1 = -2*x10*x11*x20 - 2*x10^2*x21 + 2*x10*x11*x21
-        sage: antisymmetric_normal(p1, 3, 3, [[0,1,2]])
+        sage: antisymmetric_normal(p1, 3, 3, ((0,1,2),))
         -4*x10*x11*x20 - 2*x10^2*x21
 
 
@@ -194,14 +194,14 @@ def reduce_antisymmetric_normal(p, int n, int r, tuple positions):
 
     EXAMPLES::
 
-        sage: load("code.py")
+        sage: load("diagonal_polynomial_ring.py")
         sage: R = DiagonalPolynomialRing(QQ, 4, 2)
-        sage: X = R.algebra_generators()
-        sage: p = -2*x00^2*x01*x11^3*x12
-        sage: reduce_antisymmetric_normal(p,4,1,[[0,1,2,3]])
+        sage: x = R.algebra_generators()
+        sage: p = -2*x[0,0]^2*x[0,1]*x[1,1]^3*x[1,2]
+        sage: reduce_antisymmetric_normal(p,4,1,((0,1,2,3),))
         -2*x00^2*x01*x11^3*x12
-        sage: p = -2*x00^2*x01*x11^3*x12-2*x00^2*x01*x11^3*x12
-        sage: reduce_antisymmetric_normal(p,4,1,[[0,1,2,3]])
+        sage: p = -2*x[0,0]^2*x[0,1]*x[1,1]^3*x[1,2]-2*x[0,0]^2*x[0,1]*x[1,1]^3*x[1,2]
+        sage: reduce_antisymmetric_normal(p,4,1,((0,1,2,3),))
         -4*x00^2*x01*x11^3*x12
 
     """
