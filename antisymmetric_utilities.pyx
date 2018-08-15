@@ -12,7 +12,7 @@ import utilities
 #from utilities cimport diagonal_swap
 #from utilities cimport items_of_vector
 
-cpdef diagonal_antisort(exponents, int n, int r, list positions_list):
+cpdef diagonal_antisort(exponents, int n, int r, tuple positions_list):
     """
     Sort columns decreasingly at the given positions.
 
@@ -22,7 +22,7 @@ cpdef diagonal_antisort(exponents, int n, int r, list positions_list):
 
     - ``exponents `` -- a list, seen as an `r\times n` array
     - ``r``, ``n`` -- nonnegative integers
-    - ``positions_list`` -- a list of lists of all distinct column indices
+    - ``positions_list`` -- a tuple of tuples of all distinct column indices
 
     EXAMPLES::
 
@@ -66,7 +66,7 @@ cpdef diagonal_antisort(exponents, int n, int r, list positions_list):
     """
     cdef int sign = 1
     cdef int i, j
-    cdef list positions
+    cdef tuple positions
     cdef list _exponents = list(exponents)
     for positions in positions_list:
         for i in range(1, len(positions)):
@@ -81,7 +81,7 @@ cpdef diagonal_antisort(exponents, int n, int r, list positions_list):
                     continue
     return ETuple(_exponents), sign
     
-cpdef is_diagonal_antisorted(exponents, int n, int r, list positions_list):
+cpdef is_diagonal_antisorted(exponents, int n, int r, tuple positions_list):
     """
     Return True if the columns are decreasingly sorted according to positions.
 
@@ -89,7 +89,7 @@ cpdef is_diagonal_antisorted(exponents, int n, int r, list positions_list):
 
     - ``exponents `` -- a list, seen as an `r\times n` array
     - ``r``, ``n`` -- nonnegative integers
-    - ``positions_list`` -- a list of list of positions
+    - ``positions_list`` -- a tuple of tuples of positions
 
     EXAMPLES::
 
@@ -103,7 +103,7 @@ cpdef is_diagonal_antisorted(exponents, int n, int r, list positions_list):
 
     """
     cdef int i, j
-    cdef list positions
+    cdef tuple positions
     cdef list _exponents = list(exponents)
     for positions in positions_list:
         for i in range(1, len(positions)):
@@ -115,7 +115,7 @@ cpdef is_diagonal_antisorted(exponents, int n, int r, list positions_list):
                     continue
     return True
 
-def antisymmetric_normal(p, int n, int r, list positions):
+def antisymmetric_normal(p, int n, int r, tuple positions):
     """
     Return the `I` antisymmetric normal form of `b_I(p)`.
 
@@ -123,7 +123,7 @@ def antisymmetric_normal(p, int n, int r, list positions):
 
     - `p` -- a polynomial in `r` sets of `n` variables
     - `r`, `n` -- nonnegative integers
-    - `positions` -- a list of lists of all distinct column indices `(I_i)_i`
+    - `positions` -- a tuple of tuples of all distinct column indices `(I_i)_i`
 
     Let `W:=\bigtimes_i S(I_i)` be the direct product of the symmetric
     groups of each `I_i`, seen as acting by permutation of the columns
@@ -181,7 +181,7 @@ def antisymmetric_normal(p, int n, int r, list positions):
             d[exponent] += sign*c
     return R(d)
 
-def reduce_antisymmetric_normal(p, int n, int r, list positions):
+def reduce_antisymmetric_normal(p, int n, int r, tuple positions):
     
     """
     Return the terms of `p` which are antisymmetric normal. 
@@ -190,7 +190,7 @@ def reduce_antisymmetric_normal(p, int n, int r, list positions):
 
     - ``p`` -- a polynomial
     - ``r``, ``n`` -- nonnegative integers
-    - ``positions_list`` -- a list of list of positions
+    - ``positions`` -- a tuple of tuple of positions
 
     EXAMPLES::
 
@@ -218,7 +218,7 @@ def reduce_antisymmetric_normal(p, int n, int r, list positions):
 def antisymmetries_of_tableau(Q):
     if not isinstance(Q,StandardTableau) :
         Q = Partition(Q).initial_tableau()
-    return [[i-1 for i in column] for column in Q.conjugate()]
+    return tuple(tuple(i-1 for i in column) for column in Q.conjugate())
     
     
 def row_permutation(n, sigma):
