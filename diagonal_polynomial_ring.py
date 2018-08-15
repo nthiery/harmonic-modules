@@ -161,7 +161,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     def multidegree(self, p):
         """
         Return the multidegree of a multihomogeneous polynomial.
-        The inert variables are of degree 0 so they don't appaer in the multidegree.
+        The inert variables are of degree 0 so they don't appear in the multidegree.
 
         EXAMPLES::
 

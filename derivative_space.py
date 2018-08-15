@@ -37,6 +37,7 @@ class DerivativeHarmonicSpace():
             self._antisymmetries = antisymmetries_of_tableau(Partition([n]).initial_tableau())
             self._polRing = DiagonalAntisymmetricPolynomialRing(R, n, 1, antisymmetries=self._antisymmetries)
         else : 
+            
             self._antisymmetries = None
             self._polRing = DiagonalPolynomialRing(R, n, 1)
             
