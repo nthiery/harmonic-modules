@@ -116,19 +116,19 @@ def make_deriv_comp_young(x,mu):
         - `mu` -- a partition
 
     EXAMPLES::
-        sage: P = DiagonalPolynomialRing(QQ,3,3) # not tested
-        sage: X = P.algebra_generators() # not tested
-        sage: [make_deriv_comp_young(x,mu) for x in X[0] for mu in Partitions(3)] # not tested
-
-        [<function f at 0x7f7f64111f50>,
-         <function f at 0x7f7f64111140>,
-         <function f at 0x7f7f64111938>,
-         <function f at 0x7f7f64111320>,
-         <function f at 0x7f7f64111398>,
-         <function f at 0x7f7f641115f0>,
-         <function f at 0x7f7f641155f0>,
-         <function f at 0x7f7f64115668>,
-         <function f at 0x7f7f64115578>]
+        sage: load("diagonal_polynomial_ring.py")
+        sage: P = DiagonalPolynomialRing(QQ,3,3)
+        sage: X = P.algebra_generators()
+        sage: [make_deriv_comp_young(x,mu) for x in X[0] for mu in Partitions(3)] 
+        [<function f at ...>,
+         <function f at ...>,
+         <function f at ...>,
+         <function f at ...>,
+         <function f at ...>,
+         <function f at ...>,
+         <function f at ...>,
+         <function f at ...>,
+         <function f at ...>]
 
     """
     def f(p):
