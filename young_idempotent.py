@@ -6,6 +6,8 @@ from sage.combinat.permutation import Permutation
 
 from sage.calculus.functional import derivative
 
+from antisymmetric_utilities import *
+
 
 ##############################################################################
 # Young idempotent and related functions
