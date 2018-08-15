@@ -647,10 +647,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
     """
     def __init__(self, R, n, r, inert=0, antisymmetries=None):
         DiagonalPolynomialRing.__init__(self, R, n, r, inert=inert)
-        if antisymmetries:
-            self._antisymmetries = [list(a) for a in antisymmetries]
-        else:
-            self._antisymmetries = None
+        self._antisymmetries = antisymmetries
 
     def _repr_(self):
         """
@@ -673,7 +670,6 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         EXAMPLES::
             sage: mu = Partition([3])
             sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
-            sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
             sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
             sage: x = P.variables()
             sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
