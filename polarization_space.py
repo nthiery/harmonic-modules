@@ -10,14 +10,15 @@ from add_degree import *
 """
 Potential user interface::
 
-    sage: P = ...
-    sage: generators = ...(mu, nu, ...)
-    sage: space = polarizationSpace(P, generators)
-    sage: space.character()  # the GL_n character
+    sage: P = ... #not tested
+    sage: generators = ...(mu, nu, ...) #not tested
+    sage: space = polarizationSpace(P, generators) #not tested
+    sage: space.character()  # the GL_n character #not tested
 
 Variant::
 
-    sage: polarization_character(P, generators)  # Qui en interne appelle polarization_space
+    sage: polarization_character(P, generators)  #not tested
+    # Qui en interne appelle polarization_space
 """
 
 ####################################################
@@ -28,50 +29,60 @@ Variant::
 
 def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisymmetries=None, use_symmetry=False, use_lie=False, use_commutativity=False):
     """
-    TODO : Faire le tri dans la doc 
-    
     Starting from  polynomials (=generators) in the mu-isotypic component 
     of the polynomial ring in one set of variables (possibly with 
     additional inert variables), construct the space obtained by polarization.
-
-    P: a diagonal polynomial ring (or assymmetric version)
-    generators: polynomials in one set of variables (+inert) in the image of b_mu
-
-    Return the projection under the Young idempotent for the
-    partition / tableau `mu` of the space of diagonal harmonic
-    polynomials.
-
-    This is represented as a collection of subspaces corresponding
-    to the row-multidegree (aka `GL_r` weight spaces).
     
-    mu = partage avec lequel on travail
-    basis = depend de la composante isotypique (nu) dans laquelle on se trouve
+    INPUT:
+    
+        - `P` -- a diagonal polynomial ring (or assymmetric version)
+        - `mu` -- a partition corresponding to the isotypic component `b_mu`
+        - `generators`: polynomials in one set of variables 
+            (and possibly inert varaibles) in the image of `b_mu`  
+            
+    OUTPUT: `F`  -- a Subspace
     
     FIXME: duplicated logic for computing the
     antisymmetrization positions, given here and computing in apply_young_idempotent
 
     EXAMPLES::
+        sage: load("derivative_space.py")
+        sage: P = DiagonalPolynomialRing(QQ, 3, 2, inert=1)
+        sage: mu = Partition([3])
+        sage: generators = DerivativeVandermondeSpaceWithInert(QQ, mu).basis_by_shape(Partition([2,1]))
+        sage: generators
+        {(1, [2, 1]): [x00 - x02],
+         (2, [2, 1]): [x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2]}
+        sage: S = polarizationSpace(P, mu, generators, with_inert=True)
+        sage: S.basis()
+        {(1, [2, 1]): (x00 - x02, x10 - x12),
+         (2, [2, 1]): (-1/2*x00^2 + x00*x01 - x01*x02 + 1/2*x02^2,
+          x00*x10 - x01*x10 - x00*x11 + x02*x11 + x01*x12 - x02*x12,
+          1/2*x10^2 - x10*x11 + x11*x12 - 1/2*x12^2)}
+        sage: generators = DerivativeVandermondeSpaceWithInert(QQ, mu).basis_by_shape(Partition([1,1,1]))
+        sage: generators
+        {(3,
+          [1, 1, 1]): [-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2]}
+        sage: S = polarizationSpace(P, mu, generators, with_inert=True)
+        sage: S.basis()
+        {(2, [1, 1, 1]): (-x01*x10 + x02*x10 + x00*x11 - x02*x11 - x00*x12 + x01*x12,),
+         (3,
+          [1, 1, 1]): (x00^2*x01 - x00*x01^2 - x00^2*x02 + x01^2*x02 + x00*x02^2 - x01*x02^2, -x00*x01*x10 + 1/2*x01^2*x10 + x00*x02*x10 - 1/2*x02^2*x10 - 1/2*x00^2*x11 + x00*x01*x11 - x01*x02*x11 + 1/2*x02^2*x11 + 1/2*x00^2*x12 - 1/2*x01^2*x12 - x00*x02*x12 + x01*x02*x12, -1/2*x01*x10^2 + 1/2*x02*x10^2 - x00*x10*x11 + x01*x10*x11 + 1/2*x00*x11^2 - 1/2*x02*x11^2 + x00*x10*x12 - x02*x10*x12 - x01*x11*x12 + x02*x11*x12 - 1/2*x00*x12^2 + 1/2*x01*x12^2, x10^2*x11 - x10*x11^2 - x10^2*x12 + x11^2*x12 + x10*x12^2 - x11*x12^2)}
 
-        sage: P = DiagonalPolynomialRing(QQ,4,2)
-        sage: F = P.harmonic_space_by_shape([1,1,1,1])
-        sage: F.hilbert_polynomial()
-        s[3, 1] + s[4, 1] + s[6]
+        sage: mu = Partition([2,1])
+        sage: generators = DerivativeVandermondeSpaceWithInert(QQ, mu).basis_by_shape(Partition([2,1]))
+        sage: generators
+        {(0, [2, 1]): [-theta00 + theta02]}
+        sage: S = polarizationSpace(P, mu, generators, with_inert=True)
+        sage: S.basis()
+        {(0, [2, 1]): (theta00 - theta02,)}
+        
+    TODO:: add exemples for harmonics with no inert variables
+           there may be some bugs to correct
 
-        sage: P = DiagonalPolynomialRing(QQ,3,2)
-        sage: F = P.harmonic_space_by_shape([1,1,1])
-        sage: F.hilbert_polynomial()
-        s[1, 1] + s[3]
-
-        sage: P = DiagonalPolynomialRing(QQ,3,2)
-        sage: F = P.harmonic_space_by_shape([1,1,1])
-        sage: F.hilbert_polynomial()
-        s[1, 1] + s[3]
-
-        sage: P = DiagonalPolynomialRing(QQ,5,2)
-        sage: F = P.harmonic_space_by_shape(Partition([3,2]),use_lie='multipolarization', verbose=True)
-    
     """
-    mu = Partition(mu) # necessaire ??? Oui si calcul des antisymetries ici
+    # FIXME mu is useless for now, usefull only if antisymmetries computed here
+    mu = Partition(mu)
     r = P._r
     S = SymmetricFunctions(ZZ)
     s = S.s()
@@ -79,7 +90,10 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
     
     # Change of ring (one set on variables to multisets of variables)
     # To be able to use polarization
-    new_generators = {d:[P(gen) for gen in g] for (d,g) in generators.iteritems()}
+    if isinstance(generators, dict):
+        new_generators = {d:[P(gen) for gen in g] for (d,g) in generators.iteritems()}
+    else:
+        return "generators should be a dictonnary."
         
     if use_lie:
         # The hilbert series will be directly expressed in terms of the
@@ -93,15 +107,13 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
             return s(m.sum_of_terms([Partition(d), c]
                                      for d,c in dimensions.iteritems())
                     ).restrict_partition_lengths(r, exact=False)
-    ##### A TESTER with_inert #####
     elif with_inert:
         def hilbert_parent(dimensions):
-            return s.sum_of_terms([Partition(d), c] for d,c in dimension.iteritems())
+            return s.sum_of_terms([Partition(d), c] for c,d in dimensions.iterkeys())
     else:
         def hilbert_parent(dimensions):
             return s(S.from_polynomial(P._hilbert_parent(dimensions))
                     ).restrict_partition_lengths(r,exact=False)
-
 
     if with_inert:
         operators_by_degree = polarization_operators_by_degree(P, use_symmetry=use_symmetry)
@@ -154,8 +166,7 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
     F = Subspace(new_generators, operators=operators_by_degree,
                  add_degrees=add_degree, degree=P.multidegree,
                  hilbert_parent = hilbert_parent,
-                 extend_word=extend_word, verbose=verbose)
-    # Subspace n'a pas d'argument antisymmetries ?? 
+                 extend_word=extend_word, verbose=verbose) 
     F._antisymmetries = antisymmetries
     return F
     
@@ -166,7 +177,8 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
 ####################################################
 def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, min_degree=0):
     """
-    Return the collection of polarization operators acting on harmonic polynomials
+    Return the collection of polarization operators acting on harmonic polynomials,
+    indexed by multi-degree.
 
     INPUT:
 
@@ -182,7 +194,7 @@ def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, min_
     EXAMPLES::
 
         sage: P = DiagonalPolynomialRing(QQ, 4, 2)
-        sage: ops = polarization_operators_by_degree(P); ops
+        sage: ops = polarization_operators_by_multidegree(P); ops
         {(-1, 1): [<functools.partial object at ...>],
          (1, -1): [<functools.partial object at ...>],
          (-2, 1): [<functools.partial object at ...>],
@@ -190,13 +202,13 @@ def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, min_
          (1, -3): [<functools.partial object at ...>],
          (1, -2): [<functools.partial object at ...>]}
 
-        sage: polarization_operators_by_degree(P, side="down")
+        sage: polarization_operators_by_multidegree(P, side="down")
         {(-3, 1): [<functools.partial object at ...>],
          (-1, 1): [<functools.partial object at ...>],
          (-2, 1): [<functools.partial object at ...>]}
 
         sage: P = DiagonalPolynomialRing(QQ, 3, 3)
-        sage: polarization_operators_by_degree(P, side="down")
+        sage: polarization_operators_by_multidegree(P, side="down")
         {(-1, 1, 0): [<functools.partial object at ...>],
          (-2, 1, 0): [<functools.partial object at ...>],
          (-2, 0, 1): [<functools.partial object at ...>],
@@ -204,7 +216,7 @@ def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, min_
          (-1, 0, 1): [<functools.partial object at ...>],
          (0, -1, 1): [<functools.partial object at ...>]}
 
-        sage: polarization_operators_by_degree(P, use_lie=True) # not tested (features disabled)
+        sage: polarization_operators_by_multidegree(P, use_lie=True) # not tested (features disabled)
         {(-2, 1, 0): [<functools.partial object at ...>],
          (-2, 0, 1): [<functools.partial object at ...>],
          (0, 1, -1): [<functools.partial object at ...>],
@@ -212,7 +224,7 @@ def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, min_
          (1, -1, 0): [<functools.partial object at ...>]}
 
         sage: P = DiagonalPolynomialRing(QQ, 4, 3)
-        sage: ops = polarization_operators_by_degree(P)
+        sage: ops = polarization_operators_by_multidegree(P)
         sage: X = P.algebra_generators()
         sage: p = X[0,0]*X[1,0]^3*X[1,1]^1 + X[2,1]; p
         x00*x10^3*x11 + x21
@@ -234,6 +246,34 @@ def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, min_
            }
 
 def polarization_operators_by_degree(P, side=None, use_symmetry=False, min_degree=0):
+    """
+    Return the collection of polarization operators acting on harmonic polynomials,
+    indexed by multi-degree.
+    
+    INPUT:
+
+    - ``P`` -- a diagonal polynomial ring or a diagonal antisymmetric polynomial ring
+    - ``side`` -- 'down'
+    - ``min_degree`` -- a non negative integer `d` (default: `0`)
+    
+    If ``side`` is `down` (the only implemented choice), only
+    the operators from `X_{i1}` to `X_{i2}` for `i1<i2` are returned.
+    
+    EXAMPLES::
+        sage: P = DiagonalPolynomialRing(QQ, 4, 2)
+        sage: ops = polarization_operators_by_degree(P); ops
+        {-2: [<functools.partial object at ...>,
+          <functools.partial object at ...>],
+         -1: [<functools.partial object at ...>,
+          <functools.partial object at ...>],
+         0: [<functools.partial object at ...>,
+          <functools.partial object at ...>]}
+        sage: polarization_operators_by_degree(P, side="down")
+        {-2: [<functools.partial object at ...>],
+         -1: [<functools.partial object at ...>],
+         0: [<functools.partial object at ...>]}
+
+    """
     pol = polarization_operators_by_multidegree(P, side=side, use_symmetry=use_symmetry, min_degree=min_degree)
     res = {}
     for d,op in pol.iteritems():
