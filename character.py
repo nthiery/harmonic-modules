@@ -122,6 +122,7 @@ harmonic_character_plain = func_persist(harmonic_character_plain,
                                         hash=harmonic_character_plain_hash,
                                         key= harmonic_character_plain_key)
 
+# Est-ce qu'il faut garder ça dans le code ? 
 """
 Migrating persistent database from previous format::
 

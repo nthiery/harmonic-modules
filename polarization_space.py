@@ -175,7 +175,7 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
 ####################################################
 # Polarization Operators
 ####################################################
-def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, min_degree=0):
+def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, use_lie=False, min_degree=0):
     """
     Return the collection of polarization operators acting on harmonic polynomials,
     indexed by multi-degree.
@@ -241,11 +241,11 @@ def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, min_
             for d in range(min_degree+1, n)
             for i1 in range(0,r)
             for i2 in range(0, r)
-            #if ((i1==i2+1 if d==1 else i1<i2) if use_lie else i1<i2 if side == 'down' else i1!=i2)
+            if ((i1==i2+1 if d==1 else i1<i2) if use_lie else i1<i2 if side == 'down' else i1!=i2)
             if (i1<i2 if side == 'down' else i1!=i2)
            }
 
-def polarization_operators_by_degree(P, side=None, use_symmetry=False, min_degree=0):
+def polarization_operators_by_degree(P, side=None, use_symmetry=False, use_lie=False, min_degree=0):
     """
     Return the collection of polarization operators acting on harmonic polynomials,
     indexed by multi-degree.
@@ -274,7 +274,10 @@ def polarization_operators_by_degree(P, side=None, use_symmetry=False, min_degre
          0: [<functools.partial object at ...>]}
 
     """
-    pol = polarization_operators_by_multidegree(P, side=side, use_symmetry=use_symmetry, min_degree=min_degree)
+    pol = polarization_operators_by_multidegree(P, side=side, 
+                                                use_symmetry=use_symmetry, 
+                                                use_lie=use_lie, 
+                                                min_degree=min_degree)
     res = {}
     for d,op in pol.iteritems():
         if sum(d) not in res.keys():

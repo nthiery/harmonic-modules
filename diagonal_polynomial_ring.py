@@ -116,7 +116,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             [    x10     x11     x12     x13]
             [    x20     x21     x22     x23]
             [theta00 theta01 theta02 theta03]
-
             
             sage: D = DiagonalPolynomialRing(QQ, 4, 3)
             sage: D
@@ -532,8 +531,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     def highest_weight_vectors_decomposition(self, p):
         """
         EXAMPLES::
-
-
+        
             sage: R = DiagonalPolynomialRing(QQ, 3, 3)
             sage: R.inject_variables()
             Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
@@ -701,7 +699,6 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
             sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
             sage: P.polarization(v, 0, 1, 1)
             -12*x00*x01*x10 - 6*x00^2*x11
-
         """
         antisymmetries = self._antisymmetries
         result = super(DiagonalAntisymmetricPolynomialRing,self).polarization(p,i1,i2,d,use_symmetry=use_symmetry)
@@ -723,8 +720,6 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
             sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
             sage: P.multi_polarization(v, [1,0,0], 1)
             -4*x00*x01*x10 + 2*x01^2*x10 + 4*x00*x02*x10 - 2*x00^2*x11 + 4*x00*x01*x11 + 2*x00^2*x12
-
-
         """
         antisymmetries = self._antisymmetries
         result = super(DiagonalAntisymmetricPolynomialRing,self).multi_polarization(p,D,i2)

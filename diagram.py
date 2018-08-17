@@ -3,6 +3,8 @@
 
 from sage.combinat.composition import Composition
 
+## Pas encore utilisé : doit être corrigé d'abord
+
 
 #######################
 # Diagrams
