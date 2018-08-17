@@ -91,9 +91,16 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         sage: D = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
         sage: D.polynomial_ring()
         Multivariate Polynomial Ring in q0, q1, q2 over Rational Field
-
         """
         return self._Q
+        
+    def gens(self):
+        """
+        sage: D = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
+        sage: D.gens()
+        (q0, q1, q2)
+        """
+        return self.polynomial_ring().gens()
 
     def algebra_generators(self):
         """

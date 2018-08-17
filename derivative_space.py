@@ -3,6 +3,7 @@
 
 from sage.parallel.decorate import parallel
 from sage.combinat.ranker import rank_from_list
+from sage.combinat.sf.sf import SymmetricFunctions
 
 from utilities import index_filling
 from antisymmetric_utilities import *
