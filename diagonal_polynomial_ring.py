@@ -16,6 +16,7 @@ from sage.rings.rational_field import QQ
 from sage.categories.algebras import Algebras
 from sage.categories.cartesian_product import cartesian_product
 from sage.functions.other import binomial
+from sage.combinat.words.word import Word
 
 
 from funcpersist import *
@@ -24,6 +25,7 @@ from subspace import *
 from young_idempotent import *
 from polynomial_derivative import *
 
+from utilities import *
 from antisymmetric_utilities import *
 
 ##############################################################################
@@ -254,6 +256,30 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         K = self.base_ring()
         return sum(K.random_element() * self.random_monomial(D)
                    for i in range(l))
+                
+    def row_permutation(self, sigma):
+        """
+        Return the permutation of the variables induced by a permutation of the rows
+
+        INPUT:
+
+        - ``sigma`` -- a permutation of the rows, as a permutation of `\{1,\ldots,r\}`
+
+        OUTPUT:
+
+        a permutation of the variables, as a permutation of `\{1,\ldots,nr\}`
+
+        EXAMPLES::
+
+            sage: s = PermutationGroupElement([(1,2,4),(3,5)])
+            sage: P = DiagonalPolynomialRing(QQ,3,5)
+            sage: P.row_permutation(s)
+            (1,4,10)(2,5,11)(3,6,12)(7,13)(8,14)(9,15)
+        """
+        n = self._n
+        return PermutationGroupElement([tuple((i-1)*n + 1 + j for i in c)
+                                        for c in sigma.cycle_tuples()
+                                        for j in range(n) ])
 
     def polarization(self, p, i1, i2, d, use_symmetry=False):
         """
@@ -272,8 +298,11 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
             sage: P.polarization(p, 1, 2, 2)
             6*x00*x10*x11*x20
+            
             sage: P.polarization(p, 1, 2, 1)
             3*x00*x10^2*x11*x20 + x00*x10^3*x21
+            sage: D.polarization(p, 1, 2, 1, use_symmetry=True)
+            3*x00^2*x01*x10*x20 + x00^3*x10*x21
 
             sage: P.polarization(p, 1, 0, 2)
             6*x00^2*x10*x11
@@ -291,9 +320,11 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                               for j in range(n))
             if use_symmetry and result:
                 d = self.multidegree(result)
+                print 'd', d
                 if list(d) != sorted(d, reverse=True):
                     s = reverse_sorting_permutation(d)
                     ss = self.row_permutation(s)
+                    print 'ss', ss
                     result = act_on_polynomial(result, ss)
             return result
 
@@ -590,6 +621,33 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             result.append([q, word])
         return result
 
+def reverse_sorting_permutation(t): # TODO: put "stable sorting" as keyword somewhere
+    r"""
+    Return a permutation `p` such that  is decreasing
+
+    INPUT:
+
+    - `t` -- a list/tuple/... of numbers
+
+    OUTPUT:
+
+    a minimal permutation `p` such that `w \circ p` is sorted decreasingly
+
+    EXAMPLES::
+
+        sage: t = [3, 3, 1, 2]
+        sage: s = reverse_sorting_permutation(t); s
+        [1, 2, 4, 3]
+        sage: [t[s[i]-1] for i in range(len(t))]
+        [3, 3, 2, 1]
+
+        sage: t = [4, 2, 3, 2, 1, 3]
+        sage: s = reverse_sorting_permutation(t); s
+        [1, 3, 6, 2, 4, 5]
+        sage: [t[s[i]-1] for i in range(len(t))]
+        [4, 3, 3, 2, 2, 1]
+    """
+    return ~(Word([-i for i in t]).standard_permutation())
 
 def e(P, i):
     return functools.partial(P.polarization, i1=i, i2=i+1, d=1)
@@ -701,7 +759,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
             -12*x00*x01*x10 - 6*x00^2*x11
         """
         antisymmetries = self._antisymmetries
-        result = super(DiagonalAntisymmetricPolynomialRing,self).polarization(p,i1,i2,d,use_symmetry=use_symmetry)
+        result = super(DiagonalAntisymmetricPolynomialRing,self).polarization(p, i1, i2, d, use_symmetry=use_symmetry)
         if antisymmetries and result:
             result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
         return result

@@ -156,10 +156,11 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
         if use_commutativity and sorted(new_word) != new_word:
             return None
         return new_word
-    if use_symmetry:
-        add_degree = add_degree_symmetric
-    elif with_inert:
+        
+    if with_inert:
         add_degree = add_degree_polarization
+    elif use_symmetry:
+        add_degree = add_degree_symmetric
     else:
         add_degree = add_degree
         
