@@ -326,6 +326,8 @@ def character_with_inert(mu, verbose=False, use_antisymmetry=False, use_symmetry
     else :
         P = DiagonalPolynomialRing(QQ, n, r, inert=1)
     charac = character_plain(P, mu, inert=1, verbose=verbose, use_antisymmetry=use_antisymmetry, parallel=parallel)
+    print
+    print charac
     return character_schur(P, charac)
         
 def character_key(mu, **args):
@@ -403,9 +405,11 @@ def character_plain(P, mu, inert=1, verbose=False, use_antisymmetry=False, use_s
             antisymmetries = None
             
         if parallel:
-            for (((_,_,_,nu,_,_,),_),res) in character_by_isotypic([(P, mu, H, nu, antisymmetries, verbose) 
+            for (((_,_,_,nu,_,_,_,),_),res) in character_by_isotypic([(P, mu, H, nu, antisymmetries, 
+                                                                        use_symmetry, verbose) 
                                                                         for nu in Partitions(n)]):
-                charac += res*s(nu)
+                if res :
+                    charac += res*s(nu)
         else:
             for nu in Partitions(n):
                 charac += character_by_isotypic(P, mu, H, nu, antisymmetries=antisymmetries, use_symmetry=use_symmetry, verbose=verbose)*s(nu)

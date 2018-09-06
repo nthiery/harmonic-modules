@@ -81,8 +81,7 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
            there may be some bugs to correct
 
     """
-    # FIXME mu is useless for now, usefull only if antisymmetries computed here
-    mu = Partition(mu)
+    # FIXME mu is useless, antisymmetries already encoded in P
     r = P._r
     S = SymmetricFunctions(ZZ)
     s = S.s()
@@ -91,7 +90,10 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
     # Change of ring (one set on variables to multisets of variables)
     # To be able to use polarization
     if isinstance(generators, dict):
-        new_generators = {d:[P(gen) for gen in g] for (d,g) in generators.iteritems()}
+        if antisymmetries :
+            new_generators = {d:[antisymmetric_normal(P(gen), P._n, P._r, antisymmetries) for gen in g] for (d,g) in generators.iteritems()}
+        else :
+            new_generators = {d:[P(gen) for gen in g] for (d,g) in generators.iteritems()}
     else:
         return "generators should be a dictonnary."
         
@@ -163,12 +165,14 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
         add_degree = add_degree_symmetric
     else:
         add_degree = add_degree
-        
+
+    print generators
     F = Subspace(new_generators, operators=operators_by_degree,
                  add_degrees=add_degree, degree=P.multidegree,
                  hilbert_parent = hilbert_parent,
                  extend_word=extend_word, verbose=verbose) 
     F._antisymmetries = antisymmetries
+    print F.basis()
     return F
     
         
@@ -240,9 +244,9 @@ def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, use_
     return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
             [functools.partial(P.polarization, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry)]
             for d in range(min_degree+1, n)
-            for i1 in range(0,r)
+            for i1 in range(0, r)
             for i2 in range(0, r)
-            if ((i1==i2+1 if d==1 else i1<i2) if use_lie else i1<i2 if side == 'down' else i1!=i2)
+            #if ((i1==i2+1 if d==1 else i1<i2) if use_lie else i1<i2 if side == 'down' else i1!=i2)
             if (i1<i2 if side == 'down' else i1!=i2)
            }
 
