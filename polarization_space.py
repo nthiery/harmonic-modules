@@ -90,9 +90,10 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
     # Change of ring (one set on variables to multisets of variables)
     # To be able to use polarization
     if isinstance(generators, dict):
+        # 
         if antisymmetries :
-            new_generators = {d:[antisymmetric_normal(P(gen), P._n, P._r, antisymmetries) for gen in g] for (d,g) in generators.iteritems()}
-        else :
+            new_generators = {d:[reduce_antisymmetric_normal(P(gen), P._n, P._r, antisymmetries) for gen in g] for (d,g) in generators.iteritems()}
+        else:
             new_generators = {d:[P(gen) for gen in g] for (d,g) in generators.iteritems()}
     else:
         return "generators should be a dictonnary."
@@ -166,13 +167,18 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
     else:
         add_degree = add_degree
 
-    print generators
+    print "generators"
+    print new_generators
     F = Subspace(new_generators, operators=operators_by_degree,
                  add_degrees=add_degree, degree=P.multidegree,
                  hilbert_parent = hilbert_parent,
                  extend_word=extend_word, verbose=verbose) 
     F._antisymmetries = antisymmetries
-    print F.basis()
+    print "base"
+    for a in F.basis().values():
+        for b in a:
+            print b
+        print
     return F
     
         
@@ -246,7 +252,7 @@ def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, use_
             for d in range(min_degree+1, n)
             for i1 in range(0, r)
             for i2 in range(0, r)
-            #if ((i1==i2+1 if d==1 else i1<i2) if use_lie else i1<i2 if side == 'down' else i1!=i2)
+            if ((i1==i2+1 if d==1 else i1<i2) if use_lie else i1<i2 if side == 'down' else i1!=i2)
             if (i1<i2 if side == 'down' else i1!=i2)
            }
 

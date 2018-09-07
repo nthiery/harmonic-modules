@@ -140,7 +140,8 @@ def antisymmetric_normal(p, int n, int r, tuple positions):
 
     .. TODO::
 
-        This should be moved to a more general piece of documentation about handling antisymmetries.
+        This should be moved to a more general piece of documentation 
+        about handling antisymmetries.
 
     EXAMPLES::
 

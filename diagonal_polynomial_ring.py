@@ -761,7 +761,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         antisymmetries = self._antisymmetries
         result = super(DiagonalAntisymmetricPolynomialRing,self).polarization(p, i1, i2, d, use_symmetry=use_symmetry)
         if antisymmetries and result:
-            result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
+            result = reduce_antisymmetric_normal(result, self._n, self._r, antisymmetries)
         return result
 
     def multi_polarization(self, p, D, i2): 
@@ -782,6 +782,6 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         antisymmetries = self._antisymmetries
         result = super(DiagonalAntisymmetricPolynomialRing,self).multi_polarization(p,D,i2)
         if antisymmetries and result:
-            result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
+            result = reduce_antisymmetric_normal(result, self._n, self._r, antisymmetries)
         return result
 

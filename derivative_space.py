@@ -438,7 +438,7 @@ class DerivativeVandermondeSpaceWithInert():
                                     add_degrees=add_degree_isotyp, verbose=verbose)
         basis = F.basis()
         if self._use_antisymmetry :
-            pos = antisymmetries_of_tableau(Partition(mu))
+            pos = antisymmetries_of_tableau(Partition(mu).initial_tableau())
             for d,B in basis.iteritems():
                 res = [reduce_antisymmetric_normal(p,n,1,pos) for p in B]
                 basis[d] = res
