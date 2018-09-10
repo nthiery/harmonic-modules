@@ -325,8 +325,7 @@ def character_with_inert(mu, verbose=False, use_antisymmetry=False, use_symmetry
         P = DiagonalAntisymmetricPolynomialRing(QQ, n, r, inert=1, antisymmetries=antisymmetries)
     else :
         P = DiagonalPolynomialRing(QQ, n, r, inert=1)
-    charac = character_plain(P, mu, inert=1, verbose=verbose, use_antisymmetry=use_antisymmetry, parallel=parallel)
-    print charac
+    charac = character_plain(P, mu, inert=1, verbose=verbose, use_antisymmetry=use_antisymmetry, use_symmetry=use_symmetry, parallel=parallel)
     return character_schur(P, charac)
         
 def character_key(mu, **args):

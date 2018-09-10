@@ -319,6 +319,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             result = self.sum(X[i2,j]*p.derivative(X[i1,j],d)
                               for j in range(n))
             if use_symmetry and result:
+                print 'result', result
                 d = self.multidegree(result)
                 print 'd', d
                 if list(d) != sorted(d, reverse=True):
@@ -760,8 +761,8 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         """
         antisymmetries = self._antisymmetries
         result = super(DiagonalAntisymmetricPolynomialRing,self).polarization(p, i1, i2, d, use_symmetry=use_symmetry)
-        if antisymmetries and result:
-            result = reduce_antisymmetric_normal(result, self._n, self._r, antisymmetries)
+        #if antisymmetries and result:
+            #result = reduce_antisymmetric_normal(result, self._n, self._r+self._inert, antisymmetries)
         return result
 
     def multi_polarization(self, p, D, i2): 
@@ -782,6 +783,6 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         antisymmetries = self._antisymmetries
         result = super(DiagonalAntisymmetricPolynomialRing,self).multi_polarization(p,D,i2)
         if antisymmetries and result:
-            result = reduce_antisymmetric_normal(result, self._n, self._r, antisymmetries)
+            result = reduce_antisymmetric_normal(result, self._n, self._r+self._inert, antisymmetries)
         return result
 
