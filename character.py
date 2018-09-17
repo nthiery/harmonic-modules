@@ -390,11 +390,12 @@ def character_plain(P, mu, inert=1, verbose=False, use_antisymmetry=False, use_s
 
     s = SymmetricFunctions(P.polynomial_ring()).s()
     n = P._n
+    r = P._r
     charac = 0
     #if not isinstance(mu,Diagram):
         #mu = Diagram(mu)
     if mu.size() != n:
-        print "Given partition doesn't have the right size."
+        print "Given partition doesn't  have the right size."
     else:
         H = DerivativeVandermondeSpaceWithInert(QQ, mu, inert=inert, use_antisymmetry=use_antisymmetry)
         if use_antisymmetry:
@@ -406,8 +407,12 @@ def character_plain(P, mu, inert=1, verbose=False, use_antisymmetry=False, use_s
             for (((_,_,_,nu,_,_,_,),_),res) in character_by_isotypic([(P, mu, H, nu, antisymmetries, 
                                                                         use_symmetry, verbose) 
                                                                         for nu in Partitions(n)]):
-                if res :
-                    charac += res*s(nu)
+                if res:
+                    if use_symmetry:
+                        charac += symmetrize(res,r)*s(nu)
+                    else:
+                        charac += res*s(nu)
+                
         else:
             for nu in Partitions(n):
                 charac += character_by_isotypic(P, mu, H, nu, antisymmetries=antisymmetries, use_symmetry=use_symmetry, verbose=verbose)*s(nu)
@@ -448,3 +453,17 @@ def character_schur(P, charac):
             sym_char += tensor([s(ss.from_polynomial(P._Q(charac.coefficient(supp))))
                                 .restrict_partition_lengths(nb_rows,exact=False),s[supp]])
     return sym_char
+
+# A deplacer par la suite 
+def symmetrize(p, n):
+    """
+    Symmetrize the polynomial p in n variables
+    """
+    
+    p_sym = p
+    for sigma in Permutations(n):
+        result = act_on_polynomial(p, PermutationGroupElement(sigma))
+        for t in result:
+            if t not in p:
+                p_sym += t[1]
+    return p_sym

@@ -169,7 +169,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     def multidegree(self, p):
         """
         Return the multidegree of a multihomogeneous polynomial.
-        The inert variables are of degree 0 so they don't appear in the multidegree.
 
         EXAMPLES::
 
@@ -319,13 +318,12 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             result = self.sum(X[i2,j]*p.derivative(X[i1,j],d)
                               for j in range(n))
             if use_symmetry and result:
-                print 'result', result
                 d = self.multidegree(result)
-                print 'd', d
+                if self._inert!= 0:
+                    d = tuple(d) + tuple(0 for i in range(self._inert))
                 if list(d) != sorted(d, reverse=True):
                     s = reverse_sorting_permutation(d)
                     ss = self.row_permutation(s)
-                    print 'ss', ss
                     result = act_on_polynomial(result, ss)
             return result
 
