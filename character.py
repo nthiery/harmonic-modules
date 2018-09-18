@@ -326,6 +326,7 @@ def character_with_inert(mu, verbose=False, use_antisymmetry=False, use_symmetry
     else :
         P = DiagonalPolynomialRing(QQ, n, r, inert=1)
     charac = character_plain(P, mu, inert=1, verbose=verbose, use_antisymmetry=use_antisymmetry, use_symmetry=use_symmetry, parallel=parallel)
+    print charac
     return character_schur(P, charac)
         
 def character_key(mu, **args):
@@ -464,6 +465,6 @@ def symmetrize(p, n):
     for sigma in Permutations(n):
         result = act_on_polynomial(p, PermutationGroupElement(sigma))
         for t in result:
-            if t not in p:
+            if t not in p_sym:
                 p_sym += t[1]
     return p_sym
