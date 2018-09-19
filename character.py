@@ -417,9 +417,9 @@ def character_plain(P, mu, inert=1, verbose=False, use_antisymmetry=False, use_s
             for nu in Partitions(n):
                 res = character_by_isotypic(P, mu, H, nu, antisymmetries=antisymmetries, use_symmetry=use_symmetry, verbose=verbose)
                 if use_symmetry:
-                        charac += symmetrize(res,r)*s(nu)
-                    else:
-                        charac += res*s(nu)
+                    charac += symmetrize(res,r)*s(nu)
+                else:
+                    charac += res*s(nu)
     return charac
         
 
