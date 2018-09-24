@@ -230,12 +230,12 @@ cpdef destandardize(self):
     EXAMPLES::
 
         sage: for p in Permutations(3): print(p, destandardize(p))
-        ([1, 2, 3], [0, 0, 0])
-        ([1, 3, 2], [0, 1, 0])
-        ([2, 1, 3], [1, 0, 1])
-        ([2, 3, 1], [1, 1, 0])
-        ([3, 1, 2], [1, 0, 0])
-        ([3, 2, 1], [2, 1, 0])
+        [1, 2, 3] [0, 0, 0]
+        [1, 3, 2] [0, 1, 0]
+        [2, 1, 3] [1, 0, 1]
+        [2, 3, 1] [1, 1, 0]
+        [3, 1, 2] [1, 0, 0]
+        [3, 2, 1] [2, 1, 0]
 
         sage: for p in Permutations(4):
         ....:     assert Word(destandardize(p)).standard_permutation() == p
@@ -281,8 +281,8 @@ cpdef index_filling(t):
           3  5            1  2
           1  2  4  -->    0  0  1
 
-        sage: for t in StandardTableaux([3,2,1]):
-        ....:     print ascii_art(t,  index_filling(t), sep="  -->  "); print
+        sage: for t in StandardTableaux([3,2,1]): #not tested
+        ....:     print ascii_art(t,  index_filling(t), sep="  -->  "); print #not tested
           3               2
           2  5            1  3
           1  4  6  -->    0  2  3

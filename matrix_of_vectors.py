@@ -1,4 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import operator
+
+from utilities import items_of_vector
+
+from sage.structure.parent import Parent
+from sage.combinat.ranker import on_fly
+from sage.matrix.constructor import matrix
+from sage.modules.free_module_element import vector
+
 
 class MatrixOfVectors:
     """
@@ -32,7 +43,7 @@ class MatrixOfVectors:
                 ambient = vectors[0].parent()
         self._ambient = ambient
         self._base_ring = ambient.base_ring()
-        self._rank, self._unrank = sage.combinat.ranker.on_fly()
+        self._rank, self._unrank = on_fly()
         self._matrix = matrix(self._base_ring, 0, 0)
         self._basis = []
         self._words = []

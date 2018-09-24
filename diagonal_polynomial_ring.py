@@ -2,17 +2,31 @@
 # -*- coding: utf-8 -*-
 
 import functools
+
 from sage.structure.parent import Parent
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.structure.sage_object import load
+
 from sage.parallel.decorate import parallel
+from sage.misc.misc_c import prod
+
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.rings.integer_ring import ZZ
+from sage.rings.rational_field import QQ
+from sage.categories.algebras import Algebras
+from sage.categories.cartesian_product import cartesian_product
+from sage.functions.other import binomial
+from sage.combinat.words.word import Word
+
 
 from funcpersist import *
 from diagram import *
 from subspace import *
+from young_idempotent import *
+from polynomial_derivative import *
 
-import antisymmetric_utilities
+from utilities import *
+from antisymmetric_utilities import *
 
 ##############################################################################
 # Polynomial ring with diagonal action
@@ -21,14 +35,22 @@ import antisymmetric_utilities
 class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     """
 
-     The ring of diagonal polynomials in n x r variables and n x k inert variables
+    The ring of diagonal polynomials in n x r variables and n x k inert variables.
+    In order to distinguish the inert variables among the others, they are named `theta_ij`
 
     EXAMPLES::
 
         sage: P = DiagonalPolynomialRing(QQ, 4, 3)
+        sage: P
+        Diagonal polynomial ring with 3 rows of 4 variables over Rational Field
+
+        sage: P = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
+        sage: P
+        Diagonal polynomial ring with 3 rows of 4 variables and 1 row(s) of inert variables over Rational Field
+
     """
     def __init__(self, R, n, r, inert=0):
-        names = ["x%s%s"%(i,j) for i in range(r+inert) for j in range(n)]
+        names = ["x%s%s"%(i,j) for i in range(r) for j in range(n)]+["theta%s%s"%(i,j) for i in range(inert) for j in range(n)]
         P = PolynomialRing(R, n*(r+inert), names)
         self._n = n
         self._r = r
@@ -36,7 +58,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         vars = P.gens()
         self._P = P
         self._R = R
-        self._Q = PolynomialRing(QQ,'q',r-inert)
+        self._Q = PolynomialRing(QQ,'q',r)
         self._grading_set = cartesian_product([ZZ for i in range(r)])
         self._hilbert_parent = PolynomialRing(ZZ, r, 'q')
         self._vars = matrix([[vars[i*n+j] for j in range(n)] for i in range(r+inert)])
@@ -46,8 +68,10 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
     def _repr_(self):
         """
-            sage: DiagonalPolynomialRing(QQ, 5, 3) # indirect doctest
-            Diagonal polynomial ring with 3 rows of 5 variables over Rational Field
+        sage: DiagonalPolynomialRing(QQ, 5, 3) # indirect doctest
+        Diagonal polynomial ring with 3 rows of 5 variables over Rational Field
+        sage: DiagonalPolynomialRing(QQ, 4, 3, inert=1) # indirect doctest
+        Diagonal polynomial ring with 3 rows of 4 variables and 1 row(s) of inert variables over Rational Field
 
         """
         if self._inert == 0 :
@@ -56,36 +80,87 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             return "Diagonal polynomial ring with %s rows of %s variables and %s row(s) of inert variables over %s"%(self._r, self._n, self._inert, self.base_ring())
 
     def base_ring(self):
+        """
+        sage: D = DiagonalPolynomialRing(QQ, 4, 3)
+        sage: D.base_ring()
+        Rational Field
+
+        """
         return self._P.base_ring()
+        
+    def polynomial_ring(self):
+        """
+        sage: D = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
+        sage: D.polynomial_ring()
+        Multivariate Polynomial Ring in q0, q1, q2 over Rational Field
+        """
+        return self._Q
+        
+    def gens(self):
+        """
+        sage: D = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
+        sage: D.gens()
+        (q0, q1, q2)
+        """
+        return self.polynomial_ring().gens()
 
     def algebra_generators(self):
+        """
+        Return all the variables including the inert variables.
+        
+        EXAMPLES ::
+        
+            sage: D = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
+            sage: D
+            Diagonal polynomial ring with 3 rows of 4 variables and 1 row(s) of inert variables over Rational Field
+            sage: D.algebra_generators()
+            [    x00     x01     x02     x03]
+            [    x10     x11     x12     x13]
+            [    x20     x21     x22     x23]
+            [theta00 theta01 theta02 theta03]
+            
+            sage: D = DiagonalPolynomialRing(QQ, 4, 3)
+            sage: D
+            Diagonal polynomial ring with 3 rows of 4 variables over Rational Field
+            sage: D.algebra_generators()
+            [x00 x01 x02 x03]
+            [x10 x11 x12 x13]
+            [x20 x21 x22 x23]
+
+        """
         return self._vars
 
     def variables(self):
         """
-            EXAMPLES::
-                sage: DP = DiagonalPolynomialRingInert(QQ,3,3)
-                sage: X = DP.variables_X()
-                sage: X
-
-                [x00 x01 x02]
-                [x10 x11 x12]
-
+        Return only the classic variables.
+        
+        EXAMPLES::
+            sage: DP = DiagonalPolynomialRing(QQ, 3, 3, inert=1)
+            sage: DP.variables()
+            [x00 x01 x02]
+            [x10 x11 x12]
+            [x20 x21 x22]
+                
         """
         return self._X
 
     def inert_variables(self):
         """
-            EXAMPLES::
-                sage: DP = DiagonalPolynomialRingInert(QQ,3,3)
-                sage: Theta = DP.variables_Theta()
-                sage: Theta
-                [x20 x21 x22]
+        Return only the inert variables. 
+        
+        EXAMPLES::
+            sage: DP = DiagonalPolynomialRing(QQ, 3, 3, inert=1)
+            sage: DP.inert_variables()
+            [theta00 theta01 theta02]
+            
+            sage: DP = DiagonalPolynomialRing(QQ, 3, 3)
+            sage: DP.inert_variables()
+            'No inert variables'
 
         """
-        if self._inert != 0 :
+        if self._inert != 0:
             return self._Theta
-        else :
+        else:
             return "No inert variables"
 
     def inject_variables(self):
@@ -94,17 +169,22 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     def multidegree(self, p):
         """
         Return the multidegree of a multihomogeneous polynomial.
-        The inert variables are of degree 0.
 
         EXAMPLES::
 
-            sage: P = DiagonalPolynomialRing(QQ,3,2)
+            sage: P = DiagonalPolynomialRing(QQ, 3, 2)
             sage: X = P.algebra_generators()
             sage: p = X[0,0]*X[0,1]^2 * X[1,0]^2*X[1,1]^3
             sage: P.multidegree(p)
             (3, 5)
             sage: P.multidegree(P.zero())
             -1
+            sage: P = DiagonalPolynomialRing(QQ, 3, 2, inert=1)
+            sage: X = P.algebra_generators()
+            sage: p = X[0,0]*X[0,1] * X[1,1]^3 * X[2,0]*X[2,1]^2 
+            sage: P.multidegree(p)
+            (2, 3)
+
         """
         if not p:
             return -1
@@ -113,8 +193,33 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         v = p.exponents()[0]
         return self._grading_set([sum(v[n*i+j] for j in range(n))
                                   for i in range(r)])
+    
+    def multipower(self,d):
+        """
+        Return the product of the terms $q_i^{d_i}$.
+        
+        INPUT:
+            - `d` -- a multidegree
+            
+        EXAMPLES::
+            sage: P = DiagonalPolynomialRing(QQ,4,3,inert=1)
+            sage: d = [1, 0, 2]
+            sage: P.multipower(d)
+            q0*q2^2
 
-    def monomial(self, *args): 
+            sage: P = DiagonalPolynomialRing(QQ,4,4)
+            sage: d = [4,3,2,1]
+            sage: P.multipower(d)
+            q0^4*q1^3*q2^2*q3
+
+        """
+        q = self._Q.gens()
+        return prod(q[i]**d[i] for i in range(0,len(q)))
+
+    def monomial(self, *args):
+        """
+        
+        """
         return self._P.monomial(*args)
     
     def random_monomial(self, D):
@@ -150,8 +255,8 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         K = self.base_ring()
         return sum(K.random_element() * self.random_monomial(D)
                    for i in range(l))
-
-    def row_permutation(self, sigma): # this method should be moved elsewhere ?? in a utilities file ? 
+                
+    def row_permutation(self, sigma):
         """
         Return the permutation of the variables induced by a permutation of the rows
 
@@ -175,8 +280,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                                         for c in sigma.cycle_tuples()
                                         for j in range(n) ])
 
-    ############################################################
-    # Polarization methods : in polarization_space.py
     def polarization(self, p, i1, i2, d, use_symmetry=False):
         """
         Return the polarization `P_{d,i_1,i_2}. p` of `p`.
@@ -187,15 +290,18 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
         EXAMPLES::
 
-            sage: P = DiagonalPolynomialRing(QQ, 4, 3)
+            sage: P = DiagonalPolynomialRing(QQ, 3, 4)
             sage: X = P.algebra_generators()
             sage: p = X[0,0]*X[1,0]^3*X[1,1]^1 + X[2,1]; p
             x00*x10^3*x11 + x21
 
             sage: P.polarization(p, 1, 2, 2)
             6*x00*x10*x11*x20
+            
             sage: P.polarization(p, 1, 2, 1)
             3*x00*x10^2*x11*x20 + x00*x10^3*x21
+            sage: D.polarization(p, 1, 2, 1, use_symmetry=True)
+            3*x00^2*x01*x10*x20 + x00^3*x10*x21
 
             sage: P.polarization(p, 1, 0, 2)
             6*x00^2*x10*x11
@@ -204,21 +310,30 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             x01
         """
         n = self._n
-        X = self.algebra_generators()
-        result = self.sum(X[i2,j]*p.derivative(X[i1,j],d)
-                          for j in range(n))
-        if use_symmetry and result:
-            d = self.multidegree(result)
-            if list(d) != sorted(d, reverse=True):
-                s = reverse_sorting_permutation(d)
-                ss = self.row_permutation(s)
-                result = act_on_polynomial(result, ss)
-        return result
+        X = self.variables()
+        if i1>=self._r or i2 >=self._r:
+            print "Row number out of range."
+            return None
+        else:
+            result = self.sum(X[i2,j]*p.derivative(X[i1,j],d)
+                              for j in range(n))
+            if use_symmetry and result:
+                d = self.multidegree(result)
+                if self._inert!= 0:
+                    d = tuple(d) + tuple(0 for i in range(self._inert))
+                if list(d) != sorted(d, reverse=True):
+                    s = reverse_sorting_permutation(d)
+                    ss = self.row_permutation(s)
+                    result = act_on_polynomial(result, ss)
+            return result
 
     @cached_method
-    def derivative_input(self, D, j): 
+    def derivative_input(self, D, j):
+        """
+        
+        """
         r = self._r
-        X = self.algebra_generators()
+        X = self.variables()
         res = []
         for i in range(r):
             res.extend([X[i,j],D[i]])
@@ -258,337 +373,321 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             6*x10*x11*x20
         """
         n = self._n
-        X = self.algebra_generators()
+        X = self.variables()
         D = tuple(D)
-        result = self.sum(X[i2,j]*p.derivative(*(self.derivative_input(D, j)))
-                          for j in range(n))
-        return result
-
-    def polarization_operators_by_multidegree(self, side=None, use_symmetry=False, min_degree=0):
+        if i2>=self._r:
+            return None
+        else:
+            result = self.sum(X[i2,j]*p.derivative(*(self.derivative_input(D, j)))
+                              for j in range(n))
+            return result
+        
+    def is_highest_weight_vector(self, p, _assert=False):
         """
-        Return the collection of polarization operators acting on harmonic polynomials
+        
+        """
+        for i2 in range(self._r):
+            for i1 in range(i2):
+                if self.polarization(p, i2, i1, 1):
+                    if _assert:
+                        assert False
+                    else:
+                        return False
+        return True
 
-        INPUT:
+    def test_highest_weight_vector(self, p):
+        """
+        
+        """
+        self.is_highest_weight_vector(p, _assert=True)
 
-        - ``side`` -- 'down'
-        - ``min_degree`` -- a non negative integer `d` (default: `0`)
-
-          if `d>0`, only return the polarization operators of differential degree `>=d`.
-
-        If ``side`` is `down` (the only implemented choice), only
-        the operators from `X_{i1}` to `X_{i2}` for `i1<i2` are returned.
+    def highest_weight_vectors(self, p, i1=None, i2=None):
+        """
+        Return the "unique" highest weight vectors `p_j, j\geq 0` such
+        that `p = \sum e^j p_j`.
 
         EXAMPLES::
 
             sage: P = DiagonalPolynomialRing(QQ, 4, 2)
-            sage: ops = P.polarization_operators_by_degree(); ops
-            {(-1, 1): [<functools.partial object at ...>],
-             (1, -1): [<functools.partial object at ...>],
-             (-2, 1): [<functools.partial object at ...>],
-             (-3, 1): [<functools.partial object at ...>],
-             (1, -3): [<functools.partial object at ...>],
-             (1, -2): [<functools.partial object at ...>]}
+            sage: X = P.algebra_generators()
+            sage: P.highest_weight_vectors(X[0,0], 0, 1)
+            [x00]
+            sage: P.highest_weight_vectors(X[0,0], 1, 0)
+            [0, x10]
 
-            sage: P.polarization_operators_by_degree(side="down")
-            {(-3, 1): [<functools.partial object at ...>],
-             (-1, 1): [<functools.partial object at ...>],
-             (-2, 1): [<functools.partial object at ...>]}
+            sage: P.highest_weight_vectors(X[1,0]^3, 0, 1)
+            [0, 0, 0, 1/6*x00^3]
+            sage: P.test_highest_weight_vectors(X[1,0]^3, 0, 1)
 
-            sage: P = DiagonalPolynomialRing(QQ, 3, 3)
-            sage: P.polarization_operators_by_degree(side="down")
-            {(-1, 1, 0): [<functools.partial object at ...>],
-             (-2, 1, 0): [<functools.partial object at ...>],
-             (-2, 0, 1): [<functools.partial object at ...>],
-             (0, -2, 1): [<functools.partial object at ...>],
-             (-1, 0, 1): [<functools.partial object at ...>],
-             (0, -1, 1): [<functools.partial object at ...>]}
+            sage: P.highest_weight_vectors(p, 0, 1)  # not tested
+            [-x01*x10 + x00*x11, x00^2 - x01^2]
+            sage: P.test_highest_weight_vectors(p, 0, 1)   # not tested
 
-            sage: P.polarization_operators_by_degree(use_lie=True) # not tested (features disabled)
-            {(-2, 1, 0): [<functools.partial object at ...>],
-             (-2, 0, 1): [<functools.partial object at ...>],
-             (0, 1, -1): [<functools.partial object at ...>],
-             (0, -2, 1): [<functools.partial object at ...>],
-             (1, -1, 0): [<functools.partial object at ...>]}
+        A random example::
 
             sage: P = DiagonalPolynomialRing(QQ, 4, 3)
-            sage: ops = P.polarization_operators_by_degree()
-            sage: X = P.algebra_generators()
-            sage: p = X[0,0]*X[1,0]^3*X[1,1]^1 + X[2,1]; p
-            x00*x10^3*x11 + x21
-            sage: ops[(1,-2,0)][0](p)
-            6*x00^2*x10*x11
-            sage: ops[(0,-1,1)][0](p)
-            3*x00*x10^2*x11*x20 + x00*x10^3*x21
-        """
-        n = self._n
-        r = self._r
-        grading_set = self._grading_set
-        return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
-                [functools.partial(self.polarization, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry)]
-                for d in range(min_degree+1, n)
-                for i1 in range(0,r)
-                for i2 in range(0, r)
-                #if ((i1==i2+1 if d==1 else i1<i2) if use_lie else i1<i2 if side == 'down' else i1!=i2)
-                if (i1<i2 if side == 'down' else i1!=i2)
-               }
+            sage: P.inject_variables()
+            Defining x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23
+            sage: x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23 = P._P.gens()
+            sage: p = 1/2*x10^2*x11*x20 + 3*x10*x11*x12*x20 + 1/3*x11^2*x12*x20 + 1/2*x10*x11*x12*x21 + x10*x11^2*x22 + 1/15*x10*x11*x12*x22 - 2*x11^2*x12*x22 - 2*x12^3*x22
+            sage: res = P.highest_weight_vectors(p); res
+            [1/48*x00^2*x01*x10 + 1/4*x00*x01*x02*x10 - 1/48*x01^2*x02*x10 - 1/360*x01*x02^2*x10 - 1/48*x00^3*x11 - 1/8*x00^2*x02*x11 - 5/72*x00*x01*x02*x11 - 1/360*x00*x02^2*x11 + 1/6*x01*x02^2*x11 - 1/8*x00^2*x01*x12 + 13/144*x00*x01^2*x12 + 1/180*x00*x01*x02*x12 - 1/6*x01^2*x02*x12,
+            1/48*x00^3*x01 + 1/8*x00^2*x01*x02 + 11/144*x00*x01^2*x02 + 1/360*x00*x01*x02^2 - 1/12*x01^2*x02^2 - 1/12*x02^4]
+            sage: [P.multidegree(q) for q in res]
+            [(3, 1, 0), (4, 0, 0)]
+            sage: for q in res:
+            ....:     P.test_highest_weight_vector(q)
 
-    def polarization_operators_by_degree(self,side=None, use_symmetry=False, min_degree=0):
-        pol = self.polarization_operators_by_multidegree(side=side,use_symmetry=use_symmetry,min_degree=min_degree)
-        res = {}
-        for d,op in pol.iteritems():
-            if sum(d) not in res.keys():
-                res[sum(d)] = op
+        .. TODO:: Check that p is indeed in the span of res
+
+        Failing for the strategy of clearing HW for i1,i2 in increasing revlex  order:
+
+            sage: p = 11*x01*x12*x20*x21^2 + 1/3*x00*x12*x20^2*x22 - 1/8*x02*x11*x20*x22^2
+
+
+        Failing for the strategy of taking the reduced word 1,0,1, or any repeat thereof:
+
+            sage: p = 891/2097152*x01^3*x02*x10 + 27/1048576*x00^2*x02^2*x10 - 81/16777216*x01*x02^3*x10 + 891/1048576*x00*x01^2*x02*x11 + 243/16777216*x00*x02^3*x11 - 2673/2097152*x00*x01^3*x12 - 27/1048576*x00^3*x02*x12 - 81/8388608*x00*x01*x02^2*x12
+        """
+        # Define HW_{i1,i2}(q) as the predicate
+        #   q highest weight for i1, i2; namely: e_{i1,i2}.q = 0
+        # Define HW_{<i1,i2}(q) as the predicate
+        #   HW_{i1',i2'}(q) for i1'<i2' with (i1',i2') <_{revlex} (i1,i2)
+        # Define similarly HW_{≤i1,i2}(q)
+        if i1 is None and i2 is None:
+            ps = [p]
+            # HR:
+            # - p is in the span of ps upon application of e_i,j operators
+            # - for any q in ps, HW_{<i1,i2}(q)
+            for zut in range(5):
+                for i2 in range(self._r-1):
+                    for i1 in range(self._r-2,i2-1,-1):
+                        ps = [r
+                                  for q in ps
+                                  for r in self.highest_weight_vectors(q, i1, i1+1)
+                                  if r]
+            return ps
+
+        # Precondition: HW_{<i1,i2}(p)
+        # Goal: produce pjs such that:
+        # - p = \sum_j e^j pjs[j]
+        # - HW_{≤ i1, i2}(q) for q in pjs
+        e = functools.partial(self.polarization, i1=i1, i2=i2, d=1)
+        f = functools.partial(self.polarization, i1=i2, i2=i1, d=1)
+        D = self.multidegree(p)
+        w = D[i1] - D[i2]
+
+        # Invariant: fis[i]: f^i(p)
+        fip = p
+        fis = []
+        while fip:
+            fis.append(fip)
+            fip = f(fip)
+
+        # Invariants:
+        # pjs[j]: None or p_j
+        # pijs[j]: None or e^(j-i) p_j
+        pjs = [ None for j in range(len(fis)) ]
+        epjs = [ None for j in range(len(fis)) ]
+        for i in range(len(fis)-1, -1, -1):
+            for j in range(i+1, len(pjs)):
+                epjs[j] = e(epjs[j])
+            r = fis[i] - sum(fiej(i,j,w+2*j) * epjs[j] for j in range(i+1, len(epjs)))
+            if r:
+                pjs[i] = r / fiej(i,i,w+2*i)
             else:
-                res[sum(d)] += op
-        return res
+                pjs[i] = r
+            epjs[i] = pjs[i]
+        # for i2p in range(i2+1):
+        #     for i1p in range(i2p):
+        #         for q in pjs:
+        #             assert self.polarization(q, i2p, i1p, d=1) == 0
+        return pjs
 
-    ############################################################
-    
-    def derivatives_by_degree(self): #useless ?
+    def test_highest_weight_vectors(self, p, i1, i2):
         """
-            Returns a dictonnary containing the derivative operators.
-
-            EXAMPLES::
-                sage: DP.derivatives_by_degree()
-
-                {-1: [*.derivative(x00),
-                  *.derivative(x10),
-                  *.derivative(x01),
-                  *.derivative(x11),
-                  *.derivative(x02),
-                  *.derivative(x12)]}
-
+        
         """
-        X = self._X
-        n = self._n
-        return {-1:[attrcall("derivative", x[i]) for i in range(0,n) for x in X]}
+        e = functools.partial(self.polarization, i1=i1, i2=i2, d=1)
+        f = functools.partial(self.polarization, i1=i2, i2=i1, d=1)
+        pjs = list(self.highest_weight_vectors(p, i1, i2))
+        for q in pjs:
+            assert f(q) == 0
+        for j in range(len(pjs)):
+            for i in range(j):
+                pjs[j] = e(pjs[j])
+        assert p == sum(pjs)
 
-    def add_degree(self, d1,d2):
-        d = d1 + d2
-        if not all(i>=0 for i in d):
-            raise ValueError("invalid degree")
-        return d
-
-    def add_degree_symmetric(self, d1,d2):
+    def strip_highest_weight_vector(self, p):
         """
         EXAMPLES::
 
-            sage: P = DiagonalPolynomialRing(QQ,4,3)
-            sage: D = P._grading_set
-            sage: P._add_degree_symmetric(D([3,2,1]), D([-2,0,0]))
-            (2, 1, 1)
-            sage: P._add_degree_symmetric(D([3,2,1]), D([-2,1,4]))
-            (5, 3, 1)
-            sage: P._add_degree_symmetric(D([3,2,1]), D([2,1,1]))
-            (5, 3, 2)
-            sage: P._add_degree_symmetric(D([3,2,1]), D([2,1,-2]))
-            Traceback (most recent call last):
-            ...
-            ValueError: invalid degree
+            sage: R = DiagonalPolynomialRing(QQ, 3, 3)
+            sage: R.inject_variables()
+            Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
+            sage: x00, x01, x02, x10, x11, x12, x20, x21, x22 = R._P.gens()
+            sage: R.strip_highest_weight_vector(x00)
+            (x00, [], 0)
+            sage: R.strip_highest_weight_vector(x20)
+            (x00, [[1, 1], [0, 1]], 0)
+            sage: R.strip_highest_weight_vector(x20^2)
+            (4*x00^2, [[1, 2], [0, 2]], 0)
         """
-        d = d1 + d2
-        if not all(i>=0 for i in d):
-            raise ValueError("invalid degree")
-        return self._grading_set(sorted(d, reverse=True))
+        W = SymmetricGroup(range(self._r))
+        w0 = W.long_element().reduced_word()
+        word = []
+        q = p
+        for i in w0:
+            l = 0
+            while True:
+                q2 = self.polarization(q, i+1, i, 1)
+                if q2:
+                    q = q2
+                    l += 1
+                else:
+                    break
+            if l:
+                word.append([i,l])
+        q2 = q
+        for i,l in reversed(word):
+            D = self.multidegree(q2)
+            w = D[i] - D[i+1]
+            for l2 in range(l):
+                q2 = self.polarization(q2, i, i+1, 1)
+            q2 /= fiej(l, l, w)
+        self.test_highest_weight_vector(q)
+        return q, word, p-q2
 
-    def add_degree_isotyp(self,d1,d2):
+    def highest_weight_vectors_decomposition(self, p):
         """
-            INPUT:
-                - ``d1``,``d2`` -- lists containing an integer and a partition
+        EXAMPLES::
+        
+            sage: R = DiagonalPolynomialRing(QQ, 3, 3)
+            sage: R.inject_variables()
+            Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
+            sage: x00, x01, x02, x10, x11, x12, x20, x21, x22 = R._P.gens()
+            sage: e0 = e(R, 0); e1 = e(R, 1)
+            sage: p = e1(e0(e0(3*x00^3))) + e0(e1(e0(x01*x02^2)))
+            sage: R.highest_weight_vectors_decomposition(p)
+            [[36*x00^3 + 6*x01*x02^2, [[0, 1], [1, 1], [0, 1]]]]
 
-            OUTPUT:
-                a list containing the sum of the integers of
-                `d1` and `d2` and the partition contained in `d2`
+            sage: p = 1/2*x10^2*x11*x20 + 3*x10*x11*x12*x20 + 1/3*x11^2*x12*x20 + 1/2*x10*x11*x12*x21 + x10*x11^2*x22 + 1/15*x10*x11*x12*x22 - 2*x11^2*x12*x22 - 2*x12^3*x22
+            sage: R.highest_weight_vectors_decomposition(p)
+            [[3*x00^3*x01 + 18*x00^2*x01*x02 + 11*x00*x01^2*x02 + 2/5*x00*x01*x02^2 - 12*x01^2*x02^2 - 12*x02^4,
+            [[0, 3], [1, 1], [0, 1]]],
+            [3/4*x00^2*x01*x10 + 9*x00*x01*x02*x10 - 3/4*x01^2*x02*x10 - 1/10*x01*x02^2*x10 - 3/4*x00^3*x11 - 9/2*x00^2*x02*x11 - 5/2*x00*x01*x02*x11 - 1/10*x00*x02^2*x11 + 6*x01*x02^2*x11 - 9/2*x00^2*x01*x12 + 13/4*x00*x01^2*x12 + 1/5*x00*x01*x02*x12 - 6*x01^2*x02*x12,
+            [[0, 3], [1, 1]]]]
 
-            EXAMPLES::
-                sage: d1 = (3,[2,1])
-                sage: d2 = (-1,[3])
-                sage: DP.add_degree_isotyp(d1,d2)
-                (2, [3])
+        On a non trivial highest weight vector::
 
-        """
-        return d1[0]+d2[0], d2[1]
+            sage: f0 = f(R, 0)
+            sage: f1 = f(R, 1)
+            sage: p = 891/2097152*x01^3*x02*x10 + 27/1048576*x00^2*x02^2*x10 - 81/16777216*x01*x02^3*x10 + 891/1048576*x00*x01^2*x02*x11 + 243/16777216*x00*x02^3*x11 - 2673/2097152*x00*x01^3*x12 - 27/1048576*x00^3*x02*x12 - 81/8388608*x00*x01*x02^2*x12
+            sage: f0(p)
+            0
+            sage: f1(p)
+            0
+            sage: R.multidegree(p)
+            (4, 1, 0)
+            sage: R.highest_weight_vectors_decomposition(p) == [[p, []]]
+            True
 
+        Found while computing harmonic::
 
-    # Move the following methods elsewhere, maybe in DiagonalHarmonicPolynomialsInert
-    @cached_method
-    def isotypic_basis(self,mu,verbose=True):
-        """
-            Let $W$ be the smallest submodule generated by a Vandermonde $\Delta$ depending on
-            a partition`mu` and closed under partial derivatives.
-            Then $W$ can be decomposed into isotypic components for the action of $S_n$. This function
-            compute the basis of W using the Young idempotents to project on isotypic components.
+            sage: R = DiagonalPolynomialRing(QQ, 4, 3)
+            sage: R.inject_variables()
+            Defining x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23
+            sage: x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23 = R._P.gens()
+            sage: p = 1/2*x02*x10*x20 - 1/2*x03*x10*x20 - 5/2*x02*x11*x20 + 5/2*x03*x11*x20 - 3/2*x00*x12*x20 - 1/2*x01*x12*x20 + 2*x02*x12*x20 + 3/2*x00*x13*x20 + 1/2*x01*x13*x20 - 2*x03*x13*x20 - 2*x02*x10*x21 + 2*x03*x10*x21 + 2*x00*x12*x21 - 2*x03*x12*x21 - 2*x00*x13*x21 + 2*x02*x13*x21 - 2*x00*x10*x22 + 1/2*x01*x10*x22 + 3/2*x02*x10*x22 + 5/2*x00*x11*x22 - 5/2*x03*x11*x22 - 1/2*x00*x12*x22 + 1/2*x03*x12*x22 - 1/2*x01*x13*x22 - 3/2*x02*x13*x22 + 2*x03*x13*x22 + 2*x00*x10*x23 - 1/2*x01*x10*x23 - 3/2*x03*x10*x23 - 5/2*x00*x11*x23 + 5/2*x02*x11*x23 + 1/2*x01*x12*x23 - 2*x02*x12*x23 + 3/2*x03*x12*x23 + 1/2*x00*x13*x23 - 1/2*x02*x13*x23
 
-            EXAMPLES::
-                sage: DP = DiagonalPolynomialRing(QQ,3,2,inert=1)
-                sage: DP.isotypic_basis(Partition([2,1]),use_antisymmetries=True,verbose=False)
-                {(0, [2, 1]): [-3*x20], (1, [1, 1, 1]): [x00*x21]}
-                sage: DP.isotypic_basis(Partition([3]),use_antisymmetries=True,verbose=False)
+            sage: p = x02*x10*x20 - x00*x12*x20
+            sage: R.multidegree(p)
+            (1, 1, 1)
 
-                {(0, [3]): [108],
-                 (1, [2, 1]): [-18*x00],
-                 (2, [2, 1]): [-3*x00^2 + 6*x00*x01],
-                 (3, [1, 1, 1]): [-x00^2*x01]}
+            sage: q = x00*x02*x10 - x00^2*x12
+            sage: q
+            x00*x02*x10 - x00^2*x12
+            sage: e0(e1(q))
+            x02*x10*x20 + x00*x12*x20 - 2*x00*x10*x22
+            sage: e1(e0(q))
+            2*x02*x10*x20 - x00*x12*x20 - x00*x10*x22
 
-        """
-        n = self._n
-        r = self._r
-        X = self._X
-        charac = 0
-        s = SymmetricFunctions(self._R).s()
-        Delta = self.vandermonde(mu)
-        dim = self.dimension_vandermonde(mu)
-        operators = {}
-        for nu in Partitions(n):
-            operators[(-1,nu)] = [make_deriv_comp_young(X[0][i],nu) for i in range(0,n)]
-        F = Subspace(generators={(dim,Partition([1 for i in range(n)])):[Delta]},operators=operators,
-                                    add_degrees=self.add_degree_isotyp, verbose=verbose)
-        basis = F.basis()
-        return basis
-
-    @parallel()
-    def character_isotypic(self,nu,basis):
-        """
-            Computes the character of $Gl_r$ on the smallest submodule generated by
-            the elements in `basis` indexed by `nu` and closed under the polarizators
-            operators.
-
-            INPUT:
-                - `nu` -- a partition
-                - `basis` -- a dict indexed by tuples of integers and partitions
-
-            EXAMPLES::
-                sage: DP = DiagonalPolynomialRingInert(QQ,3,3)
-                sage: basis = DP.isotypic_basis(Partition([3]),verbose=False)
-                sage: DP.character_isotypic(Partition([3]),basis)
-                1
-                sage: DP.character_isotypic(Partition([2,1]),basis)
-                q0^2 + q0*q1 + q1^2 + q0 + q1
-                sage: DP.character_isotypic(Partition([1,1,1]),basis)
-                q0^3 + q0^2*q1 + q0*q1^2 + q1^3 + q0^2 + 2*q0*q1 + q1^2
 
         """
-        if nu not in [d[1] for d in basis]:
-            return 0
-        else:
-            basis_nu = basis_by_component(basis,nu)
-            charac = 0
-            S = Subspace(generators={d:B for d,B in basis_nu.iteritems()},operators=self.polarizators_by_degree())
-            for b in S.basis().values():
-                charac += sum(multipower(self.multidegree(p),self._Q.gens()) for p in b)
-            return charac
+        result = []
+        while p:
+            q, word, p = self.strip_highest_weight_vector(p)
+            result.append([q, word])
+        return result
 
-    def character_q(self,mu,verbose=True):
-        """
-            Computes the character and returns the result as a sum of tensor products
-            of polynomials in $q$ variables for the action of $GL_r$ and Schur functions
-            for the action of $S_n$.
+def reverse_sorting_permutation(t): # TODO: put "stable sorting" as keyword somewhere
+    r"""
+    Return a permutation `p` such that  is decreasing
 
-            INPUT: `mu` a partition
+    INPUT:
 
-            EXAMPLES::
-                sage: DP.character_q(Partition([2,1]),verbose=False)
-                (q0+q1)*s[1, 1, 1] + s[2, 1]
-                sage: DP.character_q(Partition([3]),verbose=False)
-                (q0^3+q0^2*q1+q0*q1^2+q1^3+q0^2+2*q0*q1+q1^2)*s[1, 1, 1] + (q0^2+q0*q1+q1^2+q0+q1)*s[2, 1] + s[3]
-                sage: DP.character_q(Partition([1,1,1]),verbose=False)
-                s[1, 1, 1]
+    - `t` -- a list/tuple/... of numbers
 
-        """
-        n = self._n
-        s = SymmetricFunctions(self._Q).s()
-        charac = 0
-        if not isinstance(mu,Diagram):
-            mu = Diagram(mu)
-        if mu.size() != n:
-            print "Given partition doesn't have the right size."
-        else:
-            basis = self.isotypic_basis(mu)
-            for nu in Partitions(n):
-                charac += self.character_isotypic(nu,basis)*s(nu)
-            return charac
+    OUTPUT:
 
-    def character_q_parallel(self,mu,verbose=True):
-        """
-            Computes the character and returns the result as a sum of tensor products
-            of polynomials in q variables for the action of $GL_r$ and Schur functions
-            for the action of $S_n$ using parallel computation.
+    a minimal permutation `p` such that `w \circ p` is sorted decreasingly
 
-            INPUT: `mu` a partition
+    EXAMPLES::
 
-            EXAMPLES::
-                sage: DP.character_q_parallel(Partition([1,1,1]))
-                s[1, 1, 1]
-                sage: DP.character_q_parallel(Partition([2,1]))
-                (q0+q1)*s[1, 1, 1] + s[2, 1]
-                sage: DP.character_q_parallel(Partition([3]))
-                (q0^3+q0^2*q1+q0*q1^2+q1^3+q0^2+2*q0*q1+q1^2)*s[1, 1, 1] + (q0^2+q0*q1+q1^2+q0+q1)*s[2, 1] + s[3]
+        sage: t = [3, 3, 1, 2]
+        sage: s = reverse_sorting_permutation(t); s
+        [1, 2, 4, 3]
+        sage: [t[s[i]-1] for i in range(len(t))]
+        [3, 3, 2, 1]
 
-        """
-        n = self._n
-        s = SymmetricFunctions(self._Q).s()
-        charac = 0
-        if not isinstance(mu,Diagram):
-            mu = Diagram(mu)
-        if mu.size() != n:
-            print "Given partition doesn't have the right size."
-        else:
-            basis = self.isotypic_basis(mu)
-            for (((nu,_),_),res) in self.character_isotypic([(nu,basis) for nu in Partitions(n)]):
-                #print "nu : ",nu
-                #print "res : ",res
-                charac += res*s(nu)
-            return charac
+        sage: t = [4, 2, 3, 2, 1, 3]
+        sage: s = reverse_sorting_permutation(t); s
+        [1, 3, 6, 2, 4, 5]
+        sage: [t[s[i]-1] for i in range(len(t))]
+        [4, 3, 3, 2, 2, 1]
+    """
+    return ~(Word([-i for i in t]).standard_permutation())
 
-    def into_schur(self,charac):
-        """
-            Convert a character `charac` written as a sum of tensor products of polynomials in q
-            variables and Schur functions into a character written as a sum of tensor products
-            of Schur functions.
+def e(P, i):
+    return functools.partial(P.polarization, i1=i, i2=i+1, d=1)
 
-            INPUT: `charac` a sum of tensor products
+def f(P, i):
+    return functools.partial(P.polarization, i1=i+1, i2=i, d=1)
+    
+def e_polarization_degrees(D1, D2):
+    """
+    Return the degree of an e-multipolarization operator from degree D1 to degree D2
 
-            EXAMPLES::
-                sage: for c in [DP.character_q_parallel(p) for p in Partitions(3)]:
-                ....:     print DP.into_schur(c)
-                s[] # s[3] + s[1] # s[2, 1] + s[1, 1] # s[1, 1, 1] + s[2] # s[1, 1, 1] + s[2] # s[2, 1] + s[3] # s[1, 1, 1]
-                s[] # s[2, 1] + s[1] # s[1, 1, 1]
-                s[] # s[1, 1, 1]
+    EXAMPLES::
 
-        """
-        nb_rows = self._n - self._k
-        s = SymmetricFunctions(self._Q).s()
-        ss = SymmetricFunctions(QQ).s()
-        sym_char = 0
-        for supp in charac.support():
-            if charac.coefficient(supp)==1:
-                sym_char += tensor([s[0],s[supp]])
-            else:
-                sym_char += tensor([s(ss.from_polynomial(self._Q(charac.coefficient(supp))))
-                                    .restrict_partition_lengths(nb_rows,exact=False),s[supp]])
-        return sym_char
+        sage: e_polarization_degrees([5,0,0],[3,1,0])
+        (1, [2, 0, 0])
+        sage: e_polarization_degrees([5,0,0],[3,1,0])
+        (1, [2, 0, 0])
+        sage: e_polarization_degrees([5,0,0],[3,2,0])
+        sage: e_polarization_degrees([5,1,0],[3,2,0])
+        (1, [2, 0, 0])
+        sage: e_polarization_degrees([5,4,0,1],[1,1,0,2])
+        (3, [4, 3, 0, 0])
+        sage: e_polarization_degrees([5,4,0,1,0,0],[1,1,0,2,0,0])
+        (3, [4, 3, 0, 0, 0, 0])
+        sage: e_polarization_degrees([5,4,0,1,0,0],[1,1,0,2,0,1])
+        sage: e_polarization_degrees([5,4,0,1,0,1],[1,1,0,2,0,0])
 
-    def character_schur(self,mu,parallel=True,verbose=True):
-        """
-            Return the complete character of the smallest submodule generated by $\Delta_{\mu}$
-            and closed under partial derivatives and polarization operators for the double action
-            of $GL_r \times S_n$.
-            The result is given as a sum of tensor product of Schur functions.
 
-            EXAMPLES::
-            sage: DP = DiagonalPolynomialRingInert(QQ,3,3)
-            sage: DP.character_schur(Partition([3]))
-            s[] # s[3] + s[1] # s[2, 1] + s[1, 1] # s[1, 1, 1] + s[2] # s[1, 1, 1] + s[2] # s[2, 1] + s[3] # s[1, 1, 1]
-            sage: DP = DiagonalPolynomialRingInert(QQ,4,4)
-            sage: DP.character_schur(Partition([2,2]))
-            s[] # s[2, 2] + s[1] # s[2, 1, 1] + s[2] # s[1, 1, 1, 1]
-
-        """
-
-        if parallel:
-            return self.into_schur(self.character_q_parallel(mu))
-        else:
-            return self.into_schur(self.character_q(mu))
+    """
+    D = [D1i-D2i for D1i,D2i in zip(D1, D2)]
+    for i in reversed(range(len(D))):
+        if D[i] == -1:
+            break
+        if D[i] != 0:
+            return None
+    if i <= 0:
+        return None
+    D[i] = 0
+    if any(D[j] < 0 for j in range(i)):
+        return None
+    return i, D
 
 
 ##############################################################################
@@ -598,13 +697,15 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
     """
 
-    The ring of diagonal polynomials in n x r variables + n inert variables
-    with antisymmetries
+    The ring of diagonal antisymmetric polynomials in n x r variables 
+    and n x k inert variables.
 
     EXAMPLES::
 
         sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3)
-        sage:
+        sage: P
+        Diagonal antisymmetric polynomial ring with 3 rows of 4 variables over Rational Field
+
     """
     def __init__(self, R, n, r, inert=0, antisymmetries=None):
         DiagonalPolynomialRing.__init__(self, R, n, r, inert=inert)
@@ -612,6 +713,10 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
 
     def _repr_(self):
         """
+        sage: DiagonalAntisymmetricPolynomialRing(QQ, 5, 3)
+        Diagonal antisymmetric polynomial ring with 3 rows of 5 variables over Rational Field
+        sage: DiagonalAntisymmetricPolynomialRing(QQ, 5, 3, inert=1)
+        Diagonal antisymmetric polynomial ring with 3 rows of 5 variables and 1 row(s) of inert variables over Rational Field
 
         """
         if self._inert == 0 :
@@ -619,460 +724,63 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         else :
             return "Diagonal antisymmetric polynomial ring with %s rows of %s variables and %s row(s) of inert variables over %s"%(self._r, self._n, self._inert, self.base_ring())
 
-
     def polarization(self, p, i1, i2, d, use_symmetry=False):
         """
+        Return the polarization `P_{d,i_1,i_2}. p` of `p`. 
+        The result is reduced with respect to the given antisymmetries. 
+        
+        EXAMPLES::
+            sage: mu = Partition([3])
+            sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+            sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
+            sage: x = P.variables()
+            sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+            sage: P.polarization(v, 0, 1, 1)
+            -2*x00*x01*x10 + x01^2*x10 + 2*x00*x02*x10 - x02^2*x10 - x00^2*x11 + 2*x00*x01*x11 - 2*x01*x02*x11 + x02^2*x11 + x00^2*x12 - x01^2*x12 - 2*x00*x02*x12 + 2*x01*x02*x12
 
+                        
+            sage: mu = Partition([2,1])
+            sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+            sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
+            sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
+            sage: x = P.variables()
+            sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+            sage: P.polarization(v, 0, 1, 1)
+            -4*x00*x01*x10 + 2*x01^2*x10 + 4*x00*x02*x10 - 2*x00^2*x11 + 4*x00*x01*x11 + 2*x00^2*x12
+
+            sage: mu = Partition([1,1,1])
+            sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+            sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
+            sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
+            sage: x = P.variables()
+            sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+            sage: P.polarization(v, 0, 1, 1)
+            -12*x00*x01*x10 - 6*x00^2*x11
         """
         antisymmetries = self._antisymmetries
-        result = self.polarization(p, i1, i2, d, use_symmetry=use_symmetry)
-        if antisymmetries and result:
-            result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
+        result = super(DiagonalAntisymmetricPolynomialRing,self).polarization(p, i1, i2, d, use_symmetry=use_symmetry)
+        #if antisymmetries and result:
+            #result = reduce_antisymmetric_normal(result, self._n, self._r+self._inert, antisymmetries)
         return result
 
-    def multi_polarization(self, p, D, i2):
+    def multi_polarization(self, p, D, i2): 
         """
-
+        Return the multi polarization `P_{D,i_2}. p` of `p`.
+        The result is reduced with respect to the given antisymmetries.
+        
+        EXAMPLES::
+            sage: mu = Partition([2,1])
+            sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+            sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
+            sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
+            sage: x = P.variables()
+            sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+            sage: P.multi_polarization(v, [1,0,0], 1)
+            -4*x00*x01*x10 + 2*x01^2*x10 + 4*x00*x02*x10 - 2*x00^2*x11 + 4*x00*x01*x11 + 2*x00^2*x12
         """
         antisymmetries = self._antisymmetries
-        result = self.multi_polarization(p, D, i2)
+        result = super(DiagonalAntisymmetricPolynomialRing,self).multi_polarization(p,D,i2)
         if antisymmetries and result:
-            result = antisymmetric_normal(result, self._n, self._r, antisymmetries)
+            result = reduce_antisymmetric_normal(result, self._n, self._r+self._inert, antisymmetries)
         return result
 
-
-    def polarization_operators_by_multidegree(self, side=None, use_symmetry=False, min_degree=0):
-        """
-
-        """
-        n = self._n
-        r = self._r
-        grading_set = self._grading_set
-        antisymmetries = self._antisymmetries
-        return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
-                [functools.partial(self.polarization_antisym, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry,antisymmetries=antisymmetries)]
-                for d in range(min_degree+1, n)
-                for i1 in range(0,r)
-                for i2 in range(0, r)
-                if (i1<i2 if side == 'down' else i1!=i2)
-               }
-
-    def polarization_operators_by_degree(self,side=None, use_symmetry=False, min_degree=0):
-        antisymmetries = self._antisymmetries
-        pol = self.polarization_operators_by_multidegree_antisym(side=side,use_symmetry=use_symmetry,antisymmetries=antisymmetries,min_degree=min_degree)
-        res = {}
-        for d,op in pol.iteritems():
-            if sum(d) not in res.keys():
-                res[sum(d)] = op
-            else:
-                res[sum(d)] += op
-        return res
-
-    @cached_method
-    def isotypic_basis(self,mu,verbose=True):
-        """
-            Let $W$ be the smallest submodule generated by a Vandermonde $\Delta$ depending on
-            a partition`mu` and closed under partial derivatives.
-            Then $W$ can be decomposed into isotypic components for the action of $S_n$. This function
-            compute the basis of W using the Young idempotents to project on isotypic components.
-
-            EXAMPLES::
-                sage: DP = DiagonalPolynomialRing(QQ,3,2,inert=1)
-                sage: DP.isotypic_basis(Partition([2,1]),use_antisymmetries=True,verbose=False)
-                {(0, [2, 1]): [-3*x20], (1, [1, 1, 1]): [x00*x21]}
-                sage: DP.isotypic_basis(Partition([3]),use_antisymmetries=True,verbose=False)
-
-                {(0, [3]): [108],
-                 (1, [2, 1]): [-18*x00],
-                 (2, [2, 1]): [-3*x00^2 + 6*x00*x01],
-                 (3, [1, 1, 1]): [-x00^2*x01]}
-
-        """
-        basis = self.isotypic_basis(mu,verbose=verbose)
-        for d,B in basis.iteritems():
-                pos = antisymmetries_of_tableau(d[1])
-                res = [reduce_antisymmetric_normal(p,n,r,pos) for p in B]
-                basis[d] = res
-        return basis
-
-
-##############################################################################
-# Harmonic Polynomials
-##############################################################################
-
-class DiagonalHarmonicPolynomials():
-    """
-
-        The space diagonal hamonic polynomials in n x r variables.
-
-        EXAMPLES::
-
-            sage: P = DiagonalHarmonicPolynomialRing(QQ, 4, 3)
-            sage:
-    """
-
-    def __init__(self, R, n, r, antisymmetries=None):
-        self._antisymmetric = antisymmetric
-        self._R = R
-        self._n = n
-        self._r = r
-        self._antisymmetries = antisymmetries
-        if antisymmetries: 
-            self._polRing = DiagonalAntisymmetricPolynomialRing(R, n, r, inert, antisymmetries)
-        else:
-            self._polRing = DiagonalPolynomialRing(R, n, r, inert)
-            
-            
-    def _repr_(self):
-        """
-
-        """
-        return "Diagonal harmonic polynomials with %s rows of %s variables over %s"%(self._r, self._n, self._polRing.base_ring())
-
-    def harmonic_space_by_shape(self, mu, verbose=False, use_symmetry=False, use_lie=False, use_commutativity=False):
-        """
-        Return the projection under the Young idempotent for the
-        partition / tableau `mu` of the space of diagonal harmonic
-        polynomials.
-
-        This is represented as a collection of subspaces corresponding
-        to the row-multidegree (aka `GL_r` weight spaces).
-
-        EXAMPLES::
-
-            sage: P = DiagonalPolynomialRing(QQ,4,2)
-            sage: F = P.harmonic_space_by_shape([1,1,1,1])
-            sage: F.hilbert_polynomial()
-            s[3, 1] + s[4, 1] + s[6]
-
-            sage: P = DiagonalPolynomialRing(QQ,3,2)
-            sage: F = P.harmonic_space_by_shape([1,1,1])
-            sage: F.hilbert_polynomial()
-            s[1, 1] + s[3]
-
-            sage: P = DiagonalPolynomialRing(QQ,3,2)
-            sage: F = P.harmonic_space_by_shape([1,1,1])
-            sage: F.hilbert_polynomial()
-            s[1, 1] + s[3]
-
-            sage: P = DiagonalPolynomialRing(QQ,5,2)
-            sage: F = P.harmonic_space_by_shape(Partition([3,2]),use_lie='multipolarization', verbose=True)
-        """
-        mu = Partition(mu)
-        r = self._r
-        S = SymmetricFunctions(ZZ)
-        s = S.s()
-        m = S.m()
-        generators = [self.higher_specht(t, harmonic=True, use_antisymmetry=use_antisymmetry)
-                      for t in StandardTableaux(mu)]
-
-        if antisymmetries: #TODO fix this : antisymmetries are given at the begin or compute in this function ?
-            # FIXME: duplicated logic for computing the
-            # antisymmetrization positions, here and in apply_young_idempotent
-            antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
-        else:
-            antisymmetries = None
-        if use_lie:
-            # The hilbert series will be directly expressed in terms of the
-            # dimensions of the highest weight spaces, thus as a symmetric
-            # function in the Schur basis
-            def hilbert_parent(dimensions):
-                return s.sum_of_terms([Partition(d), c]
-                                       for d,c in dimensions.iteritems() if c)
-        elif use_symmetry:
-            def hilbert_parent(dimensions):
-                return s(m.sum_of_terms([Partition(d), c]
-                                         for d,c in dimensions.iteritems())
-                        ).restrict_partition_lengths(r, exact=False)
-        else:
-            def hilbert_parent(dimensions):
-                return s(S.from_polynomial(self._hilbert_parent(dimensions))
-                        ).restrict_partition_lengths(r,exact=False)
-
-        operators = self.polarization_operators_by_degree(side='down',
-                                                          use_symmetry=use_symmetry,
-                                                          antisymmetries=antisymmetries,
-                                                          min_degree=1 if use_lie else 0)
-        if use_lie == "euler+intersection":
-            operators[self._grading_set.zero()] = [
-                functools.partial(lambda v,i: self.polarization(self.polarization(v, i+1,i, 1,antisymmetries=antisymmetries), i,i+1, 1,antisymmetries=antisymmetries), i=i)
-                for i in range(r-1)
-                ]
-        elif use_lie == 'decompose':
-            def post_compose(f):
-                return lambda x: [q for (q,word) in self.highest_weight_vectors_decomposition(f(x))]
-            operators = {d: [post_compose(op) for op in ops]
-                         for d, ops in operators.iteritems()}
-        elif use_lie == 'multipolarization':
-            F = HighestWeightSubspace(generators,
-                     ambient=self,
-                     add_degrees=self._add_degree, degree=self.multidegree,
-                     hilbert_parent = hilbert_parent,
-                     antisymmetries=antisymmetries,
-                     verbose=verbose)
-            return F
-
-        operators_by_degree = {}
-        for degree,ops in operators.iteritems():
-            d = sum(degree)
-            operators_by_degree.setdefault(d,[])
-            operators_by_degree[d].extend(ops)
-        ranks = {}
-        for d, ops in operators_by_degree.iteritems():
-            ranker = rank_from_list(ops)
-            for op in ops:
-                ranks[op] = (d, ranker(op))
-        ranker = ranks.__getitem__
-        def extend_word(word, op):
-            new_word = word + [ranker(op)]
-            if use_commutativity and sorted(new_word) != new_word:
-                #print "rejected: %s"% new_word
-                return None
-            #print new_word
-            return new_word
-        # print operators
-        add_degree = self._add_degree_symmetric if use_symmetry else self._add_degree
-        F = Subspace(generators, operators=operators,
-                     add_degrees=add_degree, degree=self.multidegree,
-                     hilbert_parent = hilbert_parent,
-                     extend_word=extend_word, verbose=verbose)
-        F._antisymmetries = antisymmetries
-        return F
-
-    def harmonic_character(self, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
-        """
-        Return the `GL_r` character of the space of diagonally harmonic polynomials
-        contributed by a given `S_n` irreducible representation.
-
-        EXAMPLES::
-
-            sage: P = DiagonalPolynomialRing(QQ,5,2)
-            sage: P.harmonic_character(Partition([3,2]))
-            s[2] + s[2, 1] + s[2, 2] + s[3] + s[3, 1] + s[4] + s[4, 1] + s[5] + s[6]
-        """
-        mu = Partition(mu)
-        F = self.harmonic_space_by_shape(mu, verbose=verbose,
-                                         use_symmetry=use_symmetry,
-                                         use_antisymmetry=use_antisymmetry,
-                                         use_lie=use_lie,
-                                         use_commutativity=use_commutativity)
-        F.finalize()
-
-        if use_lie != "euler+intersection":
-            return F.hilbert_polynomial()
-        # Otherwise:
-        # The hilbert polynomial is expressed directly in terms of the
-        # dimensions of the highest weight spaces; however the subspaces that
-        # have been computed at this stage may include non highest weight
-        # vectors.
-        # We compute the intersection with the highest weight space,
-        # i.e. the joint kernel of the f operators of the lie algebra
-        # which are the polarization operators of degree 0 with i_2 < i_1
-        operators = [functools.partial(self.polarization, i1=i1, i2=i2, d=1,
-                                       antisymmetries=F._antisymmetries)
-                     for i1 in range(1, self._r)
-                     for i2 in range(i1)]
-        return F._hilbert_parent({mu: len(annihilator_basis(basis._basis, operators, action=lambda b, op: op(b), ambient=self))
-                                  for mu, basis in F._bases.iteritems() if basis._basis})
-
-    def harmonic_bicharacter(self, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False):
-        """
-        Return the `GL_r-S_n` character of the space of diagonally harmonic polynomials
-
-        EXAMPLES::
-
-            sage: P = DiagonalPolynomialRing(QQ,3,2)
-            sage: P.harmonic_bicharacter()
-            s[] # s[3] + s[1] # s[2, 1] + s[1, 1] # s[1, 1, 1] + s[2] # s[2, 1] + s[3] # s[1, 1, 1]
-
-        """
-        s = SymmetricFunctions(ZZ).s()
-        def char(mu):
-            if verbose:
-                print "%s:"%s(mu)
-            r = tensor([self.harmonic_space_by_shape(mu, verbose=verbose,
-                                                     use_symmetry=use_symmetry,
-                                                     use_antisymmetry=use_antisymmetry,
-                                                     use_lie=use_lie,
-                                                    ).hilbert_polynomial(),
-                        s[mu]])
-            return r
-        # TODO Understand why this does not work in parallel
-        #char = parallel()(char)
-        #return sum( res[1] for res in char(Partitions(self._n).list()) )
-        return sum(char(mu) for mu in Partitions(self._n))
-
-
-##############################################################################
-# Harmonic Polynomials With Inert Variables
-##############################################################################
-
-#TODO : find a (short) name for those polynomials
-class DiagonalHarmonicPolynomialsInert():
-    """
-
-        The space of diagonal hamonic polynomials in n x r variables and k rows of inert variables
-
-        EXAMPLES::
-
-            sage: 
-    """
-
-    def __init__(self, R, n, r, inert=0, antisymmetries=None):
-        self._antisymmetric = antisymmetric
-        self._R = R
-        self._n = n
-        self._r = r
-        self._k = inert
-        self._inert = inert
-        self._antisymmetries = antisymmetries
-        if antisymmetries: 
-            self._polRing = DiagonalAntisymmetricPolynomialRing(R, n, r, inert, antisymmetries)
-        else:
-            self._polRing = DiagonalPolynomialRing(R, n, r, inert)
-            
-            
-    def _repr_(self):
-        """
-
-        """
-        return "Diagonal harmonic polynomials with %s rows of %s variables and %s rows of inert variables over %s"%(self._r, self._n, self._k, self._polRing.base_ring())
-
-    def vandermonde(self,mu):
-        """
-            Let `mu` be a diagram (of a partition or no) and $X=(x_i)$ and
-            $\Theta = (\theta_i)$ two sets of n variables.
-            Then $\Delta$ is the determinant of the matrix $(x_i^a\theta_i^b)$
-            for (a,b) the cells of `mu`.
-
-            INPUT: A partition `mu`
-
-            OUTPUT: The determinant Delta
-
-            EXAMPLES::
-                sage: vandermonde([3])
-                -x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2
-                sage: vandermonde([2,1])
-                -x01*x20 + x02*x20 + x00*x21 - x02*x21 - x00*x22 + x01*x22
-                sage: vandermonde([1,1,1])
-                -x20^2*x21 + x20*x21^2 + x20^2*x22 - x21^2*x22 - x20*x22^2 + x21*x22^2
-
-        """
-        n = self._n
-        X = self._polRing.variables()
-        Theta = self._polRing.inert_variables()
-        if not isinstance(mu,Diagram):
-            mu = Diagram(mu)
-        Delta = matrix([[x**i[1]*theta**i[0] for i in mu.cells()] for x,theta in zip(X[0],Theta[0])]).determinant()
-        return Delta
-
-    def dimension_vandermonde(self,mu) :
-        return sum([i[1] for i in mu.cells()])
-
-
-##############################################################################
-# Young idempotent
-##############################################################################
-
-
-def apply_young_idempotent(p, t, use_antisymmetry=False):
-    """
-    Apply the Young idempotent indexed by `t` on the polynomial `p`
-
-    INPUT::
-
-    - `t` -- a standard tableau or a partition
-    - `p` -- a polynomial on as many variables as there are cells in `t`
-
-    The Young idempotent first symmetrizes `p` according to the
-    row stabilizer of `t` and then antisymmetrizes the result according
-    to the column stabilizer of `t` (a cell containing `i` in `t`
-    being associated to the `i`-th variable (starting at `i=1`)
-    of the polynomial ring containing `p`.
-
-    .. TODO:: normalize result
-
-    EXAMPLES::
-
-        sage: x,y,z = QQ['x,y,z'].gens()
-        sage: p = x^2 * y
-        sage: t = StandardTableau([[1],[2],[3]])
-        sage: apply_young_idempotent(p, t)
-        x^2*y - x*y^2 - x^2*z + y^2*z + x*z^2 - y*z^2
-
-        sage: apply_young_idempotent(p, Partition([1,1,1]))
-        x^2*y - x*y^2 - x^2*z + y^2*z + x*z^2 - y*z^2
-
-        sage: t = StandardTableau([[1,2,3]])
-        sage: apply_young_idempotent(p, t)
-        x^2*y + x*y^2 + x^2*z + y^2*z + x*z^2 + y*z^2
-
-        sage: apply_young_idempotent(p, Partition([3]))
-        x^2*y + x*y^2 + x^2*z + y^2*z + x*z^2 + y*z^2
-
-        sage: t = StandardTableau([[1,2],[3]])
-        sage: p = x*y*y^2
-        sage: apply_young_idempotent(p, t)
-        x^3*y + x*y^3 - y^3*z - y*z^3
-
-        sage: p = x*y*z^2
-        sage: apply_young_idempotent(p, t)
-        -2*x^2*y*z + 2*x*y*z^2
-    """
-    if isinstance(t, Partition):
-        t = t.initial_tableau()
-    p = sum(act(Permutation(sigma),p) for sigma in t.row_stabilizer() )
-    if use_antisymmetry:
-        antisymmetries = antisymmetries_of_tableau(t)
-        p = antisymmetric_normal(p, t.size(), 1, antisymmetries)
-    else:
-        p = sum(sigma.sign()*act(Permutation(sigma),p) for sigma in t.column_stabilizer() )
-    return p
-
-def act(sigma,v) :
-    """
-    Return sigma(v).
-
-    INPUT:
-
-    - `sigma` -- a permutation
-    - `v` -- a polynomial
-
-    """
-
-    X = v.parent().gens()
-    r = len(X)/len(sigma)
-    n = len(sigma)
-    sub = {}
-    for j in range(0,r) :
-        sub.update({X[i+n*j]:X[sigma[i]-1+n*j] for i in range (0,n) if i!=sigma[i]-1})
-    return v.subs(sub)
-
-def make_deriv_comp_young(x,mu):
-    """
-        Return a function which corresponds to a partial derivative in `x`
-        composed with the young idempotent for the partition `mu`.
-
-        INPUT:
-            - `x` -- a variable for the derivation
-            - `mu` -- a partition
-
-        EXAMPLES::
-        sage: P = DiagonalPolynomialRing(QQ,3,3)
-        sage: X = P.algebra_generators()
-        sage: [make_deriv_comp_young(x,mu) for x in X[0] for mu in Partitions(3)]
-
-        [<function f at 0x7f7f64111f50>,
-         <function f at 0x7f7f64111140>,
-         <function f at 0x7f7f64111938>,
-         <function f at 0x7f7f64111320>,
-         <function f at 0x7f7f64111398>,
-         <function f at 0x7f7f641115f0>,
-         <function f at 0x7f7f641155f0>,
-         <function f at 0x7f7f64115668>,
-         <function f at 0x7f7f64115578>]
-
-    """
-    def f(p):
-        return apply_young_idempotent(derivative(p,x),mu)
-    return f
