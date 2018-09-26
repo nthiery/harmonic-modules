@@ -118,9 +118,9 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
                     ).restrict_partition_lengths(r,exact=False)
 
     if with_inert:
-        operators_by_degree = polarization_operators_by_degree(P, use_symmetry=use_symmetry)
+        operators_by_degree = polarization_operators_by_degree(P, antisymmetries=antisymmetries, use_symmetry=use_symmetry)
     else:
-        operators = polarization_operators_by_multidegree(P, side='down',
+        operators = polarization_operators_by_multidegree(P, side='down', antisymmetries=antisymmetries,
                                                           use_symmetry=use_symmetry,
                                                           min_degree=1 if use_lie else 0)
         if use_lie == "euler+intersection":
@@ -178,7 +178,7 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
 ####################################################
 # Polarization Operators
 ####################################################
-def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, use_lie=False, min_degree=0):
+def polarization_operators_by_multidegree(P, antisymmetries=None, side=None, use_symmetry=False, use_lie=False, min_degree=0):
     """
     Return the collection of polarization operators acting on harmonic polynomials,
     indexed by multi-degree.
@@ -239,16 +239,26 @@ def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, use_
     n = P._n
     r = P._r
     grading_set = P._grading_set
-    return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
-            [functools.partial(P.polarization, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry)]
-            for d in range(min_degree+1, n)
-            for i1 in range(0, r)
-            for i2 in range(0, r)
-            if ((i1==i2+1 if d==1 else i1<i2) if use_lie else i1<i2 if side == 'down' else i1!=i2)
-            if (i1<i2 if side == 'down' else i1!=i2)
-           }
+    if antisymmetries:
+        return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
+                [functools.partial(P.polarization, i1=i1, i2=i2, d=d, antisymmetries=antisymmetries, use_symmetry=use_symmetry)]
+                for d in range(min_degree+1, n)
+                for i1 in range(0, r)
+                for i2 in range(0, r)
+                if ((i1==i2+1 if d==1 else i1<i2) if use_lie else i1<i2 if side == 'down' else i1!=i2)
+                if (i1<i2 if side == 'down' else i1!=i2)
+               }
+    else:
+        return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
+                [functools.partial(P.polarization, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry)]
+                for d in range(min_degree+1, n)
+                for i1 in range(0, r)
+                for i2 in range(0, r)
+                if ((i1==i2+1 if d==1 else i1<i2) if use_lie else i1<i2 if side == 'down' else i1!=i2)
+                if (i1<i2 if side == 'down' else i1!=i2)
+               }
 
-def polarization_operators_by_degree(P, side=None, use_symmetry=False, use_lie=False, min_degree=0):
+def polarization_operators_by_degree(P, antisymmetries=None, side=None, use_symmetry=False, use_lie=False, min_degree=0):
     """
     Return the collection of polarization operators acting on harmonic polynomials,
     indexed by multi-degree.
@@ -277,7 +287,7 @@ def polarization_operators_by_degree(P, side=None, use_symmetry=False, use_lie=F
          0: [<functools.partial object at ...>]}
 
     """
-    pol = polarization_operators_by_multidegree(P, side=side, 
+    pol = polarization_operators_by_multidegree(P, side=side, antisymmetries=antisymmetries,
                                                 use_symmetry=use_symmetry, 
                                                 use_lie=use_lie, 
                                                 min_degree=min_degree)

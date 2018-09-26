@@ -724,7 +724,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         else :
             return "Diagonal antisymmetric polynomial ring with %s rows of %s variables and %s row(s) of inert variables over %s"%(self._r, self._n, self._inert, self.base_ring())
 
-    def polarization(self, p, i1, i2, d, use_symmetry=False):
+    def polarization(self, p, i1, i2, d, antisymmetries=None, use_symmetry=False):
         """
         Return the polarization `P_{d,i_1,i_2}. p` of `p`. 
         The result is reduced with respect to the given antisymmetries. 
@@ -757,13 +757,15 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
             sage: P.polarization(v, 0, 1, 1)
             -12*x00*x01*x10 - 6*x00^2*x11
         """
-        antisymmetries = self._antisymmetries
+        
+        if antisymmetries == None :
+            antisymmetries = self._antisymmetries
         result = super(DiagonalAntisymmetricPolynomialRing,self).polarization(p, i1, i2, d, use_symmetry=use_symmetry)
-        #if antisymmetries and result:
-            #result = reduce_antisymmetric_normal(result, self._n, self._r+self._inert, antisymmetries)
+        if antisymmetries and result:
+            result = antisymmetric_normal(result, self._n, self._r+self._inert, antisymmetries)
         return result
 
-    def multi_polarization(self, p, D, i2): 
+    def multi_polarization(self, p, D, i2, antisymmetries=None): 
         """
         Return the multi polarization `P_{D,i_2}. p` of `p`.
         The result is reduced with respect to the given antisymmetries.
@@ -778,7 +780,8 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
             sage: P.multi_polarization(v, [1,0,0], 1)
             -4*x00*x01*x10 + 2*x01^2*x10 + 4*x00*x02*x10 - 2*x00^2*x11 + 4*x00*x01*x11 + 2*x00^2*x12
         """
-        antisymmetries = self._antisymmetries
+        if antisymmetries == None :
+            antisymmetries = self._antisymmetries
         result = super(DiagonalAntisymmetricPolynomialRing,self).multi_polarization(p,D,i2)
         if antisymmetries and result:
             result = reduce_antisymmetric_normal(result, self._n, self._r+self._inert, antisymmetries)
