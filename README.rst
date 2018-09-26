@@ -13,3 +13,16 @@ Dependencies: the `SageMath <http://sagemath.org>`_ open source mathematical sys
 
 License: GPL
 
+## Subspace computation facilities
+
+The code for this project includes generic facilities for computing
+subspaces of general Sage vector spaces like polynomial rings. See
+utilities.pyx, matrix_of_vectors.py, subspace.py.
+
+This code is being extracted and refactored as a dedicated
+Sage package, to be eventually integrated into Sage:
+
+    https://github.com/darijgr/sage-subspace/
+
+Don't edit the corresponding files in this repo; it will soon go away
+in favor of using sage-subspace.
