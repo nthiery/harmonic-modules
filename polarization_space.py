@@ -27,7 +27,7 @@ Variant::
 
 #TODO use_symmetry a implementer
 
-def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisymmetries=None, use_symmetry=False, use_lie=False, use_commutativity=False):
+def polarizationSpace(P, generators, verbose=False, with_inert=False, antisymmetries=None, use_symmetry=False, use_lie=False, use_commutativity=False):
     """
     Starting from  polynomials (=generators) in the mu-isotypic component 
     of the polynomial ring in one set of variables (possibly with 
@@ -81,9 +81,7 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
            there may be some bugs to correct
 
     """
-    # FIXME mu is useless, antisymmetries already encoded in P
-    r = P._r
-    S = SymmetricFunctions(ZZ)
+    S = SymmetricFunctions(QQ)
     s = S.s()
     m = S.m()
     
