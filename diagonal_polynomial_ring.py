@@ -300,7 +300,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             
             sage: P.polarization(p, 1, 2, 1)
             3*x00*x10^2*x11*x20 + x00*x10^3*x21
-            sage: D.polarization(p, 1, 2, 1, use_symmetry=True)
+            sage: P.polarization(p, 1, 2, 1, use_symmetry=True)
             3*x00^2*x01*x10*x20 + x00^3*x10*x21
 
             sage: P.polarization(p, 1, 0, 2)

@@ -78,7 +78,7 @@ def harmonic_bicharacter_comp(P, verbose=False, use_symmetry=False, antisymmetri
     def char(mu):
         if verbose:
             print "%s:"%s(mu)
-        r = tensor([polarizationSpace(P, mu, generators, verbose=verbose,
+        r = tensor([polarizationSpace(P, generators, verbose=verbose,
                                                  use_symmetry=use_symmetry,
                                                  antisymmetries=antisymmetries,
                                                  use_lie=use_lie,
@@ -298,7 +298,7 @@ def bitruncate(f,d):
 
 
 ###########################################################################
-# Caracters for generalized version of Vandermonde with inert variables
+# Characters for generalized version of Vandermonde with inert variables
 ###########################################################################
 
 def character_with_inert(mu, verbose=False, use_antisymmetry=False, use_symmetry=False, parallel=True): 
@@ -356,10 +356,8 @@ def character_by_isotypic(mu, nu, inert=1, use_antisymmetry=False, use_symmetry=
 
     EXAMPLES::
         sage: mu = Partition([2,2])
-        sage: P = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
-        sage: H = DerivativeVandermondeSpaceWithInert(QQ, mu)
         sage: for nu in Partitions(4):
-        ....:     print((nu,character_by_isotypic(P, mu, H, nu)))
+        ....:     print((nu,character_by_isotypic(mu, nu)))
         ([4], 0)
         ([3, 1], 0)
         ([2, 2], 1)

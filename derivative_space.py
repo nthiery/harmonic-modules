@@ -318,7 +318,7 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         
         EXAMPLES::
 
-            sage: W = DerivativeVandermondeSpaceWithInert(QQ, [2,1])
+            sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([2,1]))
     """
 
     def __init__(self, R, mu, inert=1, use_antisymmetry=True):
@@ -347,13 +347,13 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         OUTPUT: The determinant Delta
 
         EXAMPLES::
-            sage: W = DerivativeVandermondeSpaceWithInert(QQ, [3])
+            sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([3]))
             sage: W.vandermonde()
             -x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2
-            sage: W = DerivativeVandermondeSpaceWithInert(QQ, [2,1])
+            sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([2,1]))
             sage: W.vandermonde()
             -x01*theta00 + x02*theta00 + x00*theta01 - x02*theta01 - x00*theta02 + x01*theta02
-            sage: W = DerivativeVandermondeSpaceWithInert(QQ, [1,1,1])
+            sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([1,1,1]))
             sage: W.vandermonde()
             -theta00^2*theta01 + theta00*theta01^2 + theta00^2*theta02 - theta01^2*theta02 - theta00*theta02^2 + theta01*theta02^2
         """
@@ -361,8 +361,6 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         mu = self._mu
         X = self._polRing.variables()
         Theta = self._polRing.inert_variables()
-        #if not isinstance(mu,Diagram):
-            #mu = Diagram(mu)
         Delta = matrix([[x**i[1]*theta**i[0] for i in mu.cells()] for x,theta in zip(X[0],Theta[0])]).determinant()
         return Delta
 
@@ -372,19 +370,17 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         w.r.t the `x` variables. The `theta` variables are considered to be of degree 0.
         
         EXAMPLES::
-            sage: W = DerivativeVandermondeSpaceWithInert(QQ, [3])
+            sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([3]))
             sage: W.degree_vandermonde()
             3
-            sage: W = DerivativeVandermondeSpaceWithInert(QQ, [2,1])
+            sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([2,1]))
             sage: W.degree_vandermonde()
             1
-            sage: W = DerivativeVandermondeSpaceWithInert(QQ, [1,1,1])
+            sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([1,1,1]))
             sage: W.degree_vandermonde()
             0
         """
         mu = self._mu
-        #if not isinstance(mu,Diagram):
-            #mu = Diagram(mu)
         return sum([i[1] for i in mu.cells()])
             
     @cached_method
@@ -395,29 +391,29 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         using the Young idempotents to project on isotypic components.
 
         EXAMPLES::
-           sage: W = DerivativeVandermondeSpaceWithInert(QQ, [3])
+           sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([3]))
             sage: W.basis()
             {(0, [3]): [1],
              (1, [2, 1]): [x00 - x02],
              (2, [2, 1]): [x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2],
              (3,
               [1, 1, 1]): [-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2]}
-            sage: W = DerivativeVandermondeSpaceWithInert(QQ, [2,1])
+            sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([2,1]))
             sage: W.basis()
             {(0, [2, 1]): [-theta00 + theta02],
              (1, [1, 1, 1]): [x01*theta00 - x00*theta01 + x00*theta02 - x01*theta02]}
-            sage: W = DerivativeVandermondeSpaceWithInert(QQ, [1,1,1])
+            sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([1,1,1]))
             sage: W.basis()
             {(0,
               [1, 1, 1]): [-theta00^2*theta01 + theta00*theta01^2 + theta00^2*theta02 - theta01^2*theta02 - theta00*theta02^2 + theta01*theta02^2]}
-            sage: W = DerivativeVandermondeSpaceWithInert(QQ, [3], use_antisymmetry=False)
+            sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([3]), use_antisymmetry=False)
             sage: W.basis()
             {(0, [3]): (1,),
              (1, [2, 1]): (x00 - x02,),
              (2, [2, 1]): (x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2,),
              (3,
               [1, 1, 1]): (-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2,)}
-            sage: W = DerivativeVandermondeSpaceWithInert(QQ, [2,1], use_antisymmetry=False)
+            sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([2,1]), use_antisymmetry=False)
             sage: W.basis()
             {(0, [2, 1]): (-theta00 + theta02,),
              (1,
@@ -451,7 +447,7 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         INPUT :: `nu` -- a partition
         
         EXAMPLES::
-            sage: W = DerivativeVandermondeSpaceWithInert(QQ, [2,1])
+            sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([2,1]))
             sage: W.basis()
             {(0, [2, 1]): [-theta00 + theta02],
              (1, [1, 1, 1]): [x01*theta00 - x00*theta01 + x00*theta02 - x01*theta02]}
