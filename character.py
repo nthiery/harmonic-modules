@@ -327,14 +327,13 @@ def character_with_inert(mu, verbose=False, use_antisymmetry=False, use_symmetry
         for (((_,nu,_,_,_,_,),_),res) in character_by_isotypic([(mu, nu, inert, use_antisymmetry, 
                                                                     use_symmetry, verbose) 
                                                                     for nu in Partitions(n)]):
-            print "test", res
             if res:
-                charac += tensor([res,s(nu)])
+                result = sum(dim*s(Partition(degrees)) for degrees,dim in res.iteritems())
+                charac += tensor([result,s(nu)])
             
     else:
         for nu in Partitions(n):
             res = character_by_isotypic(mu, nu, inert=inert, use_antisymmetry=use_antisymmetry, use_symmetry=use_symmetry, verbose=verbose)
-            #res = # ... 
             if res:
                 charac += tensor([res,s(nu)])
     return charac
@@ -343,7 +342,7 @@ def character_key(mu, **args):
     return tuple(Composition(mu))
 def character_hash(mu):
     return str(list(mu)).replace(" ","")[1:-1]
-#character_with_inert = func_persist(character_with_inert,hash=character_hash,key=character_key)  
+character_with_inert = func_persist(character_with_inert,hash=character_hash,key=character_key)  
     
 @parallel()
 def character_by_isotypic(mu, nu, inert=1, use_antisymmetry=False, use_symmetry=False, verbose=False):
@@ -387,6 +386,7 @@ def character_by_isotypic(mu, nu, inert=1, use_antisymmetry=False, use_symmetry=
                 charac += s(sum(m(Partition(P.multidegree(p))) for p in b)).restrict_partition_lengths(r,exact=False)
             else:
                 charac += s(ss.from_polynomial(sum(P.multipower(P.multidegree(p)) for p in b))).restrict_partition_lengths(r,exact=False)
-    print "isotyp", charac
-    return charac
-    #return {tuple(degrees): dim for degrees, dim in charac}
+    if charac:
+        return {tuple(degrees): dim for degrees, dim in charac}
+    else:
+        return 0
