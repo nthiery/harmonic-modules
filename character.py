@@ -11,49 +11,49 @@ from polarization_space import *
 
 
 def harmonic_character_comp(P, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
-        """
-        Return the `GL_r` character of the space of diagonal harmonic polynomials
-        contributed by a given `S_n` irreducible representation.
+    """
+    Return the `GL_r` character of the space of diagonal harmonic polynomials
+    contributed by a given `S_n` irreducible representation.
 
-        EXAMPLES::
+    EXAMPLES::
 
-            sage: P = DiagonalPolynomialRing(QQ,5,4)
-            sage: harmonic_character_comp(P, Partition([3,2]))
-            s[2] + s[2, 1] + s[2, 2] + s[3] + s[3, 1] + s[4] + s[4, 1] + s[5] + s[6]
-        """
-        mu = Partition(mu)
-        n = P._n
-        r = P._r
-        if use_antisymmetry:
-            antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
-        else:
-            antisymmetries = None
-        generators = [higher_specht(P, t, harmonic=True, use_antisymmetry=use_antisymmetry)
-                      for t in StandardTableaux(mu)]
-        F = polarizationSpace(P, mu, generators, verbose=verbose, 
-                                         antisymmetries=antisymmetries, 
-                                         use_symmetry=use_symmetry, 
-                                         use_lie=use_lie,
-                                         use_commutativity=use_commutativity)
-        F.finalize()
+        sage: P = DiagonalPolynomialRing(QQ,5,4)
+        sage: harmonic_character_comp(P, Partition([3,2]))
+        s[2] + s[2, 1] + s[2, 2] + s[3] + s[3, 1] + s[4] + s[4, 1] + s[5] + s[6]
+    """
+    mu = Partition(mu)
+    n = P._n
+    r = P._r
+    if use_antisymmetry:
+        antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+    else:
+        antisymmetries = None
+    generators = [higher_specht(P, t, harmonic=True, use_antisymmetry=use_antisymmetry)
+                  for t in StandardTableaux(mu)]
+    F = polarizationSpace(P, mu, generators, verbose=verbose, 
+                                     antisymmetries=antisymmetries, 
+                                     use_symmetry=use_symmetry, 
+                                     use_lie=use_lie,
+                                     use_commutativity=use_commutativity)
+    F.finalize()
 
-        if use_lie != "euler+intersection":
-            return F.hilbert_polynomial()
-        # Otherwise:
-        # The hilbert polynomial is expressed directly in terms of the
-        # dimensions of the highest weight spaces; however the subspaces that
-        # have been computed at this stage may include non highest weight
-        # vectors.
-        # We compute the intersection with the highest weight space,
-        # i.e. the joint kernel of the f operators of the lie algebra
-        # which are the polarization operators of degree 0 with i_2 < i_1
-        operators = [functools.partial(P.polarization, i1=i1, i2=i2, d=1,
-                                       antisymmetries=F._antisymmetries)
-                     for i1 in range(1, r)
-                     for i2 in range(i1)]
-        # basis._basis ??? 
-        return F._hilbert_parent({mu: len(annihilator_basis(basis._basis, operators, action=lambda b, op: op(b), ambient=self))
-                                  for mu, basis in F._bases.iteritems() if basis._basis})
+    if use_lie != "euler+intersection":
+        return F.hilbert_polynomial()
+    # Otherwise:
+    # The hilbert polynomial is expressed directly in terms of the
+    # dimensions of the highest weight spaces; however the subspaces that
+    # have been computed at this stage may include non highest weight
+    # vectors.
+    # We compute the intersection with the highest weight space,
+    # i.e. the joint kernel of the f operators of the lie algebra
+    # which are the polarization operators of degree 0 with i_2 < i_1
+    operators = [functools.partial(P.polarization, i1=i1, i2=i2, d=1,
+                                   antisymmetries=F._antisymmetries)
+                 for i1 in range(1, r)
+                 for i2 in range(i1)]
+    # basis._basis ??? 
+    return F._hilbert_parent({mu: len(annihilator_basis(basis._basis, operators, action=lambda b, op: op(b), ambient=self))
+                              for mu, basis in F._bases.iteritems() if basis._basis})
 
 
 def harmonic_bicharacter_comp(P, verbose=False, use_symmetry=False, antisymmetries=None, use_lie=False):
@@ -320,19 +320,20 @@ def character_with_inert(mu, verbose=False, use_antisymmetry=False, use_symmetry
     """
     n = mu.size()
     r = mu.size()-1
-    if use_antisymmetry : 
+    SymmetricFunctions(PolynomialRing(QQ,'q',r)).inject_shorthands(verbose=False)
+    if use_antisymmetry: 
         antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
         P = DiagonalAntisymmetricPolynomialRing(QQ, n, r, inert=1, antisymmetries=antisymmetries) ## A CORIGER ICI
     else :
         P = DiagonalPolynomialRing(QQ, n, r, inert=1)
     charac = character_plain(P, mu, inert=1, verbose=verbose, use_antisymmetry=use_antisymmetry, use_symmetry=use_symmetry, parallel=parallel)
-    return character_schur(P, charac)
+    return charac
         
 def character_key(mu, **args):
     return tuple(Composition(mu))
 def character_hash(mu):
     return str(list(mu)).replace(" ","")[1:-1]
-character_with_inert = func_persist(character_with_inert,hash=character_hash,key=character_key)
+#character_with_inert = func_persist(character_with_inert,hash=character_hash,key=character_key)
 
 
 @parallel()
@@ -361,6 +362,7 @@ def character_by_isotypic(P, mu, H, nu, use_antisymmetry=False, use_symmetry=Fal
     """
     charac = 0
     basis = H.basis_by_shape(nu)
+    ss = SymmetricFunctions(QQ).s()
     if use_antisymmetry:
         antisymmetries = antisymmetries_of_tableau(nu.initial_tableau())
     else:
@@ -368,7 +370,11 @@ def character_by_isotypic(P, mu, H, nu, use_antisymmetry=False, use_symmetry=Fal
     if basis :
         S = polarizationSpace(P, mu, basis, verbose=verbose, with_inert=True, antisymmetries=antisymmetries, use_symmetry=use_symmetry)
         for b in S.basis().values():
-            charac += sum(P.multipower(P.multidegree(p)) for p in b)
+            if use_symmetry:
+                charac += s(sum(m(Partition(P.multidegree(p))) for p in b)).restrict_partition_lengths(P._r,exact=False)
+            else:
+                charac += s(ss.from_polynomial(sum(P.multipower(P.multidegree(p)) for p in b))).restrict_partition_lengths(P._r,exact=False)
+    print "isotyp", charac
     return charac
 
 def character_plain(P, mu, inert=1, verbose=False, use_antisymmetry=False, use_symmetry=False, parallel=False):
@@ -391,8 +397,6 @@ def character_plain(P, mu, inert=1, verbose=False, use_antisymmetry=False, use_s
         (q0^2+q0*q1+q1^2+q0*q2+q1*q2+q2^2)*s[1, 1, 1, 1] + (q0+q1+q2)*s[2, 1, 1] + s[2, 2]
 
     """
-
-    s = SymmetricFunctions(P.polynomial_ring()).s()
     n = P._n
     r = P._r
     charac = 0
@@ -406,67 +410,11 @@ def character_plain(P, mu, inert=1, verbose=False, use_antisymmetry=False, use_s
             for (((_,_,_,nu,_,_,_,),_),res) in character_by_isotypic([(P, mu, H, nu, use_antisymmetry, 
                                                                         use_symmetry, verbose) 
                                                                         for nu in Partitions(n)]):
-                if res:
-                    if use_symmetry:
-                        charac += symmetrize(res,r)*s(nu)
-                    else:
-                        charac += res*s(nu)
+                print "test", res
+                charac += tensor([res,s(nu)])
                 
         else:
             for nu in Partitions(n):
                 res = character_by_isotypic(P, mu, H, nu, use_antisymmetry=use_antisymmetry, use_symmetry=use_symmetry, verbose=verbose)
-                if use_symmetry:
-                    charac += symmetrize(res,r)*s(nu)
-                else:
-                    charac += res*s(nu)
+                charac += tensor([res,s(nu)])
     return charac
-        
-
-def character_schur(P, charac):
-    """
-    Convert a character `charac` written as a sum of tensor products of polynomials in q
-    variables and Schur functions into a character written as a sum of tensor products
-    of Schur functions.
-
-    INPUT: `charac` a sum of tensor products
-
-    EXAMPLES::
-        sage: P = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
-        sage: charac = character_plain(P, Partition([2,2]))
-        sage: character_schur(P, charac)
-        s[] # s[2, 2] + s[1] # s[2, 1, 1] + s[2] # s[1, 1, 1, 1]
-
-        sage: P = DiagonalPolynomialRing(QQ, 3, 2, inert=1)
-        sage: for nu in Partitions(3):
-        ....:     character_schur(P, character_plain(P, nu))   
-        s[] # s[3] + s[1] # s[2, 1] + s[1, 1] # s[1, 1, 1] + s[2] # s[2, 1] + s[3] # s[1, 1, 1]
-        s[] # s[2, 1] + s[1] # s[1, 1, 1]
-        s[] # s[1, 1, 1]
-
-    """
-    
-    nb_rows = P._r
-    s = SymmetricFunctions(P._Q).s()
-    ss = SymmetricFunctions(QQ).s()
-    sym_char = 0
-    for supp in charac.support():
-        if charac.coefficient(supp)==1:
-            sym_char += tensor([s[0],s[supp]])
-        else:
-            sym_char += tensor([s(ss.from_polynomial(P._Q(charac.coefficient(supp))))
-                                .restrict_partition_lengths(nb_rows,exact=False),s[supp]])
-    return sym_char
-
-# A deplacer par la suite 
-def symmetrize(p, n):
-    """
-    Symmetrize the polynomial p in n variables
-    """
-    
-    p_sym = p
-    for sigma in Permutations(n):
-        result = act_on_polynomial(p, PermutationGroupElement(sigma))
-        for t in result:
-            if t not in p_sym:
-                p_sym += t[1]
-    return p_sym
