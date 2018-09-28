@@ -1,0 +1,15 @@
+# Relaunching the Harm(6,5) calculations on pascaline
+
+ssh pascaline
+cd harmonic-modules/
+rm -rf func_persist
+tmux
+sage
+%run code.py
+
+%time harmonic_characters(1)
+%time harmonic_characters(2)
+%time harmonic_characters(3)
+%time harmonic_characters(4)
+%time harmonic_characters(5)
+%time harmonic_characters(6)
