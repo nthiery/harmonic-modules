@@ -27,7 +27,7 @@ Variant::
 
 #TODO use_symmetry a implementer
 
-def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisymmetries=None, use_symmetry=False, use_lie=False, use_commutativity=False):
+def polarizationSpace(P, generators, verbose=False, with_inert=False, use_symmetry=False, use_lie=False, use_commutativity=False):
     """
     Starting from  polynomials (=generators) in the mu-isotypic component 
     of the polynomial ring in one set of variables (possibly with 
@@ -53,7 +53,7 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
         sage: generators
         {(1, [2, 1]): [x00 - x02],
          (2, [2, 1]): [x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2]}
-        sage: S = polarizationSpace(P, mu, generators, with_inert=True)
+        sage: S = polarizationSpace(P, generators, with_inert=True)
         sage: S.basis()
         {(1, [2, 1]): (x00 - x02, x10 - x12),
          (2, [2, 1]): (-1/2*x00^2 + x00*x01 - x01*x02 + 1/2*x02^2,
@@ -63,7 +63,7 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
         sage: generators
         {(3,
           [1, 1, 1]): [-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2]}
-        sage: S = polarizationSpace(P, mu, generators, with_inert=True)
+        sage: S = polarizationSpace(P, generators, with_inert=True)
         sage: S.basis()
         {(2, [1, 1, 1]): (-x01*x10 + x02*x10 + x00*x11 - x02*x11 - x00*x12 + x01*x12,),
          (3,
@@ -73,7 +73,7 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
         sage: generators = DerivativeVandermondeSpaceWithInert(QQ, mu).basis_by_shape(Partition([2,1]))
         sage: generators
         {(0, [2, 1]): [-theta00 + theta02]}
-        sage: S = polarizationSpace(P, mu, generators, with_inert=True)
+        sage: S = polarizationSpace(P, generators, with_inert=True)
         sage: S.basis()
         {(0, [2, 1]): (theta00 - theta02,)}
         
@@ -81,11 +81,14 @@ def polarizationSpace(P, mu, generators, verbose=False, with_inert=False, antisy
            there may be some bugs to correct
 
     """
-    # FIXME mu is useless, antisymmetries already encoded in P
-    r = P._r
-    S = SymmetricFunctions(ZZ)
+    S = SymmetricFunctions(QQ)
     s = S.s()
     m = S.m()
+    
+    if isinstance(P, DiagonalAntisymmetricPolynomialRing):
+        antisymmetries = P._antisymmetries
+    else:
+        antisymmetries = None
     
     # Change of ring (one set on variables to multisets of variables)
     # To be able to use polarization
@@ -277,7 +280,7 @@ def polarization_operators_by_degree(P, side=None, use_symmetry=False, use_lie=F
          0: [<functools.partial object at ...>]}
 
     """
-    pol = polarization_operators_by_multidegree(P, side=side, 
+    pol = polarization_operators_by_multidegree(P, side=side,
                                                 use_symmetry=use_symmetry, 
                                                 use_lie=use_lie, 
                                                 min_degree=min_degree)

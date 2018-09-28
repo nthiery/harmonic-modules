@@ -300,7 +300,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             
             sage: P.polarization(p, 1, 2, 1)
             3*x00*x10^2*x11*x20 + x00*x10^3*x21
-            sage: D.polarization(p, 1, 2, 1, use_symmetry=True)
+            sage: P.polarization(p, 1, 2, 1, use_symmetry=True)
             3*x00^2*x01*x10*x20 + x00^3*x10*x21
 
             sage: P.polarization(p, 1, 0, 2)
@@ -759,11 +759,11 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         """
         antisymmetries = self._antisymmetries
         result = super(DiagonalAntisymmetricPolynomialRing,self).polarization(p, i1, i2, d, use_symmetry=use_symmetry)
-        #if antisymmetries and result:
-            #result = reduce_antisymmetric_normal(result, self._n, self._r+self._inert, antisymmetries)
+        if antisymmetries and result:
+            result = antisymmetric_normal(result, self._n, self._r+self._inert, antisymmetries)
         return result
 
-    def multi_polarization(self, p, D, i2): 
+    def multi_polarization(self, p, D, i2, antisymmetries=None): 
         """
         Return the multi polarization `P_{D,i_2}. p` of `p`.
         The result is reduced with respect to the given antisymmetries.
