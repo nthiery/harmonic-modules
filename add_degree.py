@@ -95,23 +95,3 @@ def add_degree_polarization(d1,d2):
 
     """
     return d1[0]+d2, d1[1]
-    
-def add_degree_polarization(d1,d2):
-    """
-    INPUT:
-        - ``d1`` -- list containing an integer and a partition
-        - ``d2`` -- a integer
-
-    OUTPUT:
-        a list containing the sum of the integer of
-        `d1` and `d2` and the partition contained in `d1`
-
-    EXAMPLES::
-    
-        sage: d1 = (3,[2,1])
-        sage: d2 = -1
-        sage: add_degree_polarization(d1,d2)
-        (2, [2, 1])
-
-    """
-    return d1[0]+d2, d1[1]
