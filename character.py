@@ -10,7 +10,7 @@ from polarization_space import *
 ##################################################
 
 
-def harmonic_character_comp(P, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
+def harmonic_character(P, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
     """
     Return the `GL_r` character of the space of diagonal harmonic polynomials
     contributed by a given `S_n` irreducible representation.
@@ -56,7 +56,7 @@ def harmonic_character_comp(P, mu, verbose=False, use_symmetry=False, use_antisy
                               for mu, basis in F._bases.iteritems() if basis._basis})
 
 
-def harmonic_bicharacter_comp(P, verbose=False, use_symmetry=False, antisymmetries=None, use_lie=False):
+def harmonic_bicharacter(P, verbose=False, use_symmetry=False, antisymmetries=None, use_lie=False):
     """
     Return the `GL_r-S_n` character of the space of diagonally harmonic polynomials
     (comp = compute)
@@ -107,7 +107,7 @@ def harmonic_character_plain(mu, verbose=False, parallel=False):
         progressbar = tqdm.tqdm(unit=" extensions", leave=True, desc="harmonic character for "+str(mu).ljust(mu.size()*3), position=mu.rank() if parallel else 1)
     else:
         progressbar = False
-    result = harmonic_character_comp(R, mu, verbose=progressbar,
+    result = harmonic_character(R, mu, verbose=progressbar,
                                   use_symmetry=True,
                                   use_lie=True,
                                   use_antisymmetry=True)
