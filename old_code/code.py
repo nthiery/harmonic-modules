@@ -44,7 +44,7 @@ from sage.rings.semirings.non_negative_integer_semiring import NN
 
 from sage.functions.other import factorial
 
-load("code1.pyx")
+load("old_code/code1.pyx")
 
 class func_persist:
     r"""
