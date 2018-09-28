@@ -11,3 +11,4 @@ Partitions.options.convention = "french"
 Partitions.options.display = "list"
 from sage.typeset.unicode_art import UnicodeArt
 Partition._unicode_art_ = lambda p: UnicodeArt([''.join(str(i) for i in p)])
+SymmetricFunctions(QQ).inject_shorthands(verbose=False)
