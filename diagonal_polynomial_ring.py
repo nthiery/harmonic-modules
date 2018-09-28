@@ -595,6 +595,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         Found while computing harmonic::
 
             sage: R = DiagonalPolynomialRing(QQ, 4, 3)
+            sage: e0 = e(R, 0); e1 = e(R, 1)
             sage: R.inject_variables()
             Defining x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23
             sage: x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23 = R._P.gens()

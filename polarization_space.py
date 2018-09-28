@@ -121,7 +121,7 @@ def polarizationSpace(P, generators, verbose=False, with_inert=False, use_symmet
                     ).restrict_partition_lengths(r,exact=False)
 
     if with_inert:
-        operators_by_degree = polarization_operators_by_degree(P, use_symmetry=use_symmetry)
+        operators = polarization_operators_by_degree(P, use_symmetry=use_symmetry)
     else:
         operators = polarization_operators_by_multidegree(P, side='down',
                                                           use_symmetry=use_symmetry,
@@ -169,7 +169,7 @@ def polarizationSpace(P, generators, verbose=False, with_inert=False, use_symmet
     else:
         add_degree = add_degree
 
-    F = Subspace(new_generators, operators=operators_by_degree,
+    F = Subspace(new_generators, operators=operators,
                  add_degrees=add_degree, degree=P.multidegree,
                  hilbert_parent = hilbert_parent,
                  extend_word=extend_word, verbose=verbose) 

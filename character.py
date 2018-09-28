@@ -377,6 +377,8 @@ def character_by_isotypic(mu, nu, inert=1, use_antisymmetry=False, use_symmetry=
     else :
         P = DiagonalPolynomialRing(QQ, n, r, inert=1)
     if basis :
+        # mettre les elements de la base dans P ici pour envoyer bonne base tout de suite
+        # with_inert info déjà dans P 
         S = polarizationSpace(P, basis, verbose=verbose, with_inert=True, use_symmetry=use_symmetry)
         for b in S.basis().values():
             if use_symmetry:
