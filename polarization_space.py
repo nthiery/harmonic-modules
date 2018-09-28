@@ -112,9 +112,6 @@ def polarizationSpace(P, generators, verbose=False, with_inert=False, use_symmet
             return s(m.sum_of_terms([Partition(d), c]
                                      for d,c in dimensions.iteritems())
                     ).restrict_partition_lengths(r, exact=False)
-    elif with_inert:
-        def hilbert_parent(dimensions):
-            return s.sum_of_terms([Partition(d), c] for c,d in dimensions.iterkeys())
     else:
         def hilbert_parent(dimensions):
             return s(S.from_polynomial(P._hilbert_parent(dimensions))
