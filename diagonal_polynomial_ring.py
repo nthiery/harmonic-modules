@@ -104,6 +104,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         """
         return self.polynomial_ring().gens()
 
+
     def algebra_generators(self):
         """
         Return all the variables including the inert variables.

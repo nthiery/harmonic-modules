@@ -10,6 +10,7 @@ from polarization_space import *
 #################################################
 # Characters of GL_r \times S_n modules
 #################################################
+
 def character(mu):
     if not isinstance(mu, Partitions):
         mu = Partition(mu)
@@ -17,11 +18,12 @@ def character(mu):
         return harmonic_bicharacter(mu.size())
     else:
         return character_with_inert(mu)
+        
+        
 
 ##################################################
 # Harmonic characters
 ##################################################
-
 
 def harmonic_character(P, mu, verbose=False, use_symmetry=False, use_lie=False, use_commutativity=False):
     """
@@ -31,13 +33,19 @@ def harmonic_character(P, mu, verbose=False, use_symmetry=False, use_lie=False, 
     EXAMPLES::
 
         sage: P = DiagonalPolynomialRing(QQ,5,4)
-        sage: harmonic_character_comp(P, Partition([3,2]))
+        sage: harmonic_character(P, Partition([3,2])) #not tested 
+        # TODO NICOLAS : don't know how to correct the problem
         s[2] + s[2, 1] + s[2, 2] + s[3] + s[3, 1] + s[4] + s[4, 1] + s[5] + s[6]
     """
     mu = Partition(mu)
     n = P._n
     r = P._r
-    antisymmetries = P._antisymmetries
+    if isinstance(P, DiagonalAntisymmetricPolynomialRing):
+        antisymmetries = P._antisymmetries
+        use_antisymmetry = True
+    else:
+        antisymmetries = None
+        use_antisymmetry = False
     generators = [higher_specht(P, t, harmonic=True, use_antisymmetry=use_antisymmetry)
                   for t in StandardTableaux(mu)]
     F = polarizationSpace(P, mu, generators, verbose=verbose, 
@@ -61,20 +69,18 @@ def harmonic_character(P, mu, verbose=False, use_symmetry=False, use_lie=False, 
                                    antisymmetries=F._antisymmetries)
                  for i1 in range(1, r)
                  for i2 in range(i1)]
-    # basis._basis ??? 
     return F._hilbert_parent({mu: len(annihilator_basis(basis._basis, operators, action=lambda b, op: op(b), ambient=self))
                               for mu, basis in F._bases.iteritems() if basis._basis})
 
-
-def harmonic_bicharacter(P, verbose=False, use_symmetry=False, antisymmetries=None, use_lie=False):
+# NICOLAS : Cette fonction est-elle devenue inutile ? (voir harmonic_bicharacter plus bas)
+def harmonic_bicharacter_bis(P, verbose=False, use_symmetry=False, antisymmetries=None, use_lie=False):
     """
     Return the `GL_r-S_n` character of the space of diagonally harmonic polynomials
-    (comp = compute)
 
     EXAMPLES::
 
         sage: P = DiagonalPolynomialRing(QQ, 3, 2)
-        sage: harmonic_bicharacter_comp(P)
+        sage: harmonic_bicharacter_bis(P)
         s[] # s[3] + s[1] # s[2, 1] + s[1, 1] # s[1, 1, 1] + s[2] # s[2, 1] + s[3] # s[1, 1, 1]
 
     """
@@ -90,7 +96,6 @@ def harmonic_bicharacter(P, verbose=False, use_symmetry=False, antisymmetries=No
             print "%s:"%s(mu)
         r = tensor([polarizationSpace(P, generators, verbose=verbose,
                                                  use_symmetry=use_symmetry,
-                                                 antisymmetries=antisymmetries,
                                                  use_lie=use_lie,
                                                 ).hilbert_polynomial(),
                     s[mu]])
@@ -159,7 +164,7 @@ Inserting François's value for the character for `1^6` in the database::
     sage: save((key,value), "func_persist/harmonic_character_plain_%s"%(myhash(key))) # not tested
 """
 
-def harmonic_character(mu):
+def harmonic_character_isotypic(mu):
     """
     Return the `GL_n` character of an `S_n` isotypic component in the
     diagonal harmonic polynomials
@@ -171,27 +176,27 @@ def harmonic_character(mu):
 
     EXAMPLES::
 
-        sage: harmonic_character([6])
+        sage: harmonic_character_isotypic([6])
         s[]
-        sage: harmonic_character([5, 1])
+        sage: harmonic_character_isotypic([5, 1])
         s[1] + s[2] + s[3] + s[4] + s[5]
-        sage: harmonic_character([4, 2])
+        sage: harmonic_character_isotypic([4, 2])
         s[2] + s[2, 1] + s[2, 2] + s[3] + s[3, 1] + s[3, 2] + 2*s[4] + 2*s[4, 1] + s[4, 2] + s[5] + s[5, 1] + 2*s[6] + s[6, 1] + s[7] + s[8]
-        sage: harmonic_character([4, 1, 1])
+        sage: harmonic_character_isotypic([4, 1, 1])
         s[1, 1] + s[2, 1] + s[3] + 2*s[3, 1] + s[3, 2] + s[3, 3] + s[4] + 2*s[4, 1] + s[4, 2] + 2*s[5] + 2*s[5, 1] + s[5, 2] + 2*s[6] + s[6, 1] + 2*s[7] + s[7, 1] + s[8] + s[9]
-        sage: harmonic_character([3, 3])
+        sage: harmonic_character_isotypic([3, 3])
         s[2, 2] + s[2, 2, 1] + s[3] + s[3, 1] + s[3, 2] + s[4, 1] + s[4, 1, 1] + s[4, 2] + s[5] + s[5, 1] + s[5, 2] + s[6] + s[6, 1] + s[7] + s[7, 1] + s[9]
-        sage: harmonic_character([2, 2, 2])
+        sage: harmonic_character_isotypic([2, 2, 2])
         s[2, 2] + s[2, 2, 1] + s[3, 1, 1] + s[3, 1, 1, 1] + s[3, 2, 1] + s[3, 3, 1] + s[4, 1] + s[4, 1, 1] + 2*s[4, 2] + s[4, 2, 1] + s[4, 3] + s[4, 4] + s[5, 1] + 2*s[5, 1, 1] + 2*s[5, 2] + s[5, 2, 1] + s[5, 3] + s[6] + 2*s[6, 1] + s[6, 1, 1] + 2*s[6, 2] + s[6, 3] + 2*s[7, 1] + s[7, 1, 1] + s[7, 2] + s[8] + 2*s[8, 1] + s[8, 2] + s[9] + s[9, 1] + s[10] + s[10, 1] + s[12]
-        sage: harmonic_character([3, 1, 1, 1])
+        sage: harmonic_character_isotypic([3, 1, 1, 1])
         s[1, 1, 1] + s[2, 1, 1] + s[3, 1] + 2*s[3, 1, 1] + s[3, 2] + s[3, 2, 1] + 2*s[3, 3] + s[3, 3, 1] + 2*s[4, 1] + 2*s[4, 1, 1] + 2*s[4, 2] + s[4, 2, 1] + 2*s[4, 3] + 3*s[5, 1] + 2*s[5, 1, 1] + 3*s[5, 2] + s[5, 2, 1] + 2*s[5, 3] + s[6] + 4*s[6, 1] + s[6, 1, 1] + 3*s[6, 2] + s[6, 3] + s[7] + 4*s[7, 1] + s[7, 1, 1] + 2*s[7, 2] + 2*s[8] + 3*s[8, 1] + s[8, 2] + 2*s[9] + 2*s[9, 1] + 2*s[10] + s[10, 1] + s[11] + s[12]
-        sage: harmonic_character([3, 2, 1])
+        sage: harmonic_character_isotypic([3, 2, 1])
         s[2, 1] + s[2, 1, 1] + s[2, 2] + s[2, 2, 1] + 2*s[3, 1] + 2*s[3, 1, 1] + 3*s[3, 2] + 2*s[3, 2, 1] + s[3, 3] + s[4] + 3*s[4, 1] + 2*s[4, 1, 1] + 4*s[4, 2] + s[4, 2, 1] + 2*s[4, 3] + 2*s[5] + 5*s[5, 1] + 2*s[5, 1, 1] + 4*s[5, 2] + s[5, 3] + 2*s[6] + 5*s[6, 1] + s[6, 1, 1] + 3*s[6, 2] + 3*s[7] + 4*s[7, 1] + s[7, 2] + 3*s[8] + 3*s[8, 1] + 2*s[9] + s[9, 1] + 2*s[10] + s[11]
-        sage: harmonic_character([2, 1, 1, 1, 1])
+        sage: harmonic_character_isotypic([2, 1, 1, 1, 1])
         s[1, 1, 1, 1] + s[2, 1, 1, 1] + s[3, 1, 1] + s[3, 1, 1, 1] + s[3, 2, 1] + s[3, 3, 1] + 2*s[4, 1, 1] + s[4, 1, 1, 1] + s[4, 2] + 2*s[4, 2, 1] + 2*s[4, 3] + 2*s[4, 3, 1] + s[4, 4] + 3*s[5, 1, 1] + s[5, 1, 1, 1] + s[5, 2] + 2*s[5, 2, 1] + 2*s[5, 3] + s[5, 3, 1] + s[5, 4] + s[6, 1] + 3*s[6, 1, 1] + 3*s[6, 2] + 2*s[6, 2, 1] + 3*s[6, 3] + s[6, 4] + 2*s[7, 1] + 3*s[7, 1, 1] + 3*s[7, 2] + s[7, 2, 1] + 2*s[7, 3] + 3*s[8, 1] + 2*s[8, 1, 1] + 3*s[8, 2] + s[8, 3] + 3*s[9, 1] + s[9, 1, 1] + 2*s[9, 2] + s[10] + 3*s[10, 1] + s[10, 2] + s[11] + 2*s[11, 1] + s[12] + s[12, 1] + s[13] + s[14]
-        sage: harmonic_character([2, 2, 1, 1])
+        sage: harmonic_character_isotypic([2, 2, 1, 1])
         s[2, 1, 1] + s[2, 1, 1, 1] + s[2, 2, 1] + s[3, 1, 1] + s[3, 1, 1, 1] + s[3, 2] + 2*s[3, 2, 1] + s[3, 3] + s[3, 3, 1] + s[4, 1] + 3*s[4, 1, 1] + s[4, 1, 1, 1] + 2*s[4, 2] + 3*s[4, 2, 1] + 2*s[4, 3] + s[4, 3, 1] + s[4, 4] + 2*s[5, 1] + 3*s[5, 1, 1] + 4*s[5, 2] + 2*s[5, 2, 1] + 3*s[5, 3] + s[5, 4] + 3*s[6, 1] + 4*s[6, 1, 1] + 4*s[6, 2] + s[6, 2, 1] + 2*s[6, 3] + s[7] + 4*s[7, 1] + 2*s[7, 1, 1] + 4*s[7, 2] + s[7, 3] + s[8] + 4*s[8, 1] + s[8, 1, 1] + 2*s[8, 2] + 2*s[9] + 4*s[9, 1] + s[9, 2] + s[10] + 2*s[10, 1] + 2*s[11] + s[11, 1] + s[12] + s[13]
-        sage: harmonic_character([1, 1, 1, 1, 1, 1])
+        sage: harmonic_character_isotypic([1, 1, 1, 1, 1, 1])
         s[1, 1, 1, 1, 1] + s[3, 1, 1, 1] + s[4, 1, 1, 1] + s[4, 2, 1] + s[4, 3, 1] + s[4, 4] + s[4, 4, 1] + s[5, 1, 1, 1] + s[5, 2, 1] + s[5, 3, 1] + s[6, 1, 1] + s[6, 1, 1, 1] + s[6, 2, 1] + s[6, 3] + s[6, 3, 1] + s[6, 4] + s[7, 1, 1] + s[7, 2] + s[7, 2, 1] + s[7, 3] + s[7, 4] + 2*s[8, 1, 1] + s[8, 2] + s[8, 2, 1] + s[8, 3] + s[9, 1, 1] + s[9, 2] + s[9, 3] + s[10, 1] + s[10, 1, 1] + s[10, 2] + s[11, 1] + s[11, 2] + s[12, 1] + s[13, 1] + s[15]
     """
     mu = tuple(mu)
@@ -201,7 +206,7 @@ def harmonic_character(mu):
     return s.sum_of_terms([Partition(d), c] for d,c in result.iteritems())
 
 @parallel()
-def harmonic_character_paral(mu):
+def harmonic_character_isotypic_paral(mu):
     r"""
     Utility to parallelize the computation of the `GL_r` character of
     the `S_n` isotypic components in the diagonal harmonic
@@ -219,7 +224,7 @@ def harmonic_characters(n):
     """
     S = SymmetricFunctions(ZZ)
     s = S.s()
-    for (((nu,),_), (result, t)) in harmonic_character_paral((tuple(mu),) for mu in Partitions(n)):
+    for (((nu,),_), (result, t)) in harmonic_character_isotypic_paral((tuple(mu),) for mu in Partitions(n)):
         import tqdm
         tqdm.tqdm.write("\r%s\t("%Partition(nu)+str(t)[:-7]+"): %s"%
                                                      s.sum_of_terms([Partition(d), c]
@@ -231,7 +236,7 @@ def harmonic_bicharacter(n):
     """
     s = SymmetricFunctions(ZZ).s()
     ss = tensor([s,s])
-    return ss.sum(tensor([harmonic_character(mu), s.term(mu)])
+    return ss.sum(tensor([harmonic_character_isotypic(mu), s.term(mu)])
                   for mu in Partitions(n))
 
 def harmonic_bicharacter_truncated_series():
@@ -353,7 +358,7 @@ def character_hash(mu):
     return str(list(mu)).replace(" ","")[1:-1]
 #character_with_inert = func_persist(character_with_inert,hash=character_hash,key=character_key)  
     
-@parallel()
+#@parallel()
 def character_by_isotypic(mu, nu, inert=1, use_antisymmetry=False, use_symmetry=False, verbose=False):
     """
     Computes the character of $Gl_r$ on the smallest submodule generated by
@@ -370,9 +375,10 @@ def character_by_isotypic(mu, nu, inert=1, use_antisymmetry=False, use_symmetry=
         ....:     print((nu,character_by_isotypic(mu, nu)))
         ([4], 0)
         ([3, 1], 0)
-        ([2, 2], 1)
-        ([2, 1, 1], q0 + q1 + q2)
-        ([1, 1, 1, 1], q0^2 + q0*q1 + q1^2 + q0*q2 + q1*q2 + q2^2)
+        ([2, 2], {(): 1})
+        ([2, 1, 1], {(1,): 1})
+        ([1, 1, 1, 1], {(2,): 1})
+
 
     """
     n = mu.size()
@@ -403,3 +409,9 @@ def character_by_isotypic(mu, nu, inert=1, use_antisymmetry=False, use_symmetry=
         return {tuple(degrees): dim for degrees, dim in charac}
     else:
         return 0
+
+def character_isotypic_key(mu, nu, **args):
+    return (tuple(Composition(mu)), tuple(Composition(nu)))
+def character_isotypic_hash(mu, nu):
+    return str(list(mu)).replace(" ","")[1:-1], str(list(nu)).replace(" ","")[1:-1]
+character_by_isotypic = func_persist(character_by_isotypic,hash=character_isotypic_hash,key=character_isotypic_key) 
