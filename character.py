@@ -1,16 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import datetime
 from diagonal_polynomial_ring import *
 from derivative_space import *
 from polarization_space import *
+
+
+#################################################
+# Characters of GL_r \times S_n modules
+#################################################
+def character(mu):
+    if not isinstance(mu, Partitions):
+        mu = Partition(mu)
+    if mu.length() == 1:
+        return harmonic_bicharacter(mu.size())
+    else:
+        return character_with_inert(mu)
 
 ##################################################
 # Harmonic characters
 ##################################################
 
 
-def harmonic_character(P, mu, verbose=False, use_symmetry=False, use_antisymmetry=False, use_lie=False, use_commutativity=False):
+def harmonic_character(P, mu, verbose=False, use_symmetry=False, use_lie=False, use_commutativity=False):
     """
     Return the `GL_r` character of the space of diagonal harmonic polynomials
     contributed by a given `S_n` irreducible representation.
@@ -24,10 +37,7 @@ def harmonic_character(P, mu, verbose=False, use_symmetry=False, use_antisymmetr
     mu = Partition(mu)
     n = P._n
     r = P._r
-    if use_antisymmetry:
-        antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
-    else:
-        antisymmetries = None
+    antisymmetries = P._antisymmetries
     generators = [higher_specht(P, t, harmonic=True, use_antisymmetry=use_antisymmetry)
                   for t in StandardTableaux(mu)]
     F = polarizationSpace(P, mu, generators, verbose=verbose, 
@@ -122,7 +132,7 @@ harmonic_character_plain = func_persist(harmonic_character_plain,
                                         hash=harmonic_character_plain_hash,
                                         key= harmonic_character_plain_key)
 
-# Est-ce qu'il faut garder ça dans le code ? 
+# NICOLAS : Est-ce qu'il faut garder ça dans le code ? 
 """
 Migrating persistent database from previous format::
 
