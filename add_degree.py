@@ -76,7 +76,7 @@ def add_degree_isotyp(d1,d2):
     
     return d1[0]+d2[0], d2[1]
 
-def add_degree_polarization(d1,d2):
+def add_degree_inert(d1,d2):
     """
     INPUT:
         - ``d1`` -- list containing an integer and a partition
