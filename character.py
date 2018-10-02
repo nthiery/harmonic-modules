@@ -368,23 +368,27 @@ def character_by_isotypic(mu, nu, inert=1, use_antisymmetry=False, use_symmetry=
     n = mu.size()
     r = n-1
     charac = 0
+    ss = SymmetricFunctions(QQ).s()
+    
     H = DerivativeVandermondeSpaceWithInert(QQ, mu, inert=inert, use_antisymmetry=use_antisymmetry)
     basis = H.basis_by_shape(nu)
-    ss = SymmetricFunctions(QQ).s()
-    if use_antisymmetry: 
-        antisymmetries = antisymmetries_of_tableau(nu.initial_tableau())
-        P = DiagonalAntisymmetricPolynomialRing(QQ, n, r, inert=1, antisymmetries=antisymmetries)
-    else :
-        P = DiagonalPolynomialRing(QQ, n, r, inert=1)
+    
     if basis :
-        # mettre les elements de la base dans P ici pour envoyer bonne base tout de suite
-        # with_inert info déjà dans P 
-        S = polarizationSpace(P, basis, verbose=verbose, with_inert=True, use_symmetry=use_symmetry)
+        if use_antisymmetry: 
+            antisymmetries = antisymmetries_of_tableau(nu.initial_tableau())
+            P = DiagonalAntisymmetricPolynomialRing(QQ, n, r, inert=1, antisymmetries=antisymmetries)
+            generators = {d:[reduce_antisymmetric_normal(P(gen), n, r+inert, antisymmetries) for gen in g] for (d,g) in basis.iteritems()}
+        else :
+            P = DiagonalPolynomialRing(QQ, n, r, inert=1)
+            generators = {d:[P(gen) for gen in g] for (d,g) in basis.iteritems()}
+
+        S = polarizationSpace(P, generators, verbose=verbose, use_symmetry=use_symmetry)
         for b in S.basis().values():
             if use_symmetry:
                 charac += s(sum(m(Partition(P.multidegree(p))) for p in b)).restrict_partition_lengths(r,exact=False)
             else:
                 charac += s(ss.from_polynomial(sum(P.multipower(P.multidegree(p)) for p in b))).restrict_partition_lengths(r,exact=False)
+   
     if charac:
         return {tuple(degrees): dim for degrees, dim in charac}
     else:
