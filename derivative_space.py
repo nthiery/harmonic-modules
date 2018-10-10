@@ -327,7 +327,7 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         self._n = Partition(mu).size()
         self._inert = inert
         self._use_antisymmetry = use_antisymmetry
-        self._polRing = DiagonalPolynomialRing(R, self._n, 1, inert)
+        self._P = DiagonalPolynomialRing(R, self._n, 1, inert)
             
     def _repr_(self):
         """
@@ -359,8 +359,8 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         """
         n = self._n
         mu = self._mu
-        X = self._polRing.variables()
-        Theta = self._polRing.inert_variables()
+        X = self._P.variables()
+        Theta = self._P.inert_variables()
         Delta = matrix([[x**i[1]*theta**i[0] for i in mu.cells()] for x,theta in zip(X[0],Theta[0])]).determinant()
         return Delta
 
@@ -422,14 +422,15 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         """
         n = self._n
         mu = self._mu
-        X = self._polRing.variables()
+        X = self._P.variables()
+        D = self._P._grading_set
         Delta = self.vandermonde()
         dim = self.degree_vandermonde()
         operators = {}
         for nu in Partitions(n):
-            operators[(-1,nu)] = [make_deriv_comp_young(X[0][i],nu) for i in range(0,n)]
-        F = Subspace(generators={(dim,Partition([1 for i in range(n)])):[Delta]},operators=operators,
-                                    add_degrees=add_degree_isotyp, verbose=verbose)
+            operators[(D((-1,)),nu)] = [make_deriv_comp_young(X[0][i],nu) for i in range(0,n)]
+        generators={(D((dim,)),Partition([1 for i in range(n)])):[Delta]}
+        F = Subspace(generators=generators, operators=operators, add_degrees=add_degree_isotyp, verbose=verbose)
         basis = F.basis()
         if self._use_antisymmetry :
             pos = antisymmetries_of_tableau(Partition(mu).initial_tableau())

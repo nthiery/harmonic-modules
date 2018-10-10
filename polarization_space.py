@@ -107,12 +107,8 @@ def polarizationSpace(P, generators, verbose=False, use_symmetry=False, use_lie=
             return s(S.from_polynomial(P._hilbert_parent(dimensions))
                     ).restrict_partition_lengths(r,exact=False)
 
-    if P._inert:
-        operators = polarization_operators_by_degree(P, use_symmetry=use_symmetry)
-    else:
-        operators = polarization_operators_by_multidegree(P, side='down',
-                                                          use_symmetry=use_symmetry,
-                                                          min_degree=1 if use_lie else 0)
+    operators = polarization_operators_by_multidegree(P, side='down', use_symmetry=use_symmetry, min_degree=1 if use_lie else 0)
+    
     if use_lie == "euler+intersection":
         operators[P._grading_set.zero()] = [
             functools.partial(lambda v,i: P.polarization(P.polarization(v, i+1, i, 1, antisymmetries=antisymmetries), i, i+1, 1, antisymmetries=antisymmetries), i=i)
@@ -132,8 +128,8 @@ def polarizationSpace(P, generators, verbose=False, use_symmetry=False, use_lie=
                  verbose=verbose)
         return F    
     operators_by_degree = {}
-    for degree,ops in operators.iteritems():
-        d = sum([degree])
+    for degree,ops in operators.iteritems(): 
+        d = sum(degree)
         operators_by_degree.setdefault(d,[])
         operators_by_degree[d].extend(ops)
 
@@ -148,16 +144,14 @@ def polarizationSpace(P, generators, verbose=False, use_symmetry=False, use_lie=
         if use_commutativity and sorted(new_word) != new_word:
             return None
         return new_word
-        
-    if P._inert:
-        add_degree = add_degree_inert
-    elif use_symmetry:
-        add_degree = add_degree_symmetric
+
+    if use_symmetry:
+        add_deg = add_degree_symmetric
     else:
-        add_degree = add_degree
+        add_deg = add_degree
 
     F = Subspace(generators, operators=operators,
-                 add_degrees=add_degree, degree=P.multidegree,
+                 add_degrees=add_deg, degree=P.multidegree,
                  hilbert_parent = hilbert_parent,
                  extend_word=extend_word, verbose=verbose) 
     F._antisymmetries = antisymmetries

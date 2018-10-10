@@ -356,7 +356,7 @@ def character_key(mu, **args):
     return tuple(Composition(mu))
 def character_hash(mu):
     return str(list(mu)).replace(" ","")[1:-1]
-character_with_inert = func_persist(character_with_inert,hash=character_hash,key=character_key)  
+#character_with_inert = func_persist(character_with_inert,hash=character_hash,key=character_key)  
     
 @parallel()
 def character_by_isotypic(mu, nu, inert=1, use_antisymmetry=False, use_symmetry=False, verbose=False):
@@ -393,17 +393,18 @@ def character_by_isotypic(mu, nu, inert=1, use_antisymmetry=False, use_symmetry=
         if use_antisymmetry: 
             antisymmetries = antisymmetries_of_tableau(nu.initial_tableau())
             P = DiagonalAntisymmetricPolynomialRing(QQ, n, r, inert=1, antisymmetries=antisymmetries)
-            generators = {d:[reduce_antisymmetric_normal(P(gen), n, r+inert, antisymmetries) for gen in g] for (d,g) in basis.iteritems()}
+            generators = {P.multidegree(P(gen)): [reduce_antisymmetric_normal(P(gen), n, r+inert, antisymmetries) for gen in g] for (d,g) in basis.iteritems()}
         else :
             P = DiagonalPolynomialRing(QQ, n, r, inert=1)
-            generators = {d:[P(gen) for gen in g] for (d,g) in basis.iteritems()}
-
+            generators = {P.multidegree(P(gen)): [P(gen) for gen in g] for (d,g) in basis.iteritems()}
         S = polarizationSpace(P, generators, verbose=verbose, use_symmetry=use_symmetry)
-        for b in S.basis().values():
-            if use_symmetry:
-                charac += s(sum(m(Partition(P.multidegree(p))) for p in b)).restrict_partition_lengths(r,exact=False)
-            else:
-                charac += s(ss.from_polynomial(sum(P.multipower(P.multidegree(p)) for p in b))).restrict_partition_lengths(r,exact=False)
+        if use_symmetry:
+            for degree, b in S.basis().iteritems():
+                charac += s(sum(m(Partition(degree)) for p in b)).restrict_partition_lengths(r,exact=False)
+        else:
+            for degree, b in S.basis().iteritems():
+                charac += sum(P.multipower(degree) for p in b)
+            charac = s(ss.from_polynomial(charac)).restrict_partition_lengths(r,exact=False)
    
     if charac:
         return {tuple(degrees): dim for degrees, dim in charac}

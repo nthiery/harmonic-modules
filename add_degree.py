@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from sage.categories.cartesian_product import cartesian_product
+from sage.rings.integer_ring import ZZ
+
 def add_degree(d1,d2):
     """
     Compute the sum componentwise of d1 and d2 and return a grading set
@@ -75,23 +78,3 @@ def add_degree_isotyp(d1,d2):
     """
     
     return d1[0]+d2[0], d2[1]
-
-def add_degree_inert(d1,d2):
-    """
-    INPUT:
-        - ``d1`` -- list containing an integer and a partition
-        - ``d2`` -- a integer
-
-    OUTPUT:
-        a list containing the sum of the integer of
-        `d1` and `d2` and the partition contained in `d1`
-
-    EXAMPLES::
-    
-        sage: d1 = (3,[2,1])
-        sage: d2 = -1
-        sage: add_degree_polarization(d1,d2)
-        (2, [2, 1])
-
-    """
-    return d1[0]+d2, d1[1]
