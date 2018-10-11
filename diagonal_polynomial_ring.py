@@ -281,7 +281,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                                         for c in sigma.cycle_tuples()
                                         for j in range(n) ])
 
-    def polarization(self, p, i1, i2, d, use_symmetry=False):
+    def polarization(self, p, i1, i2, d, row_symmetry=None):
         """
         Return the polarization `P_{d,i_1,i_2}. p` of `p`.
 
@@ -301,7 +301,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             
             sage: P.polarization(p, 1, 2, 1)
             3*x00*x10^2*x11*x20 + x00*x10^3*x21
-            sage: P.polarization(p, 1, 2, 1, use_symmetry=True)
+            sage: P.polarization(p, 1, 2, 1, row_symmetry="permutation")
             3*x00^2*x01*x10*x20 + x00^3*x10*x21
 
             sage: P.polarization(p, 1, 0, 2)
@@ -318,7 +318,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         else:
             result = self.sum(X[i2,j]*p.derivative(X[i1,j],d)
                               for j in range(n))
-            if use_symmetry and result:
+            if row_symmetry=="permutation" and result:
                 d = self.multidegree(result)
                 if self._inert!= 0:
                     d = tuple(d) + tuple(0 for i in range(self._inert))
@@ -726,7 +726,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         else :
             return "Diagonal antisymmetric polynomial ring with %s rows of %s variables and %s row(s) of inert variables over %s"%(self._r, self._n, self._inert, self.base_ring())
 
-    def polarization(self, p, i1, i2, d, use_symmetry=False):
+    def polarization(self, p, i1, i2, d, row_symmetry=None):
         """
         Return the polarization `P_{d,i_1,i_2}. p` of `p`. 
         The result is reduced with respect to the given antisymmetries. 
@@ -760,7 +760,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
             -12*x00*x01*x10 - 6*x00^2*x11
         """
         antisymmetries = self._antisymmetries
-        result = super(DiagonalAntisymmetricPolynomialRing,self).polarization(p, i1, i2, d, use_symmetry=use_symmetry)
+        result = super(DiagonalAntisymmetricPolynomialRing,self).polarization(p, i1, i2, d, row_symmetry=row_symmetry)
         if antisymmetries and result:
             result = antisymmetric_normal(result, self._n, self._r+self._inert, antisymmetries)
         return result

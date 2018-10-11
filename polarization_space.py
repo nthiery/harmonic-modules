@@ -14,11 +14,6 @@ Potential user interface::
     sage: generators = ...(mu, nu, ...) #not tested
     sage: space = polarizationSpace(P, generators) #not tested
     sage: space.character()  # the GL_n character #not tested
-
-Variant::
-
-    sage: polarization_character(P, generators)  #not tested
-    # Qui en interne appelle polarization_space
 """
 
 ####################################################
@@ -27,11 +22,15 @@ Variant::
 
 #TODO use_symmetry a implementer
 
-def polarizationSpace(P, generators, verbose=False, use_symmetry=False, use_lie=False, use_commutativity=False):
+def polarizationSpace(P, generators, verbose=False, row_symmetry=None, use_commutativity=False):
     """
     Starting from  polynomials (=generators) in the mu-isotypic component 
     of the polynomial ring in one set of variables (possibly with 
     additional inert variables), construct the space obtained by polarization.
+    
+    The possible values for row_symmetry : 
+        - "permutation" : the action of S_n on the rows
+        - "euler+intersection" or "decompose" or "multipolarization" for stategies on lie algebras
     
     INPUT:
     
@@ -41,9 +40,6 @@ def polarizationSpace(P, generators, verbose=False, use_symmetry=False, use_lie=
             (and possibly inert varaibles) in the image of `b_mu`  
             
     OUTPUT: `F`  -- a Subspace
-    
-    FIXME: duplicated logic for computing the
-    antisymmetrization positions, given here and computing in apply_young_idempotent
 
     EXAMPLES::
         sage: load("derivative_space.py")
@@ -90,14 +86,14 @@ def polarizationSpace(P, generators, verbose=False, use_symmetry=False, use_lie=
     else:
         antisymmetries = None
         
-    if use_lie:
+    if row_symmetry in ("euler+intersection", "decompose", "multipolarization")  :
         # The hilbert series will be directly expressed in terms of the
         # dimensions of the highest weight spaces, thus as a symmetric
         # function in the Schur basis
         def hilbert_parent(dimensions):
             return s.sum_of_terms([Partition(d), c]
                                    for d,c in dimensions.iteritems() if c)
-    elif use_symmetry:
+    elif row_symmetry == "permutation":
         def hilbert_parent(dimensions):
             return s(m.sum_of_terms([Partition(d), c]
                                      for d,c in dimensions.iteritems())
@@ -107,19 +103,19 @@ def polarizationSpace(P, generators, verbose=False, use_symmetry=False, use_lie=
             return s(S.from_polynomial(P._hilbert_parent(dimensions))
                     ).restrict_partition_lengths(r,exact=False)
 
-    operators = polarization_operators_by_multidegree(P, side='down', use_symmetry=use_symmetry, min_degree=1 if use_lie else 0)
+    operators = polarization_operators_by_multidegree(P, side='down', row_symmetry=row_symmetry, min_degree=1 if row_symmetry else 0)
     
-    if use_lie == "euler+intersection":
+    if row_symmetry == "euler+intersection":
         operators[P._grading_set.zero()] = [
             functools.partial(lambda v,i: P.polarization(P.polarization(v, i+1, i, 1, antisymmetries=antisymmetries), i, i+1, 1, antisymmetries=antisymmetries), i=i)
             for i in range(r-1)
             ]
-    elif use_lie == 'decompose':
+    elif row_symmetry == "decompose":
         def post_compose(f):
             return lambda x: [q for (q,word) in P.highest_weight_vectors_decomposition(f(x))]
         operators = {d: [post_compose(op) for op in ops]
                      for d, ops in operators.iteritems()}
-    elif use_lie == 'multipolarization':
+    elif row_symmetry == "multipolarization":
         F = HighestWeightSubspace(generators,
                  ambient=self,
                  add_degrees=add_degree, degree=P.multidegree,
@@ -145,7 +141,7 @@ def polarizationSpace(P, generators, verbose=False, use_symmetry=False, use_lie=
             return None
         return new_word
 
-    if use_symmetry:
+    if row_symmetry == "permutation":
         add_deg = add_degree_symmetric
     else:
         add_deg = add_degree
@@ -162,7 +158,7 @@ def polarizationSpace(P, generators, verbose=False, use_symmetry=False, use_lie=
 ####################################################
 # Polarization Operators
 ####################################################
-def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, use_lie=False, min_degree=0):
+def polarization_operators_by_multidegree(P, side=None, row_symmetry=None, use_lie=False, min_degree=0):
     """
     Return the collection of polarization operators acting on harmonic polynomials,
     indexed by multi-degree.
@@ -224,7 +220,7 @@ def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, use_
     r = P._r
     grading_set = P._grading_set
     return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
-            [functools.partial(P.polarization, i1=i1, i2=i2, d=d, use_symmetry=use_symmetry)]
+            [functools.partial(P.polarization, i1=i1, i2=i2, d=d, row_symmetry=row_symmetry)]
             for d in range(min_degree+1, n)
             for i1 in range(0, r)
             for i2 in range(0, r)
@@ -232,7 +228,7 @@ def polarization_operators_by_multidegree(P, side=None, use_symmetry=False, use_
             if (i1<i2 if side == 'down' else i1!=i2)
            }
 
-def polarization_operators_by_degree(P, side=None, use_symmetry=False, use_lie=False, min_degree=0):
+def polarization_operators_by_degree(P, side=None, row_symmetry=None, use_lie=False, min_degree=0):
     """
     Return the collection of polarization operators acting on harmonic polynomials,
     indexed by multi-degree.
@@ -262,7 +258,7 @@ def polarization_operators_by_degree(P, side=None, use_symmetry=False, use_lie=F
 
     """
     pol = polarization_operators_by_multidegree(P, side=side,
-                                                use_symmetry=use_symmetry, 
+                                                row_symmetry=row_symmetry, 
                                                 use_lie=use_lie, 
                                                 min_degree=min_degree)
     res = {}
