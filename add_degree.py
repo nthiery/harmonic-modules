@@ -61,19 +61,19 @@ def add_degree_symmetric(d1,d2):
 
 def add_degree_isotyp(d1,d2):
     """
+    Compute the sum componentwise of the list of integrers contained in d1 and d2 
+    and return a grading set and the partition contained in d2 as result.
+    
     INPUT:
-        - ``d1``,``d2`` -- lists containing an integer and a partition
-
-    OUTPUT:
-        a list containing the sum of the integers of
-        `d1` and `d2` and the partition contained in `d2`
+        - ``d1``,``d2`` -- lists containing a list of integers and a partition
 
     EXAMPLES::
     
-        sage: d1 = (3,[2,1])
-        sage: d2 = (-1,[3])
+        sage: D = cartesian_product([ZZ for i in range(2)])
+        sage: d1 = (D((3,0)),[2,1])
+        sage: d2 = (D((-1,0)),[3])
         sage: add_degree_isotyp(d1,d2)
-        (2, [3])
+        ((2, 0), [3])
 
     """
     
