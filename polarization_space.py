@@ -103,7 +103,7 @@ def polarizationSpace(P, generators, verbose=False, row_symmetry=None, use_commu
             return s(S.from_polynomial(P._hilbert_parent(dimensions))
                     ).restrict_partition_lengths(r,exact=False)
 
-    operators = polarization_operators_by_multidegree(P, side='down', row_symmetry=row_symmetry, min_degree=1 if row_symmetry else 0)
+    operators = polarization_operators_by_multidegree(P, side='down', row_symmetry=row_symmetry, min_degree=1 if row_symmetry and row_symmetry!="permutation" else 0)
     
     if row_symmetry == "euler+intersection":
         operators[P._grading_set.zero()] = [
