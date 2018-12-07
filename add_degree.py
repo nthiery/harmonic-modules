@@ -61,7 +61,7 @@ def add_degree_symmetric(d1,d2):
 
 def add_degree_isotyp(d1,d2):
     """
-    Compute the sum componentwise of the list of integrers contained in d1 and d2 
+    Compute the sum componentwise of the lists of integrers contained in d1 and d2 
     and return a grading set and the partition contained in d2 as result.
     
     INPUT:
@@ -76,5 +76,4 @@ def add_degree_isotyp(d1,d2):
         ((2, 0), [3])
 
     """
-    
     return d1[0]+d2[0], d2[1]

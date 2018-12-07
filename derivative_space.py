@@ -393,31 +393,31 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         EXAMPLES::
            sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([3]))
             sage: W.basis()
-            {(0, [3]): [1],
-             (1, [2, 1]): [x00 - x02],
-             (2, [2, 1]): [x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2],
-             (3,
-              [1, 1, 1]): [-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2]}
+            {((3,),
+              [1, 1, 1]): [-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2],
+             ((1,), [2, 1]): [x00 - x02],
+             ((2,), [2, 1]): [x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2],
+             ((0,), [3]): [1]}
             sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([2,1]))
             sage: W.basis()
-            {(0, [2, 1]): [-theta00 + theta02],
-             (1, [1, 1, 1]): [x01*theta00 - x00*theta01 + x00*theta02 - x01*theta02]}
+            {((1,), [1, 1, 1]): [x01*theta00 - x00*theta01 + x00*theta02 - x01*theta02],
+             ((0,), [2, 1]): [-theta00 + theta02]}
             sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([1,1,1]))
             sage: W.basis()
-            {(0,
+            {((0,),
               [1, 1, 1]): [-theta00^2*theta01 + theta00*theta01^2 + theta00^2*theta02 - theta01^2*theta02 - theta00*theta02^2 + theta01*theta02^2]}
             sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([3]), use_antisymmetry=False)
             sage: W.basis()
-            {(0, [3]): (1,),
-             (1, [2, 1]): (x00 - x02,),
-             (2, [2, 1]): (x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2,),
-             (3,
-              [1, 1, 1]): (-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2,)}
+            {((3,),
+              [1, 1, 1]): (-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2,),
+             ((1,), [2, 1]): (x00 - x02,),
+             ((2,), [2, 1]): (x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2,),
+             ((0,), [3]): (1,)}
             sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([2,1]), use_antisymmetry=False)
             sage: W.basis()
-            {(0, [2, 1]): (-theta00 + theta02,),
-             (1,
-              [1, 1, 1]): (x01*theta00 - x02*theta00 - x00*theta01 + x02*theta01 + x00*theta02 - x01*theta02,)}
+            {((1,),
+              [1, 1, 1]): (x01*theta00 - x02*theta00 - x00*theta01 + x02*theta01 + x00*theta02 - x01*theta02,),
+             ((0,), [2, 1]): (-theta00 + theta02,)}
 
         """
         n = self._n
@@ -450,12 +450,12 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         EXAMPLES::
             sage: W = DerivativeVandermondeSpaceWithInert(QQ, Partition([2,1]))
             sage: W.basis()
-            {(0, [2, 1]): [-theta00 + theta02],
-             (1, [1, 1, 1]): [x01*theta00 - x00*theta01 + x00*theta02 - x01*theta02]}
+            {((1,), [1, 1, 1]): [x01*theta00 - x00*theta01 + x00*theta02 - x01*theta02],
+             ((0,), [2, 1]): [-theta00 + theta02]}
             sage: W.basis_by_shape(Partition([2,1]))
-            {(0, [2, 1]): [-theta00 + theta02]}
+            {((0,), [2, 1]): [-theta00 + theta02]}
             sage: W.basis_by_shape(Partition([1,1,1]))
-            {(1, [1, 1, 1]): [x01*theta00 - x00*theta01 + x00*theta02 - x01*theta02]}
+            {((1,), [1, 1, 1]): [x01*theta00 - x00*theta01 + x00*theta02 - x01*theta02]}
             sage: W.basis_by_shape(Partition([3]))
             {}
 

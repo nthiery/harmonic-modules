@@ -45,33 +45,38 @@ def polarizationSpace(P, generators, verbose=False, row_symmetry=None, use_commu
         sage: load("derivative_space.py")
         sage: P = DiagonalPolynomialRing(QQ, 3, 2, inert=1)
         sage: mu = Partition([3])
-        sage: generators = DerivativeVandermondeSpaceWithInert(QQ, mu).basis_by_shape(Partition([2,1]))
+        sage: basis = DerivativeVandermondeSpaceWithInert(QQ, mu).basis_by_shape(Partition([2,1]))
+        sage: generators = {P.multidegree(P(gen)): [P(gen) for gen in g] for (d,g) in basis.iteritems()}
         sage: generators
-        {(1, [2, 1]): [x00 - x02],
-         (2, [2, 1]): [x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2]}
-        sage: S = polarizationSpace(P, generators, with_inert=True)
+        {(2, 0): [x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2], (1, 0): [x00 - x02]}
+        sage: S = polarizationSpace(P, generators)
         sage: S.basis()
-        {(1, [2, 1]): (x00 - x02, x10 - x12),
-         (2, [2, 1]): (-1/2*x00^2 + x00*x01 - x01*x02 + 1/2*x02^2,
-          x00*x10 - x01*x10 - x00*x11 + x02*x11 + x01*x12 - x02*x12,
-          1/2*x10^2 - x10*x11 + x11*x12 - 1/2*x12^2)}
-        sage: generators = DerivativeVandermondeSpaceWithInert(QQ, mu).basis_by_shape(Partition([1,1,1]))
+        {(0, 1): (x10 - x12,),
+         (2, 0): (-1/2*x00^2 + x00*x01 - x01*x02 + 1/2*x02^2,),
+         (1, 0): (x00 - x02,),
+         (1, 1): (x00*x10 - x01*x10 - x00*x11 + x02*x11 + x01*x12 - x02*x12,),
+         (0, 2): (1/2*x10^2 - x10*x11 + x11*x12 - 1/2*x12^2,)}
+         
+        sage: basis = DerivativeVandermondeSpaceWithInert(QQ, mu).basis_by_shape(Partition([1,1,1]))
+        sage: generators = {P.multidegree(P(gen)): [P(gen) for gen in g] for (d,g) in basis.iteritems()}
         sage: generators
-        {(3,
-          [1, 1, 1]): [-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2]}
-        sage: S = polarizationSpace(P, generators, with_inert=True)
+        {(3, 0): [-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2]}
+        sage: S = polarizationSpace(P, generators)
         sage: S.basis()
-        {(2, [1, 1, 1]): (-x01*x10 + x02*x10 + x00*x11 - x02*x11 - x00*x12 + x01*x12,),
-         (3,
-          [1, 1, 1]): (x00^2*x01 - x00*x01^2 - x00^2*x02 + x01^2*x02 + x00*x02^2 - x01*x02^2, -x00*x01*x10 + 1/2*x01^2*x10 + x00*x02*x10 - 1/2*x02^2*x10 - 1/2*x00^2*x11 + x00*x01*x11 - x01*x02*x11 + 1/2*x02^2*x11 + 1/2*x00^2*x12 - 1/2*x01^2*x12 - x00*x02*x12 + x01*x02*x12, -1/2*x01*x10^2 + 1/2*x02*x10^2 - x00*x10*x11 + x01*x10*x11 + 1/2*x00*x11^2 - 1/2*x02*x11^2 + x00*x10*x12 - x02*x10*x12 - x01*x11*x12 + x02*x11*x12 - 1/2*x00*x12^2 + 1/2*x01*x12^2, x10^2*x11 - x10*x11^2 - x10^2*x12 + x11^2*x12 + x10*x12^2 - x11*x12^2)}
-
+        {(1, 2): (-1/2*x01*x10^2 + 1/2*x02*x10^2 - x00*x10*x11 + x01*x10*x11 + 1/2*x00*x11^2 - 1/2*x02*x11^2 + x00*x10*x12 - x02*x10*x12 - x01*x11*x12 + x02*x11*x12 - 1/2*x00*x12^2 + 1/2*x01*x12^2,),
+         (3, 0): (x00^2*x01 - x00*x01^2 - x00^2*x02 + x01^2*x02 + x00*x02^2 - x01*x02^2,),
+         (0, 3): (x10^2*x11 - x10*x11^2 - x10^2*x12 + x11^2*x12 + x10*x12^2 - x11*x12^2,),
+         (1, 1): (-x01*x10 + x02*x10 + x00*x11 - x02*x11 - x00*x12 + x01*x12,),
+         (2, 1): (-x00*x01*x10 + 1/2*x01^2*x10 + x00*x02*x10 - 1/2*x02^2*x10 - 1/2*x00^2*x11 + x00*x01*x11 - x01*x02*x11 + 1/2*x02^2*x11 + 1/2*x00^2*x12 - 1/2*x01^2*x12 - x00*x02*x12 + x01*x02*x12,)}
+        
         sage: mu = Partition([2,1])
-        sage: generators = DerivativeVandermondeSpaceWithInert(QQ, mu).basis_by_shape(Partition([2,1]))
+        sage: basis = DerivativeVandermondeSpaceWithInert(QQ, mu).basis_by_shape(Partition([2,1]))
+        sage: generators = {P.multidegree(P(gen)): [P(gen) for gen in g] for (d,g) in basis.iteritems()}
         sage: generators
-        {(0, [2, 1]): [-theta00 + theta02]}
-        sage: S = polarizationSpace(P, generators, with_inert=True)
+        {(0, 0): [-theta00 + theta02]}
+        sage: S = polarizationSpace(P, generators)
         sage: S.basis()
-        {(0, [2, 1]): (theta00 - theta02,)}
+        {(0, 0): (theta00 - theta02,)}
         
     TODO:: add exemples for harmonics with no inert variables
            there may be some bugs to correct
