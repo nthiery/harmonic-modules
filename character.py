@@ -367,12 +367,6 @@ def character_with_inert(mu, inert=1, verbose=False, use_antisymmetry=False, row
         return charac
     else:
         return character_by_isotypic(mu, inert=inert, use_antisymmetry=use_antisymmetry, row_symmetry=row_symmetry, verbose=verbose)
-        
-#def character_key(mu, **args):
-#    return tuple(Composition(mu))
-#def character_hash(mu):
-#    return str(list(mu)).replace(" ","")[1:-1]
-#character_with_inert = func_persist(character_with_inert,hash=character_hash,key=character_key)  
 
 def character_by_isotypic(mu, inert=1, use_antisymmetry=False, row_symmetry=None, verbose=False):
     """
