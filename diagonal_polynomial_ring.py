@@ -18,8 +18,6 @@ from sage.categories.cartesian_product import cartesian_product
 from sage.functions.other import binomial
 from sage.combinat.words.word import Word
 
-
-from funcpersist import *
 from diagram import *
 from subspace import *
 from young_idempotent import *
@@ -34,9 +32,8 @@ from antisymmetric_utilities import *
 
 class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     """
-
-    The ring of diagonal polynomials in n x r variables and n x k inert variables.
-    In order to distinguish the inert variables among the others, they are named `theta_ij`
+    The ring of diagonal polynomials in $n \times r$ variables and $n \times k$ inert variables.
+    In order to distinguish the inert variables among the others, they are named `theta_{i,j}`
 
     EXAMPLES::
 
@@ -68,9 +65,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
     def _repr_(self):
         """
-        sage: DiagonalPolynomialRing(QQ, 5, 3) # indirect doctest
+        sage: DiagonalPolynomialRing(QQ, 5, 3)
         Diagonal polynomial ring with 3 rows of 5 variables over Rational Field
-        sage: DiagonalPolynomialRing(QQ, 4, 3, inert=1) # indirect doctest
+        sage: DiagonalPolynomialRing(QQ, 4, 3, inert=1)
         Diagonal polynomial ring with 3 rows of 4 variables and 1 row(s) of inert variables over Rational Field
 
         """
@@ -219,7 +216,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
     def monomial(self, *args):
         """
-        
+        # TODO NICOLAS add documentation
         """
         return self._P.monomial(*args)
     
@@ -262,12 +259,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         Return the permutation of the variables induced by a permutation of the rows
 
         INPUT:
-
         - ``sigma`` -- a permutation of the rows, as a permutation of `\{1,\ldots,r\}`
 
-        OUTPUT:
-
-        a permutation of the variables, as a permutation of `\{1,\ldots,nr\}`
+        OUTPUT: a permutation of the variables, as a permutation of `\{1,\ldots,nr\}`
 
         EXAMPLES::
 
@@ -286,7 +280,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         Return the polarization `P_{d,i_1,i_2}. p` of `p`.
 
         Recall that the polarization operator is defined by
-
         .. MATH:: P_{d,i_1,i_2} := \sum_j x_{i_2,j} \partial_{i_1,j}^d
 
         EXAMPLES::
@@ -331,7 +324,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     @cached_method
     def derivative_input(self, D, j):
         """
-        
+        # TODO NICOLAS add documentation
         """
         r = self._r
         X = self.variables()
@@ -345,7 +338,6 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         Return the multi polarization `P_{D,i_2}. p` of `p`.
 
         The multi polarization operator is defined by
-
         .. MATH:: P_{D,i_2} := \sum_j x_{i_2,j} \partial_{*,j}^D
 
         EXAMPLES::
@@ -385,7 +377,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         
     def is_highest_weight_vector(self, p, _assert=False):
         """
-        
+        # TODO NICOLAS add documentation
         """
         for i2 in range(self._r):
             for i1 in range(i2):
@@ -398,7 +390,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
     def test_highest_weight_vector(self, p):
         """
-        
+        # TODO NICOLAS add documentation
         """
         self.is_highest_weight_vector(p, _assert=True)
 
@@ -508,7 +500,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
     def test_highest_weight_vectors(self, p, i1, i2):
         """
-        
+        # TODO NICOLAS add documentation
         """
         e = functools.partial(self.polarization, i1=i1, i2=i2, d=1)
         f = functools.partial(self.polarization, i1=i2, i2=i1, d=1)
@@ -522,6 +514,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
 
     def strip_highest_weight_vector(self, p):
         """
+        # TODO NICOLAS add documentation
         EXAMPLES::
 
             sage: R = DiagonalPolynomialRing(QQ, 3, 3)
@@ -628,7 +621,6 @@ def reverse_sorting_permutation(t): # TODO: put "stable sorting" as keyword some
     Return a permutation `p` such that  is decreasing
 
     INPUT:
-
     - `t` -- a list/tuple/... of numbers
 
     OUTPUT:
@@ -652,9 +644,15 @@ def reverse_sorting_permutation(t): # TODO: put "stable sorting" as keyword some
     return ~(Word([-i for i in t]).standard_permutation())
 
 def e(P, i):
+    """
+    # TODO NICOLAS add documentation
+    """
     return functools.partial(P.polarization, i1=i, i2=i+1, d=1)
 
 def f(P, i):
+    """
+    # TODO NICOLAS add documentation
+    """
     return functools.partial(P.polarization, i1=i+1, i2=i, d=1)
     
 def e_polarization_degrees(D1, D2):
@@ -699,9 +697,8 @@ def e_polarization_degrees(D1, D2):
 
 class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
     """
-
-    The ring of diagonal antisymmetric polynomials in n x r variables 
-    and n x k inert variables.
+    The ring of diagonal antisymmetric polynomials in $n \times r$ variables 
+    and $n \times k$ inert variables.
 
     EXAMPLES::
 
@@ -741,7 +738,6 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
             sage: P.polarization(v, 0, 1, 1)
             -2*x00*x01*x10 + x01^2*x10 + 2*x00*x02*x10 - x02^2*x10 - x00^2*x11 + 2*x00*x01*x11 - 2*x01*x02*x11 + x02^2*x11 + x00^2*x12 - x01^2*x12 - 2*x00*x02*x12 + 2*x01*x02*x12
 
-                        
             sage: mu = Partition([2,1])
             sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
             sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
