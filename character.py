@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+from funcpersist import *
 from diagonal_polynomial_ring import *
 from derivative_space import *
 from polarization_space import *
