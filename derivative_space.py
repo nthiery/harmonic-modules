@@ -37,7 +37,7 @@ class DerivativeHarmonicSpace():
             
             self._antisymmetries = None
             self._polRing = DiagonalPolynomialRing(R, n, 1)
-            
+
     def _repr_(self):
         """
         """
