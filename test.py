@@ -1,12 +1,13 @@
-def symmetrize(p, n):
-    """
-    Symmetrize the polynomial p in n variables
-    """
-    
-    p_sym = p
-    for sigma in Permutations(n):
-        result = act_on_polynomial(p, PermutationGroupElement(sigma))
-        for t in result:
-            if t not in p:
-                p_sym += t[1]
-    return p_sym
+def factorise(f, n):
+    SymmetricFunctions(QQ).s()
+    supp = f.support()
+    suppbis = f.support()
+    result = {}
+    for mu in Partitions(n):
+        result[mu] = []
+        for a,b in supp:
+            if b == mu :
+                result[mu] += [a]
+    result2 = [(mu,sum(s(nu) for nu in result[mu])) for mu in result.keys()]
+    for a,b in result2:
+        print a, latex(b)
