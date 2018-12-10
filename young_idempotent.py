@@ -19,7 +19,6 @@ def apply_young_idempotent(p, t, use_antisymmetry=False):
     Apply the Young idempotent indexed by `t` on the polynomial `p`
 
     INPUT::
-
     - `t` -- a standard tableau or a partition
     - `p` -- a polynomial on as many variables as there are cells in `t`
 
@@ -73,7 +72,6 @@ def act(sigma,v) :
     Compute the action of the permutation sigma on the element v.
 
     INPUT:
-
         - `sigma` -- a permutation
         - `v` -- a polynomial 
         
