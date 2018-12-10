@@ -7,15 +7,6 @@ from sage.combinat.ranker import rank_from_list
 from diagonal_polynomial_ring import *
 from add_degree import *
 
-"""
-Potential user interface::
-
-    sage: P = ... #not tested
-    sage: generators = ...(mu, nu, ...) #not tested
-    sage: space = polarizationSpace(P, generators) #not tested
-    sage: space.character()  # the GL_n character #not tested
-"""
-
 ####################################################
 # Polarization Space
 ####################################################
@@ -24,20 +15,18 @@ Potential user interface::
 
 def polarizationSpace(P, generators, verbose=False, row_symmetry=None, use_commutativity=False):
     """
-    Starting from  polynomials (=generators) in the mu-isotypic component 
-    of the polynomial ring in one set of variables (possibly with 
-    additional inert variables), construct the space obtained by polarization.
+    Starting from  polynomials (generators)of the polynomial ring in one 
+    set of variables (possibly with additional inert variables), constructs
+    the space obtained by polarization.
     
     The possible values for row_symmetry : 
-        - "permutation" : the action of S_n on the rows
+        - "permutation" : the action of the symmetric group on the rows
         - "euler+intersection" or "decompose" or "multipolarization" for stategies on lie algebras
     
     INPUT:
     
         - `P` -- a diagonal polynomial ring (or assymmetric version)
-        - `mu` -- a partition corresponding to the isotypic component `b_mu`
-        - `generators`: polynomials in one set of variables 
-            (and possibly inert varaibles) in the image of `b_mu`  
+        - `generators`: polynomials in one set of variables (and possibly inert variables) 
             
     OUTPUT: `F`  -- a Subspace
 
@@ -45,10 +34,17 @@ def polarizationSpace(P, generators, verbose=False, row_symmetry=None, use_commu
         sage: load("derivative_space.py")
         sage: P = DiagonalPolynomialRing(QQ, 3, 2, inert=1)
         sage: mu = Partition([3])
-        sage: basis = DerivativeVandermondeSpaceWithInert(QQ, mu).basis_by_shape(Partition([2,1]))
-        sage: generators = {P.multidegree(P(gen)): [P(gen) for gen in g] for (d,g) in basis.iteritems()}
+        sage: basis = DerivativeHarmonicSpace(QQ, mu.size()).basis_by_shape(Partition([2,1]))
+        sage: generators = {}
+        sage: for gen in basis : 
+        ....:     d = P.multidegree((P(gen)))
+        ....:     if d in generators.keys():
+        ....:         generators[d] += [P(gen)]
+        ....:     else:
+        ....:         generators[d] = [P(gen)]
         sage: generators
-        {(2, 0): [x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2], (1, 0): [x00 - x02]}
+        {(2, 0): [1/3*x00^2 - 2/3*x00*x01 + 2/3*x01*x02 - 1/3*x02^2],
+         (1, 0): [-2*x00 + 2*x02]}
         sage: S = polarizationSpace(P, generators)
         sage: S.basis()
         {(0, 1): (x10 - x12,),
@@ -77,9 +73,6 @@ def polarizationSpace(P, generators, verbose=False, row_symmetry=None, use_commu
         sage: S = polarizationSpace(P, generators)
         sage: S.basis()
         {(0, 0): (theta00 - theta02,)}
-        
-    TODO:: add exemples for harmonics with no inert variables
-           there may be some bugs to correct
 
     """
     S = SymmetricFunctions(QQ)
@@ -113,13 +106,11 @@ def polarizationSpace(P, generators, verbose=False, row_symmetry=None, use_commu
     if row_symmetry == "euler+intersection":
         operators[P._grading_set.zero()] = [
             functools.partial(lambda v,i: P.polarization(P.polarization(v, i+1, i, 1, antisymmetries=antisymmetries), i, i+1, 1, antisymmetries=antisymmetries), i=i)
-            for i in range(r-1)
-            ]
+            for i in range(r-1)]
     elif row_symmetry == "decompose":
         def post_compose(f):
             return lambda x: [q for (q,word) in P.highest_weight_vectors_decomposition(f(x))]
-        operators = {d: [post_compose(op) for op in ops]
-                     for d, ops in operators.iteritems()}
+        operators = {d: [post_compose(op) for op in ops]for d, ops in operators.iteritems()}
     elif row_symmetry == "multipolarization":
         F = HighestWeightSubspace(generators,
                  ambient=self,
@@ -127,7 +118,8 @@ def polarizationSpace(P, generators, verbose=False, row_symmetry=None, use_commu
                  hilbert_parent = hilbert_parent,
                  antisymmetries=antisymmetries,
                  verbose=verbose)
-        return F    
+        return F
+        
     operators_by_degree = {}
     for degree,ops in operators.iteritems(): 
         d = sum(degree)
@@ -174,7 +166,7 @@ def polarization_operators_by_multidegree(P, side=None, row_symmetry=None, use_l
     - ``side`` -- 'down'
     - ``min_degree`` -- a non negative integer `d` (default: `0`)
 
-      if `d>0`, only return the polarization operators of differential degree `>=d`.
+    If `d>0`, only return the polarization operators of differential degree `>=d`.
 
     If ``side`` is `down` (the only implemented choice), only
     the operators from `X_{i1}` to `X_{i2}` for `i1<i2` are returned.
