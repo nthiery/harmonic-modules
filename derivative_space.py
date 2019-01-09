@@ -323,8 +323,8 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
 
     def __init__(self, R, mu, inert=1, use_antisymmetry=True):
         self._R = R
-        self._mu = Partition(mu)
-        self._n = Partition(mu).size()
+        self._mu = mu
+        self._n = mu.size()
         self._inert = inert
         self._use_antisymmetry = use_antisymmetry
         self._P = DiagonalPolynomialRing(R, self._n, 1, inert)
@@ -430,7 +430,7 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         generators={(D((dim,)),Partition([1 for i in range(n)])):[Delta]}
         F = Subspace(generators=generators, operators=operators, add_degrees=add_degree_isotyp, verbose=verbose)
         basis = F.basis()
-        if self._use_antisymmetry :
+        if self._use_antisymmetry : # partie a adapter pour les diagrammes : calcul des antisymetries
             pos = antisymmetries_of_tableau(Partition(mu).initial_tableau())
             for d,B in basis.iteritems():
                 res = [reduce_antisymmetric_normal(p,n,1,pos) for p in B]

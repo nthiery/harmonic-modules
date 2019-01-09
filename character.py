@@ -148,8 +148,8 @@ def harmonic_character_plain(mu, verbose=False, parallel=False):
     else:
         progressbar = False
     result = harmonic_character(R, mu, verbose=progressbar,
-                                  row_symmetry="permutation", #TODO NICOLAS : default parameter for row_symmetry ? 
-                                  use_antisymmetry=True)
+                                  row_symmetry="permutation") #TODO NICOLAS : default parameter for row_symmetry ? 
+                                  #use_antisymmetry=True)
     return {tuple(degrees): dim
             for degrees, dim in result}
 
@@ -457,7 +457,7 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
     
     H = DerivativeVandermondeSpaceWithInert(QQ, mu, inert=inert, use_antisymmetry=use_antisymmetry)
     basis = H.basis_by_shape(nu)
-    
+     
     if basis :
         if use_antisymmetry: 
             antisymmetries = antisymmetries_of_tableau(nu.initial_tableau())
@@ -484,4 +484,4 @@ def character_isotypic_plain_key(mu, nu, **args):
 def character_isotypic_plain_hash(p_tuple):
     mu, nu = p_tuple
     return str(list(mu)).replace(" ","")[1:-1] + "_" + str(list(nu)).replace(" ","")[1:-1]
-character_by_isotypic_plain = func_persist(character_by_isotypic_plain, hash=character_isotypic_plain_hash, key=character_isotypic_plain_key) 
+#character_by_isotypic_plain = func_persist(character_by_isotypic_plain, hash=character_isotypic_plain_hash, key=character_isotypic_plain_key) 
