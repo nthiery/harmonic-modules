@@ -430,7 +430,10 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         generators={(D((dim,)),Partition([1 for i in range(n)])):[Delta]}
         F = Subspace(generators=generators, operators=operators, add_degrees=add_degree_isotyp, verbose=verbose)
         basis = F.basis()
-        if self._use_antisymmetry : # partie a adapter pour les diagrammes : calcul des antisymetries
+        if self._use_antisymmetry :
+            if isinstance(mu, Diagram):
+                #lister les antisymetries
+            else:
             pos = antisymmetries_of_tableau(Partition(mu).initial_tableau())
             for d,B in basis.iteritems():
                 res = [reduce_antisymmetric_normal(p,n,1,pos) for p in B]
