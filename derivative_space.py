@@ -433,11 +433,12 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         if self._use_antisymmetry :
             if isinstance(mu, Diagram):
                 #lister les antisymetries
+                pos = []
             else:
-            pos = antisymmetries_of_tableau(Partition(mu).initial_tableau())
-            for d,B in basis.iteritems():
-                res = [reduce_antisymmetric_normal(p,n,1,pos) for p in B]
-                basis[d] = res
+                pos = antisymmetries_of_tableau(Partition(mu).initial_tableau())
+                for d,B in basis.iteritems():
+                    res = [reduce_antisymmetric_normal(p,n,1,pos) for p in B]
+                    basis[d] = res
         return basis
     
     @cached_method    

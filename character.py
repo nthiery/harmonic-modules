@@ -40,7 +40,7 @@ def character(mu):
         s[] # s[1, 1, 1, 1]
     """
     
-    if not isinstance(mu, Partitions):
+    if not isinstance(mu, Partitions) and not isinstance(mu, Diagram):
         mu = Partition(mu)
     if mu.length() == 1:
         return harmonic_bicharacter(mu.size())
@@ -357,7 +357,10 @@ def character_with_inert(mu, inert=1, verbose=False, use_antisymmetry=False, row
 
     """
     n = mu.size()
-    r = mu.size()-1
+    if isinstance(mu, Diagram):
+        r = min(mu.size(), mu.nb_cols())-1
+    else :
+        r = min(Partition(mu).size(), mu[0])-1
     SymmetricFunctions(QQ).inject_shorthands(verbose=False)
     if parallel:
         charac = 0
