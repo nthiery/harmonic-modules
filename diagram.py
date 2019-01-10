@@ -51,7 +51,7 @@ class Diagram():
         """
         return len(self._cells)
         
-    def cells(self) : 
+    def cells(self): 
         """
         Gives the list of the matrix coordinates of the cells of the diagram 
         
@@ -66,3 +66,24 @@ class Diagram():
 
         """
         return self._cells
+        
+    def nb_cols(self):
+        """
+        Gives the number of columns of the diagram including the empty ones. 
+        The number of columns thus corresponds to the greatest $a_i$.
+
+        EXAMPLES ::
+            sage: d = Diagram([(0,0),(3,0),(6,0)])
+            sage: d.nb_cols()
+            7
+
+            sage: d = Diagram([(0,0),(1,0),(2,0),(3,0),(0,1),(2,1)])
+            sage: d.nb_cols()
+            4
+
+        """
+        res=0
+        for c in self.cells():
+            if c[1] > res :
+                res = c[1]
+        return res+1
