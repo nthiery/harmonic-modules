@@ -358,7 +358,7 @@ def character_with_inert(mu, inert=1, verbose=False, use_antisymmetry=False, row
     """
     n = mu.size()
     if isinstance(mu, Diagram):
-        r = min(mu.size(), mu.nb_cols())-1
+        r = min(mu.size(), mu.nb_cols())-1 #nb_cols != m 
     else :
         r = min(Partition(mu).size(), mu[0])-1
     SymmetricFunctions(QQ).inject_shorthands(verbose=False)
