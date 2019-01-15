@@ -320,6 +320,53 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                     ss = self.row_permutation(s)
                     result = act_on_polynomial(result, ss)
             return result
+            
+    def symmetric_derivative(self, p, d):
+        """
+        Return the symmetric derivative of p w.r.t the degrees d.
+        
+        INPUT :
+            - p -- a polynomial in the variables of self
+            - d -- a list of degree corresponding to the derivation degree 
+                for each set of variables
+                
+        EXAMPLES::
+            sage: P = DiagonalPolynomialRing(QQ, 3, 1)
+            sage: x = P.variables()
+            sage: v = -x[0,0]^3*x[0,1] + x[0,0]*x[0,1]^3 + x[0,0]^3*x[0,2] - x[0,1]^3*x[0,2] - x[0,0]*x[0,2]^3 + x[0,1]*x[0,2]^3; v
+            -x00^3*x01 + x00*x01^3 + x00^3*x02 - x01^3*x02 - x00*x02^3 + x01*x02^3
+            sage: P.symmetric_derivative(v, [1])
+            -3*x00^2*x01 + 3*x00*x01^2 + 3*x00^2*x02 - 3*x01^2*x02 - 3*x00*x02^2 + 3*x01*x02^2
+            sage: P.symmetric_derivative(v, [2])
+            0
+            sage: P.symmetric_derivative(v, [3])
+            0
+            
+            sage: P = DiagonalPolynomialRing(QQ, 3, 2)
+            sage: v = P(v)
+            sage: v_pol = P.polarization(v, 0, 1, 1); v_pol
+            -3*x00^2*x01*x10 + x01^3*x10 + 3*x00^2*x02*x10 - x02^3*x10 - x00^3*x11 + 3*x00*x01^2*x11 - 3*x01^2*x02*x11 + x02^3*x11 + x00^3*x12 - x01^3*x12 - 3*x00*x02^2*x12 + 3*x01*x02^2*x12
+            sage: P.symmetric_derivative(v_pol, [1,1])
+            0
+            sage: P.symmetric_derivative(v_pol, [0,1])
+            -3*x00^2*x01 + 3*x00*x01^2 + 3*x00^2*x02 - 3*x01^2*x02 - 3*x00*x02^2 + 3*x01*x02^2
+            
+        """
+        n = self._n
+        r = self._r
+        X = self.variables()
+        if len(d) != r :
+            print "Wrong list of degrees"
+            return None
+        else:
+            result = 0
+            for i in range(n):
+                interm_result = p
+                for j in range(r):
+                    interm_result = interm_result.derivative(X[j,i],d[j])
+                result += interm_result
+            return result
+            
 
     @cached_method
     def derivative_input(self, D, j):
