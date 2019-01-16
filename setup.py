@@ -15,7 +15,7 @@ def readfile(filename):
 # For the tests
 class SageTest(TestCommand):
     def run_tests(self):
-        errno = os.system("sage -t funcpersist.py matrix_of_vectors.py subspace.py diagram.py diagonal_polynomial_ring.py harmonic.py polarization_space.py add_degree.py derivative_space.py polynomial_derivative.py young_idempotent.py")
+        errno = os.system("sage -t funcpersist.py matrix_of_vectors.py subspace.py diagram.py diagonal_polynomial_ring.py harmonic.py polarization_space.py add_degree.py derivative_space.py polynomial_derivative.py quotient.py young_idempotent.py")
         if errno != 0:
             sys.exit(1)
 
@@ -46,7 +46,7 @@ setup(
                 'diagram',
                 'diagonal_polynomial_ring', 'harmonic', 'polarization_space',
                 'add_degree', 'derivative_space', 'polynomial_derivative',
-                'young_idempotent'
+                'quotient' 'young_idempotent'
                ],
     cmdclass = {'test': SageTest}, # adding a special setup command for tests
     setup_requires   = ['sage-package'],
