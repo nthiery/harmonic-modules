@@ -483,16 +483,12 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
             basis_pol = quotiented_basis(P, S.basis(), operators)
         else:
             basis_pol = S.basis()
-        for key, b in basis_pol.iteritems():
-            print key, b
-        print
         if row_symmetry=="permutation":
             for degree, b in basis_pol.iteritems():
                 charac += s(sum(m(Partition(degree)) for p in b)).restrict_partition_lengths(r,exact=False)
         else:
             for degree, b in basis_pol.iteritems():
                 charac += sum(P.multipower(degree) for p in b)
-            print charac
             charac = s(ss.from_polynomial(charac)).restrict_partition_lengths(r,exact=False)
     if charac:
         return {tuple(degrees): dim for degrees, dim in charac}

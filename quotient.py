@@ -32,8 +32,11 @@ def quotiented_basis(P, basis, operators):
              for p in b:
                  if op(P(p))!=0:
                      quotient += [op(P(p))]
-    S = Subspace(quotient, [])
-    quotient_basis = S.basis()[0]
+    if quotient != [] :
+        S = Subspace(quotient, [])
+        quotient_basis = S.basis()[0]
+    else :
+        quotient_basis = []
     
     new_basis = {}
     for key, b in basis.iteritems():
