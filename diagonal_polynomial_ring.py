@@ -355,17 +355,15 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         n = self._n
         r = self._r
         X = self.variables()
-        if len(d) != r :
-            print "Wrong list of degrees"
-            return None
-        else:
-            result = 0
-            for i in range(n):
-                interm_result = p
-                for j in range(r):
-                    interm_result = interm_result.derivative(X[j,i],d[j])
-                result += interm_result
-            return result
+        result = 0
+        if not isinstance(d, (tuple, list)):
+            d = [d]
+        for i in range(n):
+            interm_result = p
+            for j in range(len(d)):
+                interm_result = interm_result.derivative(X[j,i],d[j])
+            result += interm_result
+        return result
             
 
     @cached_method
