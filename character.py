@@ -462,7 +462,7 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
     
     H = DerivativeVandermondeSpaceWithInert(QQ, mu, inert=inert, use_antisymmetry=use_antisymmetry)
     basis = H.basis_by_shape(nu)
-         
+    
     if basis :
         if use_antisymmetry: 
             antisymmetries = antisymmetries_of_tableau(nu.initial_tableau())
@@ -479,7 +479,7 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
             generators = {P.multidegree(P(gen)): [P(gen) for gen in g] for (d,g) in basis.iteritems()}
         S = polarizationSpace(P, generators, verbose=verbose, row_symmetry=row_symmetry)
         if quotient:
-            operators = [functools.partial(P.symmetric_derivative, d=[0 if j!=i else k for j in range(r)]) for k in range(1, H.degree_vandermonde()+1) for i in range(1,r)]
+            operators = [functools.partial(P.symmetric_derivative, d=[0 if j!=i else k for j in range(r)]) for k in range(1, H.degree_vandermonde()+1) for i in range(0,r)]
             basis_pol = quotiented_basis(P, S.basis(), operators)
         else:
             basis_pol = S.basis()

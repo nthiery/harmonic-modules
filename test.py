@@ -13,5 +13,5 @@ def factorise(f, n):
     result2 = [(mu,sum(s(nu) for nu in result[mu])) for mu in result.keys()]
     for a,b in result2:
         #print a, latex(b)
-        res += [[a,b.expand(1, 'q')]]
+        res += [[a,b]]
     return res
