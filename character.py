@@ -358,6 +358,8 @@ def character_with_inert(mu, inert=1, verbose=False, use_antisymmetry=False, row
         s[] # s[1, 1, 1]
 
     """
+    if quotient :
+        row_symmetry = None
     n = mu.size()
     if isinstance(mu, Diagram):
         r = mu.size()-1 #min(mu.size(), mu.nb_cols())-1 #nb_cols != m 
@@ -479,13 +481,17 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
             generators = {P.multidegree(P(gen)): [P(gen) for gen in g] for (d,g) in basis.iteritems()}
         S = polarizationSpace(P, generators, verbose=verbose, row_symmetry=row_symmetry)
         if quotient:
-            operators = [functools.partial(P.symmetric_derivative, d=[0 if j!=i else k for j in range(r)]) for k in range(1, H.degree_vandermonde()+1) for i in range(0,r)]
+            operators = [functools.partial(P.symmetric_derivative, d=[k if j==i else 0 for j in range(r)]) for k in range(1, H.degree_vandermonde()+1) for i in range(0,r)]
             basis_pol = quotiented_basis(P, S.basis(), operators)
         else:
             basis_pol = S.basis()
         if row_symmetry=="permutation":
             for degree, b in basis_pol.iteritems():
                 charac += s(sum(m(Partition(degree)) for p in b)).restrict_partition_lengths(r,exact=False)
+        elif quotient : # temporary and not very reliable
+            for degree, b in basis_pol.iteritems():
+                if list(degree) == sorted(degree, reverse=True) :
+                    charac += s(sum(m(Partition(degree)) for p in b)).restrict_partition_lengths(r,exact=False)
         else:
             for degree, b in basis_pol.iteritems():
                 charac += sum(P.multipower(degree) for p in b)
