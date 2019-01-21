@@ -39,7 +39,7 @@ def quotiented_basis(P, basis, operators):
         S = Subspace(quotient, [])
         quotient_basis = S.basis()[0]
     else :
-        quotient_basis = []    
+        quotient_basis = []   
     new_basis = {}
     for key, b in basis.iteritems():
         new_b = tuple(p for p in b if p not in quotient_basis)

@@ -15,9 +15,11 @@ def factorise(f, n):
         #res += [[a,b]]
 
 def test():
+    s = SymmetricFunctions(QQ).s()
+    m = SymmetricFunctions(QQ).m()
     quotient=True
     mu = Diagram([(0,0),(2,0),(4,0)]) 
-    nu = Partition([1,1,1])
+    nu = Partition([3])
     row_symmetry = None
     verbose = False
     n = mu.size()
@@ -43,11 +45,18 @@ def test():
     #operators = [functools.partial(P.symmetric_derivative, d=[k if j==i1 else l if j==i2 else 0 for j in range(r)]) 
      #                                               for k in range(1, H.degree_vandermonde()+1) for l in range(1, H.degree_vandermonde()+1) 
      #                                               for i1 in range(0,r) for i2 in range(0,r)]
-    basis_pol = quotiented_basis(P, S.basis(), operators)
-    print "generators after quotient"
-    for key, b in basis_pol.iteritems():
+    print "generators after polarization before quotient"
+    for key, b in S.basis().iteritems():
         print key,b
     print
+    basis_pol = quotiented_basis(P, S.basis(), operators)
+    print "after quotient"
+    if S.basis() == basis_pol :
+        print "toujours pareil"
+    else:
+        set1 = set(S.basis().items())
+        set2 = set(basis_pol.items())
+        print set1 ^ set2
     for degree, b in basis_pol.iteritems():
         if list(degree) == sorted(degree, reverse=True) :
             charac += s(sum(m(Partition(degree)) for p in b)).restrict_partition_lengths(r,exact=False)
