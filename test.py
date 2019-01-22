@@ -13,6 +13,24 @@ def factorise(f, n):
     for a, b in result2:
         print a, latex(b)
         #res += [[a,b]]
+        
+def test_quotient():
+    P = DiagonalPolynomialRing(QQ, 3, 2, inert=1)
+    W = DerivativeVandermondeSpaceWithInert(QQ, Diagram([(0,0),(1,0),(3,0)]))
+    basis3 = W.basis_by_shape(Partition([3]))
+    basis21 = W.basis_by_shape(Partition([2,1]))
+    basis111 = W.basis_by_shape(Partition([1,1,1]))
+    generators3 = {P.multidegree(P(gen)): [P(gen) for gen in g] for (d,g) in basis3.iteritems()}
+    generators21 = {P.multidegree(P(gen)): [P(gen) for gen in g] for (d,g) in basis21.iteritems()}
+    generators111 = {P.multidegree(P(gen)): [P(gen) for gen in g] for (d,g) in basis111.iteritems()}
+    S3 = polarizationSpace(P, generators3)
+    S21 = polarizationSpace(P, generators21)
+    S111 = polarizationSpace(P, generators111)
+    
+    character_quotient(P, S3.basis(), 3)
+    character_quotient(P, S21.basis(), 3)
+    character_quotient(P, S111.basis(), 4)
+
 
 def test():
     s = SymmetricFunctions(QQ).s()

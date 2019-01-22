@@ -359,7 +359,8 @@ def character_with_inert(mu, inert=1, verbose=False, use_antisymmetry=False, row
 
     """
     if quotient :
-        row_symmetry = None
+        row_symmetry=None
+        parallel = False
     n = mu.size()
     if isinstance(mu, Diagram):
         r = mu.size()-1 #min(mu.size(), mu.nb_cols())-1 #nb_cols != m 
@@ -457,9 +458,15 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
         [1, 1, 1, 1] {(2,): 1}
 
     """
+    if not quotient:
+        side = "down"
+    else :
+        side = None
+        
     n = mu.size()
     r = n-1
     charac = 0
+    charac_quotient = 0
     ss = SymmetricFunctions(QQ).s()
     
     H = DerivativeVandermondeSpaceWithInert(QQ, mu, inert=inert, use_antisymmetry=use_antisymmetry)
@@ -469,37 +476,51 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
         if use_antisymmetry: 
             antisymmetries = antisymmetries_of_tableau(nu.initial_tableau())
             P = DiagonalAntisymmetricPolynomialRing(QQ, n, r, inert=1, antisymmetries=antisymmetries)
-            if quotient :
-                operators = [functools.partial(P.symmetric_derivative, d=[d]) for d in range(1, H.degree_vandermonde()+1)]
-                basis = quotiented_basis(P, basis, operators)
             generators = {P.multidegree(P(gen)): [reduce_antisymmetric_normal(P(gen), n, r+inert, antisymmetries) for gen in g] for (d,g) in basis.iteritems()}
         else :
             P = DiagonalPolynomialRing(QQ, n, r, inert=1)
-            if quotient :
-                operators = [functools.partial(P.symmetric_derivative, d=[d]) for d in range(1, H.degree_vandermonde()+1)]
-                basis = quotiented_basis(P, basis, operators)
             generators = {P.multidegree(P(gen)): [P(gen) for gen in g] for (d,g) in basis.iteritems()}
-        S = polarizationSpace(P, generators, verbose=verbose, row_symmetry=row_symmetry)
+        S = polarizationSpace(P, generators, verbose=verbose, row_symmetry=row_symmetry, side=side)
+        basis_pol = S.basis()
+        
+        # appel au calcul du quotient
         if quotient:
-            operators = [functools.partial(P.symmetric_derivative, d=[k if j==i else 0 for j in range(r)]) for k in range(1, H.degree_vandermonde()+1) for i in range(1,r)]
-            basis_pol = quotiented_basis(P, S.basis(), operators)
-        else:
-            basis_pol = S.basis()
+            charac_quotient = character_quotient(P, basis_pol, H.degree_vandermonde(), row_symmetry=row_symmetry)
+            
         if row_symmetry=="permutation":
             for degree, b in basis_pol.iteritems():
                 charac += s(sum(m(Partition(degree)) for p in b)).restrict_partition_lengths(r,exact=False)
-        elif quotient : # temporary and not very reliable
-            for degree, b in basis_pol.iteritems():
-                if list(degree) == sorted(degree, reverse=True) :
-                    charac += s(sum(m(Partition(degree)) for p in b)).restrict_partition_lengths(r,exact=False)
         else:
             for degree, b in basis_pol.iteritems():
                 charac += sum(P.multipower(degree) for p in b)
             charac = s(ss.from_polynomial(charac)).restrict_partition_lengths(r,exact=False)
+            
+    charac = charac - charac_quotient
     if charac:
         return {tuple(degrees): dim for degrees, dim in charac}
     else:
         return 0
+        
+def character_quotient(P, basis, degree, row_symmetry=None):
+    """
+    
+    """
+    s = SymmetricFunctions(QQ).s()
+    m = SymmetricFunctions(QQ).m()
+    charac = 0
+    operators = [functools.partial(P.symmetric_derivative, d=[k if j==i else 0 for j in range(P._r)]) for k in range(1, degree+1) for i in range(0,P._r)]
+    qbasis = quotient_basis(P, basis, operators)
+    
+    if qbasis != {} :
+        if row_symmetry=="permutation":
+            for key, b in qbasis.iteritems():
+                charac += s(sum(m(Partition(sorted(P.multidegree(p), reverse=True))) for p in b)).restrict_partition_lengths(P._r,exact=False)
+        else:
+            for key, b in qbasis.iteritems():
+                charac += sum(P.multipower(P.multidegree(p)) for p in b)
+            charac = s(s.from_polynomial(charac)).restrict_partition_lengths(P._r,exact=False)
+            
+    return charac
 
 def character_isotypic_plain_key(mu, nu, **args):
     return tuple(Composition(mu)), tuple(Composition(nu))

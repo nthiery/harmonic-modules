@@ -3,7 +3,7 @@
 
 from subspace import *
 
-def quotiented_basis(P, basis, operators):
+def quotient_basis(P, basis, operators):
     """
         INPUT:
             - P -- a polynomial ring
@@ -28,21 +28,25 @@ def quotiented_basis(P, basis, operators):
             ((4,), [1, 1, 1]) (-x00^3*x01 + x00*x01^3 + x00^3*x02 - x01^3*x02 - x00*x02^3 + x01*x02^3,)
 
     """
-    generators = [P(p) for b in basis.itervalues() for p in b]
-    quotient = []
-    for op in operators:
-         for b in basis.itervalues():
-             for p in b:
-                 if op(P(p))!=0:
-                     quotient += [op(P(p))]
-    if quotient != [] :
-        S = Subspace(quotient, [])
-        quotient_basis = S.basis()[0]
-    else :
-        quotient_basis = []   
-    new_basis = {}
+
+    quotient = {}
     for key, b in basis.iteritems():
-        new_b = tuple(p for p in b if p not in quotient_basis)
-        if new_b != ():
-            new_basis[key] = new_b
-    return new_basis
+        add_to_quotient = [op(P(p)) for p in b for op in operators if op(P(p))!=0]
+        for q in add_to_quotient:
+            deg = sum(P.multidegree(q))
+            if deg not in quotient.iterkeys():
+                quotient[deg] = [q]
+            else:
+                quotient[deg] += [q]
+            
+    if quotient != {} :
+        return Subspace(quotient, {}).basis()
+    else :
+        return {}  
+         
+    #new_basis = {}
+    #for key, b in basis.iteritems():
+    #    new_b = tuple(p for p in b if p not in quotient_basis)
+    #    if new_b != ():
+    #        new_basis[key] = new_b
+    #return new_basis
