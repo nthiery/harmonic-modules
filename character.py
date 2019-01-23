@@ -359,7 +359,7 @@ def character_with_inert(mu, inert=1, verbose=False, use_antisymmetry=False, row
 
     """
     if quotient :
-        row_symmetry=None
+        row_symmetry="permutation"
         parallel = False
     n = mu.size()
     if isinstance(mu, Diagram):
@@ -486,8 +486,12 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
         # appel au calcul du quotient
         if quotient:
             charac_quotient = character_quotient(P, basis_pol, H.degree_vandermonde(), row_symmetry=row_symmetry)
-            
-        if row_symmetry=="permutation":
+        
+        print "basis_pol avant quotient"
+        for key, b in basis_pol.iteritems():
+            print key, b
+        print
+        if row_symmetry=="permutation": # pourquoi incorrect avec diagrammes ? 
             for degree, b in basis_pol.iteritems():
                 charac += s(sum(m(Partition(degree)) for p in b)).restrict_partition_lengths(r,exact=False)
         else:
@@ -508,8 +512,13 @@ def character_quotient(P, basis, degree, row_symmetry=None):
     s = SymmetricFunctions(QQ).s()
     m = SymmetricFunctions(QQ).m()
     charac = 0
-    operators = [functools.partial(P.symmetric_derivative, d=[k if j==i else 0 for j in range(P._r)]) for k in range(1, degree+1) for i in range(0,P._r)]
+    operators = [functools.partial(P.symmetric_derivative, d=[k if j==i else 0 for j in range(P._r)], row_symmetry=row_symmetry) for k in range(1, degree+1) for i in range(0,P._r)]
     qbasis = quotient_basis(P, basis, operators)
+    
+    print "qbasis calcul quotient"
+    for key, b in qbasis.iteritems():
+        print key, b
+    print
     
     if qbasis != {} :
         if row_symmetry=="permutation":

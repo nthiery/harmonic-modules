@@ -313,15 +313,14 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                               for j in range(n))
             if row_symmetry=="permutation" and result:
                 d = self.multidegree(result)
-                if self._inert!= 0:
-                    d = tuple(d) + tuple(0 for i in range(self._inert))
+                d = tuple(d) + tuple(0 for i in range(self._inert))
                 if list(d) != sorted(d, reverse=True):
                     s = reverse_sorting_permutation(d)
                     ss = self.row_permutation(s)
                     result = act_on_polynomial(result, ss)
             return result
             
-    def symmetric_derivative(self, p, d):
+    def symmetric_derivative(self, p, d, row_symmetry=None):
         """
         Return the symmetric derivative of p w.r.t the degrees d.
         
@@ -363,6 +362,14 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
             for j in range(len(d)):
                 interm_result = interm_result.derivative(X[j,i],d[j])
             result += interm_result
+            
+        if row_symmetry=="permutation" and result:
+            deg = self.multidegree(result) 
+            deg = tuple(deg) + tuple(0 for i in range(self._inert))
+            if list(deg) != sorted(deg, reverse=True):
+                s = reverse_sorting_permutation(deg)
+                ss = self.row_permutation(s)
+                result = act_on_polynomial(result, ss)
         return result
             
 
