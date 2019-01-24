@@ -362,8 +362,8 @@ def character_with_inert(mu, inert=1, verbose=False, use_antisymmetry=False, row
         parallel = False
     n = mu.size()
     if isinstance(mu, Diagram):
-        r = mu.size()-1 #min(mu.size(), mu.nb_cols())-1 #nb_cols != m 
-    else :
+        r = min(mu.size()-1, max([c[1] for c in mu.cells()])) 
+    else
         r = min(Partition(mu).size(), mu[0])-1
     SymmetricFunctions(QQ).inject_shorthands(verbose=False)
     if parallel:
