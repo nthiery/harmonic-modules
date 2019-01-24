@@ -82,8 +82,5 @@ class Diagram():
             4
 
         """
-        res=0
-        for c in self.cells():
-            if c[1] > res :
-                res = c[1]
-        return res+1
+        
+        return max([c[1] for c in mu.cells()
