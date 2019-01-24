@@ -486,10 +486,6 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
         if quotient:
             charac_quotient = character_quotient(P, basis_pol, H.degree_vandermonde(), row_symmetry=row_symmetry)
         
-        print "basis_pol avant quotient"
-        for key, b in basis_pol.iteritems():
-            print key, b
-        print
         if row_symmetry=="permutation": # pourquoi incorrect avec diagrammes ? 
             for degree, b in basis_pol.iteritems():
                 charac += s(sum(m(Partition(degree)) for p in b)).restrict_partition_lengths(r,exact=False)
