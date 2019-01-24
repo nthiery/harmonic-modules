@@ -359,7 +359,6 @@ def character_with_inert(mu, inert=1, verbose=False, use_antisymmetry=False, row
 
     """
     if quotient :
-        row_symmetry="permutation"
         parallel = False
     n = mu.size()
     if isinstance(mu, Diagram):
