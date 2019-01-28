@@ -83,4 +83,4 @@ class Diagram():
 
         """
         
-        return max([c[1] for c in mu.cells()
+        return max([c[1] for c in self.cells()])
