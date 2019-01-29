@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from subspace import *
+from add_degree import *
+        
 
 def quotient_basis(P, basis, operators):
     """
@@ -31,14 +33,13 @@ def quotient_basis(P, basis, operators):
 
     quotient = {}
     for key, b in basis.iteritems():
-        add_to_quotient = [op(P(p)) for p in b for op in operators if op(P(p))!=0]
+        add_to_quotient = [v(P(p)) for p in b for op in operators.itervalues() for v in op if v(P(p))!=0]
         for q in add_to_quotient:
-            deg = sum(P.multidegree(q))
+            deg = P.multidegree(q)
             if deg not in quotient.iterkeys():
                 quotient[deg] = [q]
             else:
                 quotient[deg] += [q]
-            
     if quotient != {} :
         return Subspace(quotient, {}).basis()
     else :

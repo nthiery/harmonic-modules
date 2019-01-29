@@ -458,7 +458,7 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
 
     """
     if quotient:
-        side = None
+        side = "down" 
     else:
         side = "down"
         
@@ -473,6 +473,8 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
     
     H = DerivativeVandermondeSpaceWithInert(QQ, mu, inert=inert, use_antisymmetry=use_antisymmetry)
     basis = H.basis_by_shape(nu)
+    print "avant polarisation"
+    print basis
     
     if basis :
         if use_antisymmetry: 
@@ -497,10 +499,14 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
         if row_symmetry=="permutation": 
             for degree, b in basis_pol.iteritems():
                 charac += s(sum(m(Partition(degree)) for p in b)).restrict_partition_lengths(r,exact=False)
+            print "avant quotient : ", charac
+            charac = charac - charac_quotient
         else:
             for degree, b in basis_pol.iteritems():
                 charac += sum(P.multipower(degree) for p in b)
+            print "avant quotient : ", charac
             charac = charac - charac_quotient
+            print "apres quotient : ", charac
             charac = s(ss.from_polynomial(charac)).restrict_partition_lengths(r,exact=False)
     
     print "charac : ", charac
@@ -518,7 +524,9 @@ def character_quotient(P, basis, degree, row_symmetry=None):
     s = SymmetricFunctions(QQ).s()
     m = SymmetricFunctions(QQ).m()
     charac = 0
-    operators = [functools.partial(P.symmetric_derivative, d=[k if j==i else 0 for j in range(P._r)], row_symmetry=row_symmetry) for k in range(1, degree+1) for i in range(0,P._r)]
+    grading_set = P._grading_set
+    list_degrees = [tuple(k1 if j==i1 else 0 for j in range(P._r)) for k1 in range(1, degree+1) for i1 in range(0,P._r)]
+    operators = {grading_set(-i for i in d) : [functools.partial(P.symmetric_derivative, d=d, row_symmetry=row_symmetry)] for d in list_degrees}
     qbasis = quotient_basis(P, basis, operators)
     
     print "qbasis calcul quotient"
