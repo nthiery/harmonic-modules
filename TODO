@@ -2,8 +2,8 @@
 # TODO:
 
 - Setup binder
-- Add a setup.py to enable compilation once for all of code1.pyx
-- Rename the code files
+- Add a setup.py to enable compilation once for all of code1.pyx : done
+- Rename the code files : done
 
 
 Questions:
@@ -46,11 +46,15 @@ Questions:
 
         \Delta_D = det (  X_{*,j}^{D_j}  )
 
-.. TOPIC:: Conjecture / Theorem?
+.. TOPIC:: Conjecture / Theorem? : 
 
     The space of alternating diagonal harmonic polynomials is spanned
     by the van-der-monde in the first variables and E polarization
     operators.
+    
+    It is a theorem. Prouved by Haiman for the case of 2 sets of variables.
+    Don't have original ref for the general case but it is given as a theorem 
+    in an article of Francois. 
 
 .. TOPIC:: Remarks
 
