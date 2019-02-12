@@ -75,11 +75,11 @@ class Diagram():
         EXAMPLES ::
             sage: d = Diagram([(0,0),(3,0),(6,0)])
             sage: d.nb_cols()
-            7
+            6
 
             sage: d = Diagram([(0,0),(1,0),(2,0),(3,0),(0,1),(2,1)])
             sage: d.nb_cols()
-            4
+            3
 
         """
         

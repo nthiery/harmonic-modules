@@ -20,14 +20,18 @@ def quotient_basis(P, basis, operators):
             sage: P = DiagonalPolynomialRing(QQ, 3, 1, inert=1) 
             sage: W = DerivativeVandermondeSpaceWithInert(QQ, Diagram([(0,0),(1,0),(3,0)]))
             sage: basis = W.basis()
-            sage: operators = [functools.partial(P.symmetric_derivative, d=[d]) for d in range(1, W.degree_vandermonde()+1)]
-            sage: for key,b in quotiented_basis(P, basis, operators).iteritems():
+            sage: operators = {-d:[functools.partial(P.symmetric_derivative, d=[d])] for d in range(1, W.degree_vandermonde()+1)}
+            sage: for key,b in quotient_basis(P, basis, operators).iteritems():
             ....:     print(key)
             ....:     print(b)
-            ((1,), [3]) (x00 + x01 + x02,)
-            ((2,), [2, 1]) (x00^2 - x02^2, -x00*x01 + x01*x02)
-            ((3,), [2, 1]) (x00^3 - x00^2*x01 - 2*x00*x01^2 + x00^2*x02 + 2*x01^2*x02 - x00*x02^2 + x01*x02^2 - x02^3,)
-            ((4,), [1, 1, 1]) (-x00^3*x01 + x00*x01^3 + x00^3*x02 - x01^3*x02 - x00*x02^3 + x01*x02^3,)
+                (2,)
+                (x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2,)
+                (0,)
+                (1,)
+                (3,)
+                (-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2,)
+                (1,)
+                (x00 - x02,)
 
     """
 
