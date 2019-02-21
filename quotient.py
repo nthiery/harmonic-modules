@@ -44,6 +44,7 @@ def quotient_basis(P, basis, operators):
                 quotient[deg] = [q]
             else:
                 quotient[deg] += [q]
+    
     if quotient != {} :
         return Subspace(quotient, {}).basis()
     else :

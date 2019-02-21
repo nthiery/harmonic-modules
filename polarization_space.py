@@ -102,7 +102,6 @@ def polarizationSpace(P, generators, verbose=False, row_symmetry=None, use_commu
                     ).restrict_partition_lengths(r,exact=False)
 
     operators = polarization_operators_by_multidegree(P, side=side, row_symmetry=row_symmetry, min_degree=1 if row_symmetry and row_symmetry!="permutation" else 0)
-    
     if row_symmetry == "euler+intersection":
         operators[P._grading_set.zero()] = [
             functools.partial(lambda v,i: P.polarization(P.polarization(v, i+1, i, 1, antisymmetries=antisymmetries), i, i+1, 1, antisymmetries=antisymmetries), i=i)

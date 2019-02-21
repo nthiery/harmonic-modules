@@ -457,8 +457,8 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
         [1, 1, 1, 1] {(2,): 1}
 
     """
-    if quotient:
-        side = "down" 
+    if quotient and row_symmetry==None:
+        side = None 
     else:
         side = "down"
         
@@ -469,12 +469,13 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
         r = min(Partition(mu).size(), mu[0])-1
     charac = 0
     charac_quotient = 0
-    ss = SymmetricFunctions(QQ).s()
+    s = SymmetricFunctions(QQ).s()
+    m = SymmetricFunctions(QQ).m()
     
     H = DerivativeVandermondeSpaceWithInert(QQ, mu, inert=inert, use_antisymmetry=use_antisymmetry)
     basis = H.basis_by_shape(nu)
-    print "avant polarisation"
-    print basis
+    #print "avant polarisation"
+    #print basis
     
     if basis :
         if use_antisymmetry: 
@@ -487,9 +488,9 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
         S = polarizationSpace(P, generators, verbose=verbose, row_symmetry=row_symmetry, side=side)
         basis_pol = S.basis()
     
-        print nu
+        #print nu
         for key, b in basis_pol.iteritems():
-            print key, b
+            show(key, b)
         print
         
         # appel au calcul du quotient
@@ -504,10 +505,13 @@ def character_by_isotypic_plain(mu, nu, inert=1, use_antisymmetry=False, row_sym
         else:
             for degree, b in basis_pol.iteritems():
                 charac += sum(P.multipower(degree) for p in b)
-            print "avant quotient : ", charac
+            print "avant quotient : "
+            show(charac)
             charac = charac - charac_quotient
-            print "apres quotient : ", charac
-            charac = s(ss.from_polynomial(charac)).restrict_partition_lengths(r,exact=False)
+            print 
+            print "apres quotient : "
+            show(charac)
+            charac = (s.from_polynomial(charac)).restrict_partition_lengths(r,exact=False)
     
     print "charac : ", charac
     print
@@ -525,13 +529,13 @@ def character_quotient(P, basis, degree, row_symmetry=None):
     m = SymmetricFunctions(QQ).m()
     charac = 0
     grading_set = P._grading_set
-    list_degrees = [tuple(k1 if j==i1 else 0 for j in range(P._r)) for k1 in range(1, degree+1) for i1 in range(0,P._r)]
+    list_degrees = [tuple(k1 if j==i1 else 0 for j in range(P._r)) for k1 in range(1, degree+1) for i1 in range(0, P._r)]
     operators = {grading_set(-i for i in d) : [functools.partial(P.symmetric_derivative, d=d, row_symmetry=row_symmetry)] for d in list_degrees}
     qbasis = quotient_basis(P, basis, operators)
     
     print "qbasis calcul quotient"
     for key, b in qbasis.iteritems():
-        print key, b
+        show(key, b)
     print
     
     if qbasis != {} :
@@ -543,7 +547,8 @@ def character_quotient(P, basis, degree, row_symmetry=None):
                 charac += sum(P.multipower(P.multidegree(p)) for p in b)
             #charac = s(s.from_polynomial(charac)).restrict_partition_lengths(P._r,exact=False)
     
-    print "quotient : ", charac
+    print "quotient : "
+    show(charac)
     print 
     return charac
 
