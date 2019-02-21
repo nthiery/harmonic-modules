@@ -357,9 +357,9 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         result = 0
         if not isinstance(d, (tuple, list)):
             d = [d]
-        for i in range(n):
+        for i in range(n): #columns
             interm_result = p
-            for j in range(len(d)):
+            for j in range(len(d)): #rows
                 interm_result = interm_result.derivative(X[j,i],d[j])
             result += interm_result
             
