@@ -78,6 +78,7 @@ def polarizationSpace(P, generators, verbose=False, row_symmetry=None, use_commu
     S = SymmetricFunctions(QQ)
     s = S.s()
     m = S.m()
+    r = P._r
     
     if isinstance(P, DiagonalAntisymmetricPolynomialRing):
         antisymmetries = P._antisymmetries
@@ -102,6 +103,10 @@ def polarizationSpace(P, generators, verbose=False, row_symmetry=None, use_commu
                     ).restrict_partition_lengths(r,exact=False)
 
     operators = polarization_operators_by_multidegree(P, side=side, row_symmetry=row_symmetry, min_degree=1 if row_symmetry and row_symmetry!="permutation" else 0)
+    #ajout operateurs Steenrod
+    for k in range(1, r):
+        operators[P._grading_set((-1 if j==k else 0 for j in range(0,r)))] = [functools.partial(P.steenrod_op, i=k)]
+    
     if row_symmetry == "euler+intersection":
         operators[P._grading_set.zero()] = [
             functools.partial(lambda v,i: P.polarization(P.polarization(v, i+1, i, 1, antisymmetries=antisymmetries), i, i+1, 1, antisymmetries=antisymmetries), i=i)
@@ -141,7 +146,7 @@ def polarizationSpace(P, generators, verbose=False, row_symmetry=None, use_commu
         add_deg = add_degree_symmetric
     else:
         add_deg = add_degree
-
+    
     F = Subspace(generators, operators=operators,
                  add_degrees=add_deg, degree=P.multidegree,
                  hilbert_parent = hilbert_parent,
@@ -213,6 +218,7 @@ def polarization_operators_by_multidegree(P, side=None, row_symmetry=None, use_l
         3*x00*x10^2*x11*x20 + x00*x10^3*x21
     """
     n = P._n
+    n=2
     r = P._r
     grading_set = P._grading_set
     return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):

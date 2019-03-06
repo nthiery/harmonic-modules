@@ -371,8 +371,12 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                 ss = self.row_permutation(s)
                 result = act_on_polynomial(result, ss)
         return result
+        
+    def steenrod_op(self, p, i): 
+        n = self._n
+        X = self.variables()
+        return sum(X[i,j]*p.derivative(X[i,j], 2) for j in range(0, n))
             
-
     @cached_method
     def derivative_input(self, D, j):
         """
