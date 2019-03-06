@@ -130,5 +130,10 @@ def make_deriv_comp_young(x,mu):
 
     """
     def f(p):
-        return apply_young_idempotent(derivative(p,x),mu)
+        return apply_young_idempotent(derivative(p,x), mu)
+    return f
+    
+def make_deriv_comp_young2(X,mu):
+    def f(p):
+        return apply_young_idempotent(sum(X[i]*p.derivative(X[i],2) for i in range(0,len(X))), mu)
     return f
