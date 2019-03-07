@@ -133,17 +133,18 @@ def make_deriv_comp_young(x, mu):
         return apply_young_idempotent(derivative(p,x), mu)
     return f
     
-def make_deriv_comp_young2(X, mu):
+def make_deriv_comp_young2(X, k, mu):
     """
-    Return a function which corresponds to the operator $\sum_i X_i partial_{x_i}]^2$
+    Return a function which corresponds to the operator $\sum_i X_i partial_{x_i}]^k$
     composed with the young idempotent for the partition `mu`.
 
     INPUT:
         - `X` -- a set of variables
         - `mu` -- a partition
+        - `k` -- an integer
 
     EXAMPLES::
     """
     def f(p):
-        return apply_young_idempotent(sum(X[i]*p.derivative(X[i],2) for i in range(0,len(X))), mu)
+        return apply_young_idempotent(sum(X[i]*p.derivative(X[i],k) for i in range(0,len(X))), mu)
     return f
