@@ -104,8 +104,9 @@ def polarizationSpace(P, generators, verbose=False, row_symmetry=None, use_commu
 
     operators = polarization_operators_by_multidegree(P, side=side, row_symmetry=row_symmetry, min_degree=1 if row_symmetry and row_symmetry!="permutation" else 0)
     #ajout operateurs Steenrod
-    for k in range(1, r):
-        operators[P._grading_set((-1 if j==k else 0 for j in range(0,r)))] = [functools.partial(P.steenrod_op, i=k)]
+    #for i in range(1, r):
+    #    for d in [2,3]:
+    #        operators[P._grading_set((-d+1 if j==i else 0 for j in range(0,r)))] = [functools.partial(P.steenrod_op, i=i, k=d)]
     
     if row_symmetry == "euler+intersection":
         operators[P._grading_set.zero()] = [

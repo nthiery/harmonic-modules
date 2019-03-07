@@ -426,8 +426,9 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         dim = self.degree_vandermonde()
         operators = {}
         for nu in Partitions(n):
-            operators[(D((-1,)),nu)] = [make_deriv_comp_young(X[0][i],nu) for i in range(0,n)]
-            operators[(D((-1,)),nu)] += [make_deriv_comp_young2(X[0],nu)]
+            operators[(D((-1,)),nu)] = [make_deriv_comp_young(X[0][i], nu) for i in range(0,n)]
+            operators[(D((-1,)),nu)] += [make_deriv_comp_young2(X[0], 2, nu)]
+            operators[(D((-2,)),nu)] = [make_deriv_comp_young2(X[0], 3, nu)]
         generators={(D((dim,)),Partition([1 for i in range(n)])):[Delta]}
         F = Subspace(generators=generators, operators=operators, add_degrees=add_degree_isotyp, verbose=verbose)
         basis = F.basis()
