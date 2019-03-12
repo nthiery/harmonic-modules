@@ -215,7 +215,6 @@ def polarization_operators_by_multidegree(P, side=None, row_symmetry=None, use_l
         3*x00*x10^2*x11*x20 + x00*x10^3*x21
     """
     n = P._n
-    n=2
     r = P._r
     grading_set = P._grading_set
     return {grading_set([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
