@@ -49,7 +49,7 @@ class Diagram():
             sage: d.size()
             6
         """
-        return len(self._cells)
+        return Integer(len(self._cells))
         
     def cells(self): 
         """
