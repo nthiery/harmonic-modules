@@ -320,6 +320,35 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                     result = act_on_polynomial(result, ss)
             return result
             
+    def higher_polarization(self, p, i1, i2, d1, d2, row_symmetry=None):
+        """
+        Return the polarization `P_{d1,d2,i_1,i_2}. p` of `p`.
+
+        Recall that the polarization operator is defined by
+        .. MATH:: P_{d1,d2,i_1,i_2} := \sum_j x_{i_2,j}^d1 \partial_{i_1,j}^d1
+
+        EXAMPLES::
+
+        """
+        n = self._n
+        X = self.variables()
+        if i1>=self._r or i2 >=self._r:
+            print "Row number out of range."
+            return None 
+        elif d2<1 :
+            print "Degree for second variable should be at least 1."
+        else:
+            result = self.sum((X[i2,j]**d2)*p.derivative(X[i1,j],d1)
+                              for j in range(n))
+            if row_symmetry=="permutation" and result:
+                d = self.multidegree(result)
+                d = tuple(d) + tuple(0 for i in range(self._inert))
+                if list(d) != sorted(d, reverse=True):
+                    s = reverse_sorting_permutation(d)
+                    ss = self.row_permutation(s)
+                    result = act_on_polynomial(result, ss)
+            return result
+            
     def symmetric_derivative(self, p, d, row_symmetry=None):
         """
         Return the symmetric derivative of p w.r.t the degrees d.
