@@ -9,6 +9,7 @@ from sage.structure.parent import Parent
 from sage.combinat.partition import Partition, Partitions
 from sage.rings.semirings.non_negative_integer_semiring import NN
 from sage.rings.rational_field import QQ
+from sage.combinat.free_module import CombinatorialFreeModule
 
 
 from matrix_of_vectors import *
