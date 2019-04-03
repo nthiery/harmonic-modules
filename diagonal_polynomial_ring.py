@@ -405,6 +405,12 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         n = self._n
         X = self.variables()
         return sum(X[i,j]*p.derivative(X[i,j], k) for j in range(0, n))
+        
+    def diagonal_steenrod(self, p, i1, i2, d1, d2):
+        n = self._n
+        x = self.variables()[i1]
+        y = self.variables()[i2]
+        return sum(x[i]*y[i]*derivative(derivative(p, x[i], d1+1), y[i], d2+1) for i in range(0, n))
             
     @cached_method
     def derivative_input(self, D, j):
