@@ -328,6 +328,17 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         .. MATH:: P_{d1,d2,i_1,i_2} := \sum_j x_{i_2,j}^d1 \partial_{i_1,j}^d1
 
         EXAMPLES::
+            sage: P = DiagonalPolynomialRing(QQ, 3, 4)
+            sage: X = P.algebra_generators()
+            sage: p = X[0,0]*X[1,1]^2 - X[0,1]^2*X[1,0]
+            sage: p
+            -x01^2*x10 + x00*x11^2
+            sage: P.higher_polarization(p, 0, 1, 1, 1)
+            -2*x01*x10*x11 + x10*x11^2
+            sage: P.higher_polarization(p, 0, 1, 1, 2)
+            -2*x01*x10*x11^2 + x10^2*x11^2
+            sage: P.higher_polarization(p, 0, 1, 2, 1)
+            -2*x10*x11
 
         """
         n = self._n
@@ -401,12 +412,56 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                 result = act_on_polynomial(result, ss)
         return result
         
-    def steenrod_op(self, p, i, k): 
+    def steenrod_op(self, p, i, k):
+        """
+        Apply the Steenrod operator of degree `k` for the `i`th set of variables
+        to `p`. 
+        The Steenrod operator for a set of variables $x_1, x_2, dots, x_n$ is 
+        given by 
+        .. MATh:: \sum_i x_i \partial_{x_i}^{k+1}
+        
+        EXEMPLES::
+            sage: P = DiagonalPolynomialRing(QQ, 3, 4)
+            sage: X = P.algebra_generators()
+            sage: p = X[0,0]*X[0,1] - X[0,1]*X[0,2]
+            sage: p
+            x00*x01 - x01*x02
+            sage: P.steenrod_op(p, 0, 1)
+            2*x00*x01 - 2*x01*x02
+            sage: P.steenrod_op(p, 0, 2)
+            0
+            sage: P.steenrod_op(p, 1, 1)
+            0
+                        
+        """
         n = self._n
         X = self.variables()
         return sum(X[i,j]*p.derivative(X[i,j], k) for j in range(0, n))
         
     def diagonal_steenrod(self, p, i1, i2, d1, d2):
+        """
+        Apply the diagonal Steenrod operator of degrees `d_1` in the `i_1` set of variables 
+        and `d_2` in the `i_2` set of variables to `p`. 
+        The diagonal Steenrod operator for two sets of variables $x_1, x_2, dots, x_n$ 
+        and $y_1, y_2, \dots, y_n$ is given by 
+        .. MATh:: \sum_i x_i y_i \partial_{x_i}^{i_1+1} \partial_{y_i}^{2_1+1}
+        
+        EXEMPLES::
+            sage: P = DiagonalPolynomialRing(QQ, 3, 4)
+            sage: X = P.algebra_generators()
+            sage: p = X[0,0]^2*X[1,0]^3 + X[0,1]^3*X[1,1]^2
+            sage: p
+            x00^2*x10^3 + x01^3*x11^2
+            sage: P.diagonal_steenrod(p, 0, 1, 0, 1)
+            12*x00^2*x10^2 + 6*x01^3*x11
+            sage: P.diagonal_steenrod(p, 0, 1, 1, 1)
+            12*x00*x10^2 + 12*x01^2*x11
+            sage: P.diagonal_steenrod(p, 0, 1, 2, 1)
+            12*x01*x11
+            sage: P.diagonal_steenrod(p, 0, 1, 2, 3)
+            0
+
+        """
         n = self._n
         x = self.variables()[i1]
         y = self.variables()[i2]
