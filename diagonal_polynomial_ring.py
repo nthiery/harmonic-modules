@@ -145,7 +145,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
     def inert_variables(self):
         """
         Return only the inert variables. 
-        
+        git trac config --user USERNAME --pass 'PASSWORD'
         EXAMPLES::
             sage: DP = DiagonalPolynomialRing(QQ, 3, 3, inert=1)
             sage: DP.inert_variables()
@@ -839,7 +839,7 @@ def e_polarization_degrees(D1, D2):
 
 ##############################################################################
 # Polynomial ring with diagonal action with antisymmetries
-##############################################################################
+##############################################################################git trac config --user USERNAME --pass 'PASSWORD'
 
 class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
     """

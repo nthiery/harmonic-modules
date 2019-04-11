@@ -338,7 +338,7 @@ class DerivativeVandermondeSpaceWithInert(UniqueRepresentation):
         """
         Let `mu` be a diagram of $n$ cells and $x = (x_1, x_2, \dots, x_n)$ and
         $\theta = (\theta_1, \theta_2, \dots, \theta_n)$ two sets of n variables.
-        Then $\Delta$ is the determinant of the matrix $(x_i^a\theta_i^b)$
+        Then it returns the determinant of the matrix $(x_i^a\theta_i^b)$
         for $1 \leq i \leq n$ and $(a,b) the cells of `mu`.
 
         INPUT: A partition `mu`

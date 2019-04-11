@@ -1,12 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from diagonal_polynomial_ring import*
+from subspace import*
+from young_idempotent import*
+from add_degree import*
+from diagram import*
+
+SymmetricFunctions(QQ).inject_shorthands(verbose=False)
+
 
 ##############################################################################
 # Vandermonde like determinant
 ##############################################################################
 
 def vandermonde(gamma):
+    """
+    Let `gamma` be a diagram of $n$ cells and $x = (x_1, x_2, \dots, x_n)$ and
+    $\theta = (\theta_1, \theta_2, \dots, \theta_n)$ two sets of n variables.
+    Then it returns the determinant of the matrix $(x_i^a\theta_i^b)$
+    for $1 \leq i \leq n$ and $(a,b) the cells of `mu`.
+
+    INPUT: A Partition or a Diagram `gamma`
+
+    EXAMPLES::
+        sage: gamma = Diagram([(0,0),(1,0),(3,0)])
+        sage: vandermonde(gamma)
+        -x00^3*x01 + x00*x01^3 + x00^3*x02 - x01^3*x02 - x00*x02^3 + x01*x02^3
+        sage: vandermonde(Partition([2,1]))
+        -x01*theta00 + x02*theta00 + x00*theta01 - x02*theta01 - x00*theta02 + x01*theta02
+    """
     n = gamma.size()
     P = DiagonalPolynomialRing(QQ, n, 1, inert=1)
     X = P.variables()
@@ -15,6 +38,19 @@ def vandermonde(gamma):
                    for x,theta in zip(X[0],Theta[0])]).determinant()
 
 def degree_vandermonde(gamma):
+    """
+    Returns the degree in $x$ of the vandermonde determinant computer
+    from `gamma`. 
+
+    INPUT: A Partition or a Diagram `gamma`
+
+    EXAMPLES::
+        sage: gamma = Diagram([(0,0),(1,0),(3,0)])
+        sage: degree_vandermonde(gamma)
+        4
+        sage: degree_vandermonde(Partition([2,1]))
+        1
+    """
     return sum([i[1] for i in gamma.cells()])
     
 
@@ -226,7 +262,7 @@ def character(S, n, r, left_basis=s, right_basis=s, row_symmetry=None):
     return charac
     
     
- def character_quotient(M, N, n, r, left_basis=s, right_basis=s):
+def character_quotient(M, N, n, r, left_basis=s, right_basis=s):
     b_tot = M.basis()
     b_ideal = N.basis()
     charac = 0
