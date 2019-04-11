@@ -2,17 +2,12 @@
 # -*- coding: utf-8 -*-
 
 from sage.combinat.composition import Composition
+from sage.rings.integer import Integer
 
-## Pas encore utilisé : doit être corrigé d'abord
-
-
-#######################
-# Diagrams
-#######################
 
 class Diagram():
     
-    """
+    r"""
     A list of cells in the grid $\mathbb{N} \times \mathbb{N}$ : 
     $[(a_1, b_1), (a_2, b_2), ..., (a_n, b_n)]$.
     
@@ -40,7 +35,9 @@ class Diagram():
         """
         The size of the diagram, which is the number of cells. 
         
-        EXAMPLES ::
+        OUTPUT: The number of cells of the diagram.
+        
+        EXAMPLES:
             sage: d = Diagram([(0,0),(3,0),(6,0)])
             sage: d.size()
             3
@@ -53,7 +50,9 @@ class Diagram():
         
     def cells(self): 
         """
-        Gives the list of the matrix coordinates of the cells of the diagram 
+        Gives the list of the matrix coordinates of the cells of the diagram.
+        
+        OUTPUT: The list of the diagram's cells.
         
         EXAMPLES ::
             sage: d = Diagram([(0,0),(3,0),(6,0)])
@@ -69,8 +68,11 @@ class Diagram():
         
     def nb_cols(self):
         """
-        Gives the number of columns of the diagram including the empty ones. 
+        Gives the number of columns of the diagram including the empty ones
+        that lie between unempty ones. 
         The number of columns thus corresponds to the greatest $a_i$.
+        
+        OUTPUT: The number of columns of the diagram. 
 
         EXAMPLES ::
             sage: d = Diagram([(0,0),(3,0),(6,0)])
@@ -84,3 +86,58 @@ class Diagram():
         """
         
         return max([c[1] for c in self.cells()])
+        
+    def print_diagram(self):
+        """
+        Print the diagram. 
+        """
+        cells = self.cells()
+        max_a = max(a for a,b in cells)
+        max_b = max(b for a,b in cells)
+        diag_string = []
+        k = 0
+        for a in range(max_a, -2, -1):
+            string = ''
+            for b in range(max_b+1):
+                if a==-1 and ((0,b) in cells):
+                    if (0,b+1) in cells :
+                        string += '|_'
+                    else:
+                        string += '|_|'
+                elif a==max_a:
+                    if ((a,b) in cells):
+                        string += ' _'
+                    else:
+                        string += '  '
+                elif ((a,b) in cells):
+                    if b==0 or (a+1,b-1) not in cells:
+                        if (a+1,b) in cells:
+                            if (a+1, b+1) in cells:
+                                string += '|_'
+                            else:
+                                string += '|_|'
+                        else:
+                            string += ' _'
+                    else:
+                        if (a+1,b) in cells:    
+                            string += '|_|'
+                        elif (a+1,b+1) in cells:
+                            string += '_'
+                        else :
+                            string += '_ '
+                else:
+                    if b==0 or (a+1,b-1) not in cells:
+                        if (a+1,b) in cells:
+                            if (a+1, b+1) not in cells:
+                                string += '|_|'
+                            else:
+                                string += '|_'
+                        else:
+                            string += '  '
+                    else:
+                        if (a+1,b) in cells:
+                            string += '|_|' 
+                        else:
+                            string += ' '
+            print string
+
