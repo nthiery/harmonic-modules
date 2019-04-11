@@ -90,6 +90,51 @@ class Diagram():
     def print_diagram(self):
         """
         Print the diagram. 
+        
+        EXAMPLES ::
+            sage: Diagram([(0,0),(1,1),(2,2)]).print_diagram()
+                 _
+               _|_|
+             _|_| 
+            |_|   
+            sage: Diagram([(0,0), (1,0), (2,0), (0,1), (2,1)]).print_diagram()
+             _   _
+            |_|_|_|
+            |_|_|_|
+            sage: Diagram([(0,2),(1,1),(2,0)]).print_diagram()
+             _
+            |_|_   
+              |_|_ 
+                |_|
+            sage: Diagram([(0,0),(1,1)]).print_diagram() 
+               _
+             _|_|
+            |_| 
+            sage: Diagram([(0,1),(1,0),(1,1)]).print_diagram()  
+             _ _
+            |_|_|
+              |_|
+            sage: Diagram([(0,1),(2,2)]).print_diagram()
+                 _
+             _  |_|
+            |_|   
+                  
+            sage: Diagram([(0,1),(2,3)]).print_diagram()
+                 _
+                |_|
+             _    
+            |_|         
+            sage: Diagram([(0,1),(3,2),(3,3)]).print_diagram()
+                   _
+                  |_|
+             _    |_|
+            |_|     
+                    
+            sage: Diagram([(0,1),(3,2),(2,3)]).print_diagram()
+                 _  
+                |_|_ 
+             _    |_|
+            |_|  
         """
         cells = self.cells()
         max_a = max(a for a,b in cells)
