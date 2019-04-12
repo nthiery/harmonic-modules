@@ -178,7 +178,12 @@ def higher_polarization_operators(P, side=None, row_symmetry=None, max_deg=0):
 
 def symmetric_derivatives(P, list_deg, row_symmetry=None):
     """
+    Return the list of all symmetric derivative of degree contained
+    in `list_degree` in the variables of `P`. 
     
+    The symmetric derivatives are given by taking the power sum symmetric
+    functions and replacing the variables by the corresponding partial
+    derivative. 
     """
     D = P._grading_set
     return {D(-i for i in d) : [functools.partial(P.symmetric_derivative, d=d, row_symmetry=row_symmetry)] 
