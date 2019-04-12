@@ -21,7 +21,8 @@ def vandermonde(gamma):
     Then it returns the determinant of the matrix $(x_i^a\theta_i^b)$
     for $1 \leq i \leq n$ and $(a,b) the cells of `mu`.
 
-    INPUT: A Partition or a Diagram `gamma`
+    INPUT: 
+    - ``gamma`` -- A Partition or a Diagram
 
     EXAMPLES::
         sage: gamma = Diagram([(0,0),(1,0),(3,0)])
@@ -42,7 +43,8 @@ def degree_vandermonde(gamma):
     Returns the degree in $x$ of the vandermonde determinant computer
     from `gamma`. 
 
-    INPUT: A Partition or a Diagram `gamma`
+    INPUT: 
+    - ``gamma`` -- A Partition or a Diagram
 
     EXAMPLES::
         sage: gamma = Diagram([(0,0),(1,0),(3,0)])
@@ -59,11 +61,21 @@ def degree_vandermonde(gamma):
 ##############################################################################
 
 def deriv(x, k=1):
+    """
+    Return a function that computes the k-th derivative in variable `x`. 
+    """
     def f(p):
         return derivative(p, x, k)
     return f
 
 def partial_derivatives(P):
+    """
+    Return a list of all the partial derivatives functions (of degree 1)
+    in the variable of P.
+    
+    INPUT: 
+    - ``P`` -- a polynomial ring.
+    """
     n = P._n
     r = P._r
     D = P._grading_set
@@ -74,6 +86,16 @@ def partial_derivatives(P):
     return op
 
 def steenrod_operators(P, degree=1):
+    """
+    Return a list of the steenrod operators of a given degree in the variables
+    of the polynomial ring P. 
+    
+    The Steenrod operator of degree `k` in the `x` variables is defined as follow. 
+    MATH..:: \sum_i x_i \partial_{x_i}^{k+1}
+    
+    INPUT: 
+    - ``P`` -- a polynomial ring and degree an interger. 
+    """
     r = P._r
     D = P._grading_set
     op = {}
@@ -82,6 +104,13 @@ def steenrod_operators(P, degree=1):
     return op
 
 def diagonal_steenrod_operators(P, list_deg):
+    """
+    Return the diagonal Steenrod operators
+    
+    INPUT:
+    - ``P`` -- a polynimial ring in at least two sets of variables
+    - ``list_deg`` -- a list of the degree for the operators
+    """
     r = P._r
     D = P._grading_set
     op = {}
@@ -91,6 +120,22 @@ def diagonal_steenrod_operators(P, list_deg):
     return op
 
 def polarization_operators(P, side=None, row_symmetry=None, max_deg=0):
+    """
+    Return the list of all the polarisation operators in the variables of P
+    as functions. 
+    
+    The polarisation operators in the variables `x` and `y` are given by 
+    MATH..:: \sum_i y_i partial_{x_i}^k 
+    If the parameter side is equal to 'None' only the operators going from a set 
+    of variables `x_i` to a set `x_j` with `i leq j` are created. A maximum degree
+    can be specify. The degree of an operator is defined to be `k-1`. 
+    
+    INPUT : 
+    - ``P`` -- a polynomial ring in at least 2 sets of variables
+    - ``side`` -- must be set at `down` if only upper operators are wanted
+    - ``row_symmetry`` -- only implemented case `permutation`
+    - ``max_degree`` -- maximum degree of the operators
+    """
     n = P._n
     r = P._r
     D = P._grading_set
@@ -105,6 +150,18 @@ def polarization_operators(P, side=None, row_symmetry=None, max_deg=0):
            }
 
 def higher_polarization_operators(P, side=None, row_symmetry=None, max_deg=0):
+    """
+    Return the higher polarization operators in the sets of variables of `P`. 
+    
+    Those operators are given by
+    MATH..:: \sum_i x_i y_i \dots \partial_{x_i}^{k_1} \partial_{y_i}^{k_2} \dots
+    
+    INPUT:
+    - ``P`` - a polynomial ring in at least two sets of variables
+    - ``side`` -- must be set at `down` if only upper operators are wanted
+    - ``row_symmetry`` -- only implemented case `permutation`
+    - ``max_degree`` -- maximum degree of the operators
+    """
     n = P._n
     r = P._r
     D = P._grading_set
@@ -120,6 +177,9 @@ def higher_polarization_operators(P, side=None, row_symmetry=None, max_deg=0):
            }
 
 def symmetric_derivatives(P, list_deg, row_symmetry=None):
+    """
+    
+    """
     D = P._grading_set
     return {D(-i for i in d) : [functools.partial(P.symmetric_derivative, d=d, row_symmetry=row_symmetry)] 
             for d in list_deg}
