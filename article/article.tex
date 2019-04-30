@@ -23,7 +23,7 @@
 
 
 %Notes
-\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\usepackage[colorinlistoftodos,prependcaption,textsize=small,textwidth=2.5cm]{todonotes}
 \newcommand{\pauline}[1]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue]{#1}}
 \newcommand{\nicolas}[1]{\todo[linecolor=green,backgroundcolor=green!25,bordercolor=green]{#1}}
 
@@ -76,22 +76,50 @@
 
 	
 	\section{Introduction}
-	This package was developped at the occasion of a collaboration with François Bergeron to study the character of the space $H_{k,n}$ of diagonal harmonic polynomials on $k$ sets of $n$ variables, as a graded bi $GL_k$-$S_n$  module. The main achievement is a calculation of this character for $n=6$ and $r=5$ (and therefore any $r$) in 45 minutes (and ~15Gb), which led to conjectures on its general value.
+	This package was developped at the occasion of a collaboration with François Bergeron to study the character of the space $\harmonics_{k,n}$ of diagonal harmonic polynomials on $k$ sets of $n$ variables, as a graded bi $\GLr$-$\Sn$  module. The main achievement is a calculation of this character for $n=6$ and $r=5$ (and therefore any $r$) in 45 minutes (and ~15Gb), which led to conjectures on its general value.
 	
-	This is a potentially huge calculation ($H_{5,6}$ is of dimension $5.8 \cdot10^5$), involving polynomials of degree up to $15$ in $30$ variables with thousands of terms. So we had to combine several strategies that each reduced the time and/or memory complexity by one or two orders of magnitude. As much as possible, the code was written to be modular and reusable.
+	This is a potentially huge calculation ($\harmonics_{5,6}$ is of dimension $5.8 \cdot10^5$), involving polynomials of degree up to $15$ in $30$ variables with thousands of terms. So we had to combine several strategies that each reduced the time and/or memory complexity by one or two orders of magnitude. As much as possible, the code was written to be modular and reusable.
 	
-	\section{Contexte}
-	Note: throughout this notebook, we implicitly use the Frobenius map, and identify $S_n$ and $GL_k$ characters with their associated symmetric functions.
+	\section{Context}
+		
+	Consider the polynomial ring $P=\QQ[X]$ with $k$ sets of $n$ variables. To fix conventions, we think of $X$ as a matrix of variables: \pauline{small $x$ for variables, capital $X$ for sets of variables? }
+	$$(X_{i,j})_{0\leq i<k \atop 0\leq j<n}$$
+	and we denote by $X_i$ the i-th set of variable. 
 	
-	Consider the polynomial ring $P=\QQ[X]$ with $k$ sets of $n$ variables. To fix conventions, we think of $X$ as a matrix of variables:
-	$$(X_{i,j})_{0\leq i<k, 0\leq j<n}$$
+	The polynomial ring $P$ is endowed with an action of the symmetric group $\Sn$ by diagonal permutation of the columns, and $\GLr$ by diagonal action on the rows. The invariant ring $P^{\Sn}$ is also known as the ring of multisymmetric functions. The co-invariant ring $P_{\Sn}$ is the quotient of $R$ by the ideal $\langle {P^{\Sn}}^+ \rangle$ \pauline{+ = without constant terms ?}. It inherits from $P$ a structure of graded $\GLr$-$\Sn$ bi-module.
 	
-	The polynomial ring $P$ is endowed with an action of the symmetric group $S_n$ by diagonal permutation of the columns, and $GL_k$ by diagonal action on the columns. The invariant ring $P^{S_n}$ is also known as the ring of multisymmetric functions. The coinvariant ring $P_{S_n}$ is the quotient of $R$ by the ideal $\langle {P^{S_n}}^+ \rangle$. It inherits from $P$ a structure of graded $GL_k$-$S_n$ bimodule.
+	The grading can be refined into a multigrading by rows. The multigrading is preserved by the action of $\Sn$. The multigrading is not preserved by the action of $\GLr$, but instead carries exactly the information about the $\GLr$ character. It's thus equivalent to consider the $\GLr$-$\Sn$ bicharacter or the $\Sn$ multigraded character of $P_{\Sn}$.
 	
-	The grading can be refined into a multigrading by rows. The multigrading is preserved by the action of $S_n$. The multigrading is not preserved by the action of $GL_k$, but instead carries exactly the information about the $GL_r$ character. It's thus equivalent to consider the $GL_r$-$S_n$ bicharacter or the $S_n$ multigraded character of $P_{S_n}$.
+	When $k=1$, the action of $GL_1$ is trivial; $P_{\Sn}$ is of dimension $n!$ and carries the usual graded representation of $\Sn$. Its character is given by a Hall-Littlewood polynomial.
+	When $k=2$, $P_{\Sn}$ is of dimension $(n+1)^{n-1}$ ($=16807$ for $n=6$); as a consequence of Haiman's proof of the $n!$-conjecture, the bigraded character is a Macdonald polynomial.
 	
-	When $k=1$, the action of $GL_1$ is trivial; $P_{S_n}$ is of dimension $n!$ and carries the usual graded representation of $S_n$. Its character is given by a Hall-Littlewood polynomial.
-	When $k=2$, $P_{S_n}$ is of dimension $(n+1)^{n-1}$ ($=16807$ for $n=6$); as a consequence of Haiman's proof of the $n!$-conjecture, the bigraded character is a Macdonald polynomial.
+	Throughout this notebook, we implicitly use the Frobenius map, and identify $\Sn$ and $\GLr$ characters with their associated symmetric functions. \\
+	
+	We denote the partial derivative the following way $\partial^k_x := \frac{\partial^k}{\partial x^k}$ for any variable $x$ in $X$.
+	
+	When $X$ contains only on set of variable ($r=1$), we define the \emph{harmonic polynomials} as follow.
+	
+	\begin{definition}
+		Let $f \in \QQ[X]$, $f$ is \emph{harmonic} if and only if
+		$$\partial^k_{x_1} f + \partial^k_{x_2} f + \dots + \partial^k_{x_n} f = 0 $$
+		for all $k \geq 0$, $k \in \NN$.
+	\end{definition}
+
+	The space of harmonic polynomials in $n$ variables, denoted $\harmonics_{n}$ is the joint kernel of the differential operators $D_k := \partial_{x_1}^k + \cdots + \partial_{x_n}^k$. It is also a realization of the coinvariants of the symmetric group: $\QQ[X]\, /\, \langle Sym(X)^+ \rangle$ and a graded regular representation of $\Sn$. 
+	
+	As an example, $\harmonics_2 = \langle 1, x_1-x_2 \rangle_\QQ$. 
+	
+	Note that $\Delta:=$ $\prod_{i<j}(x_i-x_j)$ is harmonic and that if $f$ is harmonic then $\partial_i f$ is also harmonic. \\
+	
+	Let now go back to $X$ containing an arbitrary number $r$ of sets of variables.
+	We define the \emph{differential operators} $(D_\alpha)_{\alpha\in \NN^r}$:
+	$$D_{(\alpha_1, \dots, \alpha_r)} := \partial_{x_{11}}^{\alpha_1}\partial_{x_{r1}}^{\alpha_r} + \dots + \partial_{x_{1n}}^{\alpha_1}\partial_{x_{rn}}^{\alpha_r}$$
+	
+	For example, $r=3$ and we denote $x, y$ and $z$ the three sets of variables of $X$, then $D_{(3,0,4)} := \partial_{x_1}^3\partial_{z_1}^4 + \dots + \partial_{x_n}^3\partial_{z_n}^4$. 
+	
+	The space of the diagonal harmonic polynomials $\harmonics_{n,r}$ is the joint kernel of the $(D_\alpha)_\alpha$. And $\harmonics_{n,r}$ contains $\harmonics_{n,1} = \harmonics_{n}$. 
+	
+	%define polarization operators
 	
 	\section{Strategies}
 	
@@ -100,7 +128,6 @@
 	We first need to compute in a quotient by an ideal.
 	A standard approach would be to compute a Gröbner basis of this ideal.
 	We haven't actually tried it, but given the number of variables and dimension of the quotient, we expect this calculation to be intractable.
-	Beside 
 	
 	So we took the classical route of realizing the coinvariant ring as the space $\def\harmonics{\mathcal{H}}\harmonics_{k,n}$ of *diagonal harmonic polynomials*.
 	This is the space of those polynomials that satisfy the equations given by the multisymmetric functions seen as differential operators.
@@ -133,7 +160,7 @@
 	
 	This utility should already have been in Sage, and will end up there.
 	
-	Once a basis of $\harmonics_{k,n}$ is constructed, there still remains to recover its bicharacter. For $GL_k$ that's given by the multigrading. For $S_n$ some additional work has to be done (e.g. computing the traces of the action of permutations of all cycle types).
+	Once a basis of $\harmonics_{k,n}$ is constructed, there still remains to recover its bicharacter. For $\GLr$ that's given by the multigrading. For $\Sn$ some additional work has to be done (e.g. computing the traces of the action of permutations of all cycle types).
 	
 	At this stage, we have an algorithm, but are still doing linear algebra in a huge space (cost $N^2 M$, where $N$ is the dimension of the result and $M$ the dimension of the ambient space).
 	
@@ -143,12 +170,12 @@
 	
 	Advantages:
 	- Writing $N=:\sum N_D$, The complexity becomes $(\sum N_D^2) M$ instead of $(\sum N_D)^2M_D$ (in fact better.
-	- The multidegrees, and therefore $GL_k$ character, can be directly read off the result.
+	- The multidegrees, and therefore $\GLr$ character, can be directly read off the result.
 	
 	\subsection{Exploiting representations of the symmetric group}
 	
-	The polarization operators commute with the action of $S_n$. Therefore,
-	we can compute independently each $S_n$ isotypic component of $\harmonics_{k,n}$ by starting from a basis of harmonic polynomials that itself is adapted to its decomposition into isotypic components:
+	The polarization operators commute with the action of $\Sn$. Therefore,
+	we can compute independently each $\Sn$ isotypic component of $\harmonics_{k,n}$ by starting from a basis of harmonic polynomials that itself is adapted to its decomposition into isotypic components:
 	$$\harmonics_{n}=:\bigoplus_\lambda \harmonics^\lambda\,.$$
 	
 	In fact we can do better.
@@ -160,7 +187,7 @@
 	- $P$ specifies the location within that copy of $V_\lambda$
 	
 	
-	Remark: For a fixed tableau $P$, denote by $\harmonics_k^P$ the space spanned by the higher Specht polynomials $(G_{P,Q})_Q$ under polarization. It's exactly the image of $\harmonics$ under the Young idempotent associated to $P$. For a given shape $\lambda$, the $\harmonics_k^P$ are all conjugate under $S_n$, and their direct sum is the isotypic component $\harmonics_k^\lambda$.
+	Remark: For a fixed tableau $P$, denote by $\harmonics_k^P$ the space spanned by the higher Specht polynomials $(G_{P,Q})_Q$ under polarization. It's exactly the image of $\harmonics$ under the Young idempotent associated to $P$. For a given shape $\lambda$, the $\harmonics_k^P$ are all conjugate under $\Sn$, and their direct sum is the isotypic component $\harmonics_k^\lambda$.
 	
 	Conclusion: It is sufficient to compute $\harmonics_k^P$ for one tableau of each shape $\lambda$. This reduces the complexity by the square of the number of standard tableaux of shape $\lambda$
 	
@@ -202,6 +229,8 @@
 	The polarization operators skew commute. Therefore it would be in principle sufficient to apply them in some "decreasing order". This sounds promising given that, at this stage about 90\% of the polynomials that are produced are redundant and reduced to zero by the linear algebra.
 	
 	However we have not yet been able put to use that optimization together with the other $sl_k$ optimizations, because the tweaked polarization operators don't skew commute consistently.
+	
+	\section{Applications}
 	
 \bibliographystyle{plain}
 \nocite{*}
