@@ -839,7 +839,7 @@ def e_polarization_degrees(D1, D2):
 
 ##############################################################################
 # Polynomial ring with diagonal action with antisymmetries
-##############################################################################git trac config --user USERNAME --pass 'PASSWORD'
+##############################################################################
 
 class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
     """
