@@ -2,7 +2,6 @@
 \usepackage[T1]{fontenc}
 \usepackage[tc]{titlepic}
 \usepackage[utf8]{inputenc}
-\usepackage{babel}
 \usepackage{lmodern}
 \usepackage{amsfonts,amsmath,amssymb}
 \usepackage{amsthm}
@@ -14,11 +13,12 @@
 \usepackage{url}
 \usepackage{enumitem}
 \usepackage[mathcal]{euscript}
-\usepackage{tikz,tkz-tab,genyoungtabtikz}
+\usepackage{tikz,tkz-tab}
+\usepackage{genyoungtabtikz}
 \usepackage{bbm, bm}
 \usepackage{mathrsfs}
 \usepackage{xargs}
-\usepackage{sagetex}
+%\usepackage{sagetex}
 \usepackage{hyperref} 
 
 
@@ -37,6 +37,15 @@
 
 \DeclareMathOperator{\Sn}{\mathbb{S}_n}
 \DeclareMathOperator{\GLr}{GL_r}
+\DeclareMathOperator{\harmonics}{\mathcal{H}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{conjecture}{Conjecture}
+\newtheorem{prop}{Proposition}
+\newtheorem{lemme}{Lemma}
+\newtheorem{coroll}{Corollary}
+\newtheorem{definition}{Definition}
+
 
 %Tableaux
 \newcommand{\diagramme}{\YFrench \Yboxdim{10pt}\yng}
@@ -63,10 +72,136 @@
 		... 
 	\end{abstract}
 	
+	\tableofcontents
+
+	
 	\section{Introduction}
+	This package was developped at the occasion of a collaboration with François Bergeron to study the character of the space $H_{k,n}$ of diagonal harmonic polynomials on $k$ sets of $n$ variables, as a graded bi $GL_k$-$S_n$  module. The main achievement is a calculation of this character for $n=6$ and $r=5$ (and therefore any $r$) in 45 minutes (and ~15Gb), which led to conjectures on its general value.
+	
+	This is a potentially huge calculation ($H_{5,6}$ is of dimension $5.8 \cdot10^5$), involving polynomials of degree up to $15$ in $30$ variables with thousands of terms. So we had to combine several strategies that each reduced the time and/or memory complexity by one or two orders of magnitude. As much as possible, the code was written to be modular and reusable.
+	
+	\section{Contexte}
+	Note: throughout this notebook, we implicitly use the Frobenius map, and identify $S_n$ and $GL_k$ characters with their associated symmetric functions.
+	
+	Consider the polynomial ring $P=\QQ[X]$ with $k$ sets of $n$ variables. To fix conventions, we think of $X$ as a matrix of variables:
+	$$(X_{i,j})_{0\leq i<k, 0\leq j<n}$$
+	
+	The polynomial ring $P$ is endowed with an action of the symmetric group $S_n$ by diagonal permutation of the columns, and $GL_k$ by diagonal action on the columns. The invariant ring $P^{S_n}$ is also known as the ring of multisymmetric functions. The coinvariant ring $P_{S_n}$ is the quotient of $R$ by the ideal $\langle {P^{S_n}}^+ \rangle$. It inherits from $P$ a structure of graded $GL_k$-$S_n$ bimodule.
+	
+	The grading can be refined into a multigrading by rows. The multigrading is preserved by the action of $S_n$. The multigrading is not preserved by the action of $GL_k$, but instead carries exactly the information about the $GL_r$ character. It's thus equivalent to consider the $GL_r$-$S_n$ bicharacter or the $S_n$ multigraded character of $P_{S_n}$.
+	
+	When $k=1$, the action of $GL_1$ is trivial; $P_{S_n}$ is of dimension $n!$ and carries the usual graded representation of $S_n$. Its character is given by a Hall-Littlewood polynomial.
+	When $k=2$, $P_{S_n}$ is of dimension $(n+1)^{n-1}$ ($=16807$ for $n=6$); as a consequence of Haiman's proof of the $n!$-conjecture, the bigraded character is a Macdonald polynomial.
+	
+	\section{Strategies}
+	
+	\subsection{Computing in the space of harmonic polynomials}
+	
+	We first need to compute in a quotient by an ideal.
+	A standard approach would be to compute a Gröbner basis of this ideal.
+	We haven't actually tried it, but given the number of variables and dimension of the quotient, we expect this calculation to be intractable.
+	Beside 
+	
+	So we took the classical route of realizing the coinvariant ring as the space $\def\harmonics{\mathcal{H}}\harmonics_{k,n}$ of *diagonal harmonic polynomials*.
+	This is the space of those polynomials that satisfy the equations given by the multisymmetric functions seen as differential operators.
+	
+	Solving those differential equations would not be that tractable either.
+	
+	\subsection{Polarization: diagonal harmonic polynomials from harmonic polynomials}
+	
+	Define the polarization operators:
+	
+	$$P_{i,i'}^d = \sum_j   x_{i',j} \partial_{i,j}^d\,.$$
+	
+	For $d=1$, those operators implement the action of $sl_k$ induced by $gl_k$.
+	
+	\begin{theorem}
+		Multisymmetric polynomials are obtained by polarization of symmetric polynomials in the first set of variables.
+	\end{theorem}
+	
+	\begin{conjecture}
+		Diagonal harmonic polynomials are obtained by polarization of harmonic polynomials in the first set of variables.
+	\end{conjecture}
+	
+	In the sequel, we assume that the above conjecture holds. The space of harmonic polynomials $\harmonics_n$ itself can be constructed, for example, as the subspace spanned by the VanDerMonde determinant under differentiation.
+	
+	In practice, we implemented a general purpose utility in Sage `Space(vectors, operators)` that computes the smallest subspace of a vector space which contains the given vectors and is stable under the action of the given linear operators.
+	
+	TODO: put an example here
+	
+	No rocket science here: maintain a matrix in row echelon form representing a basis of the space computed so far, and a ToDo list of $op(v)$ that remain to be computed and inserted in the matrix.
+	
+	This utility should already have been in Sage, and will end up there.
+	
+	Once a basis of $\harmonics_{k,n}$ is constructed, there still remains to recover its bicharacter. For $GL_k$ that's given by the multigrading. For $S_n$ some additional work has to be done (e.g. computing the traces of the action of permutations of all cycle types).
+	
+	At this stage, we have an algorithm, but are still doing linear algebra in a huge space (cost $N^2 M$, where $N$ is the dimension of the result and $M$ the dimension of the ambient space).
+	
+	\subsection{Exploiting the multigrading}
+	
+	The above utility can be adapted to exploit the multigrading. The input is now a collection of homogeneous vectors and operators together with their multidegrees, and a separate row echelon matrix is maintained for each multidegree.
+	
+	Advantages:
+	- Writing $N=:\sum N_D$, The complexity becomes $(\sum N_D^2) M$ instead of $(\sum N_D)^2M_D$ (in fact better.
+	- The multidegrees, and therefore $GL_k$ character, can be directly read off the result.
+	
+	\subsection{Exploiting representations of the symmetric group}
+	
+	The polarization operators commute with the action of $S_n$. Therefore,
+	we can compute independently each $S_n$ isotypic component of $\harmonics_{k,n}$ by starting from a basis of harmonic polynomials that itself is adapted to its decomposition into isotypic components:
+	$$\harmonics_{n}=:\bigoplus_\lambda \harmonics^\lambda\,.$$
+	
+	In fact we can do better.
+	
+	Fix a partition $\lambda$. Recall that a basis of the Specht module $V_\lambda$ is given by the family of Garnir/Specht polynomials $(G_{P})_P$ indexed by standard tableaux $P$ of shape $\lambda$.
+	
+	To get a basis of the full isotypic component $\harmonics^\lambda$, we can, for example, use a generalization of this construction (voir \cite{Ariki1997}): a family of polynomials $(G_{P,Q})_{P,Q}$ indexed by a pairs of standard tableaux of shape $\lambda$:
+	- $Q$ specifies the copy of $V_\lambda$
+	- $P$ specifies the location within that copy of $V_\lambda$
 	
 	
+	Remark: For a fixed tableau $P$, denote by $\harmonics_k^P$ the space spanned by the higher Specht polynomials $(G_{P,Q})_Q$ under polarization. It's exactly the image of $\harmonics$ under the Young idempotent associated to $P$. For a given shape $\lambda$, the $\harmonics_k^P$ are all conjugate under $S_n$, and their direct sum is the isotypic component $\harmonics_k^\lambda$.
 	
+	Conclusion: It is sufficient to compute $\harmonics_k^P$ for one tableau of each shape $\lambda$. This reduces the complexity by the square of the number of standard tableaux of shape $\lambda$
+	
+	\subsection{Exploiting column antisymmetries}
+	
+	Specht polynomials tend to be big: in $6$ variables, the VanDerMonde determinant has $6!=720$ monomials.
+	
+	But that's mostly because they are antisymmetric w.r.t. a large column stabilizer $S_P$. It's therefore sufficient to keep one representative monomial per $S_P$ orbit (and do some appropriate straightening whenever a new monomial is created). 
+	
+	This trick was already used by François for the polarizations of the VanDerMonde (the diagram space). Using higher Specht polynomials further allowed  to generalize that optimization to each shape.
+	
+	**Gain**: in theory up to $n!$. In practice between one and two orders of magnitude due to the overhead of straightening monomials.
+	
+	\subsection{Exploiting row symmetries}
+	
+	$H_k^P$ is symmetric w.r.t. permutation of rows, and such permutations
+	exchange multigraded components. For example, for $r=3$, the homogeneous components of respective multidegree $4,2,1$ and $2,1,4$ coincide
+	up to cycling of the rows. It is therefore sufficient, in principle, to compute homogeneous components with decreasing multidegree.
+	To achieve this, polarization operators can be tweaked: whenever the result of a polarization is not of decreasing multidegree, straighten it by applying an appropriate permutation of the rows. It can then easily be shown that those tweaked polarization operator properly generate the whole $\harmonics_k^P$ space from $\harmonics^P$.
+	
+	**Gain**: an order of magnitude; below are the total dimension of each $\harmonics_5^\lambda$ and its restriction to homogeneous components of decreasing multidegree:
+	
+	\subsection{Exploiting representations of $sl_k$}
+	
+	Building on the previous strategy, it would be tempting to only compute the subspace of $sl_r$ highest weight vectors within each $\harmonics_k^P$.
+	
+	The current code partially achieves this by avoiding the use of polarization operators of degree $0$ (which clearly would leave the space of highest weight vectors). The obtained space is still too big, and the actual highest weight vectors are obtained by computing the anihilator of the polarization operators $P_{i,i-1}^1$.
+	
+	The first step requires an additional, not yet proven, trick.
+	
+	We are currently exploring how to tweak the polarization operators to stabilize the space of highest weight vectors.
+	
+	**Current gain:** another order of magnitude; down from 3 days to 45 minutes for $\harmonics_5^{1^6}$
+	
+	**Potential gain:** another order of magnitude, both in time and memory:
+	
+	\subsection{Exploiting the skew commutation of polarization operators}
+	
+	The polarization operators skew commute. Therefore it would be in principle sufficient to apply them in some "decreasing order". This sounds promising given that, at this stage about 90\% of the polynomials that are produced are redundant and reduced to zero by the linear algebra.
+	
+	However we have not yet been able put to use that optimization together with the other $sl_k$ optimizations, because the tweaked polarization operators don't skew commute consistently.
 	
 \bibliographystyle{plain}
 \nocite{*}
