@@ -412,7 +412,7 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
                 result = act_on_polynomial(result, ss)
         return result
         
-    def steenrod_op(self, p, i, k):
+    def steenrod_op(self, p, i, k, row_symmetry=None):
         """
         Apply the Steenrod operator of degree `k` for the `i`th set of variables
         to `p`. 
@@ -436,7 +436,15 @@ class DiagonalPolynomialRing(UniqueRepresentation, Parent):
         """
         n = self._n
         X = self.variables()
-        return sum(X[i,j]*p.derivative(X[i,j], k) for j in range(0, n))
+        result = sum(X[i,j]*p.derivative(X[i,j], k) for j in range(0, n))
+        if row_symmetry=="permutation" and result:
+            deg = self.multidegree(result) 
+            deg = tuple(deg) + tuple(0 for i in range(self._inert))
+            if list(deg) != sorted(deg, reverse=True):
+                s = reverse_sorting_permutation(deg)
+                ss = self.row_permutation(s)
+                result = act_on_polynomial(result, ss)
+        return result
         
     def diagonal_steenrod(self, p, i1, i2, d1, d2):
         """
@@ -908,7 +916,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
             result = antisymmetric_normal(result, self._n, self._r+self._inert, antisymmetries)
         return result
 
-    def multi_polarization(self, p, D, i2, antisymmetries=None): 
+    def multi_polarization(self, p, D, i2): 
         """
         Return the multi polarization `P_{D,i_2}. p` of `p`.
         The result is reduced with respect to the given antisymmetries.
@@ -928,4 +936,13 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         if antisymmetries and result:
             result = reduce_antisymmetric_normal(result, self._n, self._r+self._inert, antisymmetries)
         return result
-
+        
+        
+    def steenrod_op(self, p, i, k, row_symmetry=None):
+        """
+        """
+        antisymmetries = self._antisymmetries
+        result = super(DiagonalAntisymmetricPolynomialRing,self).steenrod_op(p, i, k, row_symmetry=row_symmetry)
+        if antisymmetries and result:
+            result = antisymmetric_normal(result, self._n, self._r+self._inert, antisymmetries)
+        return result
