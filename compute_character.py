@@ -463,6 +463,15 @@ def character_quotient(M, N, n, r, left_basis=s, right_basis=s):
 ##############################################################################      
 
 def factorise(f, n):
+    """
+    Return the factorization of the tensor product `f` w.r.t the right symmetric
+    functions. The right symmetric functions have their supports in the partitions
+    on `n`. 
+    
+    INPUT:
+    - ``f`` -- a sum of tensor products on symmetric functions
+    - ``n`` -- an Integer
+    """
     SymmetricFunctions(QQ).s()
     supp = sorted(f.support())
     result = {}
@@ -479,6 +488,15 @@ def factorise(f, n):
             show(b)
         
 def dimension(f, n):
+    """
+    Return the dimension of the tensor product `f` w.r.t the right symmetric
+    functions. The right symmetric functions have their supports in the partitions
+    on `n` and they reprensent characters of `S_n`. 
+    
+    INPUT:
+    - ``f`` -- a sum of tensor products on symmetric functions
+    - ``n`` -- an Integer
+    """
     supp = sorted(f.support())
     result = {}
     res = []
