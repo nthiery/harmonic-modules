@@ -269,7 +269,7 @@ def add_degrees_isotypic(d1, d2):
 
     """
     D = cartesian_product([ZZ for i in range(len(d1[0]))])
-    return D(d1[0])s+D(d2), d1[1]
+    return D(d1[0])+D(d2), d1[1]
     
 def add_degrees_symmetric(d1,d2):
     """
