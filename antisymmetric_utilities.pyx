@@ -136,7 +136,8 @@ def antisymmetric_normal(p, int n, int r, tuple positions):
     have exponent vectors whose columns are decreasingly sorted
     at positions `i,i+1` for `i \in I`.
 
-    We call `q` the `I` *antisymmetric normal form* of `b_I(p)`.
+    We call `q` the `I` *antisymmetric normal form* of (the
+    antisymmetrized polynomial) `b_I(p)`.
 
     .. TODO::
 
@@ -183,15 +184,17 @@ def antisymmetric_normal(p, int n, int r, tuple positions):
     return R(d)
 
 def reduce_antisymmetric_normal(p, int n, int r, tuple positions):
-    
     """
-    Return the terms of `p` which are antisymmetric normal. 
+    Return the terms of `p` which are diagonally antisorted.
 
     INPUT:
 
     - ``p`` -- a polynomial
     - ``r``, ``n`` -- nonnegative integers
     - ``positions`` -- a tuple of tuple of positions
+
+    This coincides with reduce_antisymmetric_normal (and is faster) if
+    `p` is antisymmetric.
 
     EXAMPLES::
 
