@@ -81,22 +81,21 @@
 	
 	\subsection{Harmonic and diagonal harmonic polynomials}
 		
-	Consider the polynomial ring $P=\QQ[X]$ with $k$ sets of $n$ variables. To fix conventions, we think of $X$ as a matrix of variables: \pauline{small $x$ for variables, capital $X$ for sets of variables? }
-	$$(X_{i,j})_{0\leq i<k \atop 0\leq j<n}$$
+	Consider the polynomial ring $R=\QQ[X]$ with $k$ sets of $n$ variables. To fix conventions, we think of $X$ as a matrix of variables: \pauline{small $x$ for variables, capital $X$ for sets of variables? }
+	$$(x_{i,j})_{0\leq i<k \atop 0\leq j<n}$$
 	and we denote by $X_i = (x_{i1}, x_{i2}, \dots, x_{in})$ the i-th set of variables. 
 	
-	The polynomial ring $P$ is endowed with an action of the symmetric group $\Sn$ by diagonal permutation of the columns and of $\GLr$ by diagonal action on the rows. The invariant ring $P^{\Sn}$ is also known as the ring of multisymmetric functions. The co-invariant ring $P_{\Sn}$ is the quotient of $P$ by the ideal $\langle {P^{\Sn^+}} \rangle$ of the multisymmetric functions without constant term. It inherits from $P$ a structure of graded $\GLr \times \Sn$ bi-module.
+	The polynomial ring $R$ is endowed with an action of the symmetric group $\Sn$ by diagonal permutation of the columns and of $\GLr$ by diagonal action on the rows. The invariant ring $R^{\Sn}$ is also known as the ring of multisymmetric functions. The co-invariant ring $R_{\Sn}$ is the quotient of $P$ by the ideal $\mathcal{I}_n = \langle {R^{\Sn^+}} \rangle$ of the multisymmetric functions without constant term. It inherits from $R$ a structure of graded $\GLr \times \Sn$ bi-module.
 	
 	The grading can be refined into a multigrading by rows. The multigrading is preserved by the action of $\Sn$. The multigrading is not preserved by the action of $\GLr$, but instead carries exactly the information about the $\GLr$ character. It's thus equivalent to consider the $\GLr \times \Sn$ bicharacter or the $\Sn$ multigraded character of $P_{\Sn}$.
 	
-	When $k=1$, the action of $GL_1$ is trivial; $P_{\Sn}$ is of dimension $n!$ and carries the usual graded representation of $\Sn$. Its character is given by a Hall-Littlewood polynomial.
-	When $k=2$, $P_{\Sn}$ is of dimension $(n+1)^{n-1}$ ($=16807$ for $n=6$); as a consequence of Haiman's proof of the $n!$-conjecture (see \cite{Haiman2002}), the bigraded character is a Macdonald polynomial.
+	When $k=1$, the action of $GL_1$ is trivial; $R_{\Sn}$ is of dimension $n!$ and carries the usual graded representation of $\Sn$. Its character is given by a Hall-Littlewood polynomial.
+	When $k=2$, $R_{\Sn}$ is of dimension $(n+1)^{n-1}$ ($=16807$ for $n=6$); as a consequence of Haiman's proof of the $n!$-conjecture (see \cite{Haiman2002}), the bigraded character is a Macdonald polynomial.
 	
 	Throughout this notebook, we implicitly use the Frobenius map, and identify $\Sn$ and $\GLr$ irreducible characters with their associated Schur symmetric functions. \\
 	
-	We denote the partial derivative the following way $\partial^k_x := \frac{\partial^k}{\partial x^k}$ for any variable $x$ in $X$.
-	
-	When $X$ contains only on set of variable ($r=1$), we define the \emph{harmonic polynomials} as follow.
+	We denote the partial derivative the following way $\partial^k_x := \frac{\partial^k}{\partial x^k}$ for any variable $x \in X$.
+	When $X$ contains only on set of variable ($r=1$), $X = (x_1, x_2, \dots, x_n)$, we define the \emph{harmonic polynomials} as follow.
 	
 	\begin{definition}
 		Let $f \in \QQ[X]$, $f$ is \emph{harmonic} if and only if
@@ -104,91 +103,77 @@
 		for all $k \geq 0$, $k \in \NN$.
 	\end{definition}
 
-	The space of harmonic polynomials in $n$ variables, denoted $\harmonics_{n}$ is the joint kernel of the differential operators $D_k := \partial_{x_1}^k + \cdots + \partial_{x_n}^k$. It is also a realization of the coinvariants of the symmetric group: $\QQ[X]\, /\, \langle Sym(X)^+ \rangle$ and a graded regular representation of $\Sn$. 
+	The space of harmonic polynomials in $n$ variables, denoted $\harmonics_{n}$ is the joint kernel of the differential operators $D_k := \partial_{x_1}^k + \cdots + \partial_{x_n}^k$. It is also a realization of the coinvariants of the symmetric group: $\QQ[X]\, /\, \langle Sym(X)^+ \rangle$ \pauline{$= \QQ[X] / \mathcal{I}_n$} and a graded regular representation of $\Sn$. 
 	
 	As an example, $\harmonics_2 = \langle 1, x_1-x_2 \rangle_\QQ$. 
 	
-	Note that the Vandermonde determinant $V_n:=$ $\prod_{i<j}(x_i-x_j)$ is harmonic. It is also easy to see that if $f$ is harmonic then $\partial_{x_i} f$ is also harmonic for all $x_i \in X$. \\
+	Note that the Vandermonde determinant $V_n:=$ $\prod_{i<j}(x_i-x_j)$ is harmonic. It is also easy to see that if $f$ is harmonic then $\partial_{x_i} f$ is also harmonic for all $x_i \in X$. From that we have another way to define $\harmonics_{n}$, see (\cite{Haiman2002} and \cite{Bergeron2009}) for more details. 
+	
+	\begin{theorem}
+		The space of harmonic polynomials $\harmonics_{n}$ is the smallest subspace containing the Vandermonde determinant $V_n$ and closed by partial derivatives.
+	\end{theorem}
 	
 	Going back to an arbitrary number $r$ of sets of variables, we define the \emph{differential operators} $(D_\alpha)_{\alpha\in \NN^r}$:
 	$$D_{(\alpha_1, \dots, \alpha_r)} := \partial_{x_{11}}^{\alpha_1}\dots\partial_{x_{r1}}^{\alpha_r} + \dots + \partial_{x_{1n}}^{\alpha_1}\dots\partial_{x_{rn}}^{\alpha_r} = \sum_{j=1}^{n} \prod_{i=1}^{r} \partial_{x_{ij}}^{\alpha_i}$$
 	
 	For example, take $r=3$ and denote $x, y$ and $z$ the three sets of variables of $X$, then $D_{(3,0,4)} := \partial_{x_1}^3\partial_{z_1}^4 + \dots + \partial_{x_n}^3\partial_{z_n}^4$. 
 	
-	The space of the diagonal harmonic polynomials $\harmonics_{n,r}$ is the joint kernel of the $(D_\alpha)_\alpha$. Note that $\harmonics_{n,r}$ contains $\harmonics_{n,1} = \harmonics_{n}$.\\
+	The space of \emph{diagonal harmonic polynomials} $\harmonics_{n,r}$ is the joint kernel of the $(D_\alpha)_\alpha$. Note that $\harmonics_{n,r}$ contains $\harmonics_{n,1} = \harmonics_{n}$.\\
 	
 	The previous definition means that the diagonal harmonic polynomials are solutions of differential equations systems. 
-	They can also be obtained by construction using polarization operators. 
+	As for the harmonics, we have an alternative way to obtain $\harmonics_{n,r}$. 
 	
-	\begin{definition} \pauline{define polarization now or later ?}
-		The \emph{polarisation operator} $P_{x_a,x_b}^k$ is given by
-		$$P_{x_a,x_b}^k = \sum_{i=1}^{n} x_{bi} \partial_{x_{ai}}^k$$
-		where $x_a$ and $x_b$ are two sets of variables of $X$. 
-	\end{definition}
-	
-	For $=1$, those operators implement the action of $\mathfrak{sl}_r$ induced by $\mathfrak{gl}_r$.
-	
-	It is known (\cite{Haiman2002} and \cite{Bergeron2009}) that the harmonics $\harmonics_{n,1}$ are generated by the Vandermonde determinant $V_n$ and closed by partial derivatives. 
-	%Moreover, the diagonal harmonics $\harmonics_{n,r}$ are generated by $\harmonics_{n,1}$ and closed by the polarization operators.
-	
-	The diagonal harmonics $\harmonics_{n,r}$ have been studied a lot until now. The character in the case $r=2$ is due to Garsia and Haiman (see \cite{GarsiaHaiman1993}) and some progress in the case $r=3$ had recently been made by Bergeron and Préville-Ratelle (see \cite{BergeronPreville2012}), but the general case is still unknown. Therefore, the computation of those characters should lead to a better understanding of those spaces. 
-	
-	\subsection{Generalizations}
-	
-	In their article \cite{GarsiaHaiman1993}, Garsia and Haiman also introduced a generalized version of the Vandermonde determinant and a generalization of the diagonal harmonics for two sets of variables called the Gasia-Haiman modules. \\
-	
-	F. Bergeron recently introduced another generalization of the diagonal harmonics, with inert variables. We add a new row $\theta = (\theta_1, \theta_2, \dots, \theta_n)$ of variables in $X$. The symmetric group still acts diagonally on the columns of $X$, but $GL_r$ now acts only on the rows containing non-inert variables. Like before, we consider the smallest subspace containing a certain determinant and closed by partial derivation and polarization, except that this time the inert variables do not intervene in the operators. The determinant used in this case is defined as follow.   
-	 
-	Let $\lambda$ be a partition of $n$, we also denote $\lambda$ the Ferrer's diagram associated to the partition $\lambda$ and each cell of $\lambda$ is given by the coordinates $(a,b)$ of its bottom left corner. Then the determinant $V_{\lambda}$ associated to $\lambda$ is given by $$V_{\lambda} = \det (x_i^a \theta_i^b)_{1 \leq i \leq n \atop (a,b) \in \lambda} .$$
-	For example, the partition $21$ contains the cells $(0,0)$ and $(1,0)$ in the first row, and the cell $(0,1)$ in the second row, and $V_{21} = -x_2\theta_1 + x_3\theta_1 + x_1\theta_2 - x_3\theta_2 - x_1\theta_3 + x_2\theta_3$. \\
-	
-	Since those subspaces are completely new, computing some characters on Sage helps understanding them better and allows to find some properties of thoses spaces. 
-	Plus, experimentation helped finding the right definition we needed for this generalization.
-	
-	\begin{definition} \pauline{find the right place for Steenrod op}
-		The \emph{Steenrod operator} $St_{x_a}^k$ for $k>1$ is given by
-		$$St_{x_a}^k = \sum_{i=1}^{n} x_{ai} \partial_{x_{ai}}^k$$
-		where $x_a$ is a set of variables of $X$. 
-	\end{definition}
-
-
-	Only the Steenrod operators for $k=2$ and $k=3$ are necessary since the other operators can be obtained from the two first ones. For example, $St_{x_a}^4 = St_{x_a}^3St_{x_a}^2 - St_{x_a}^2St_{x_a}^3$. 
-
-	Note that $St_{x_a}^k = P_{x_a,x_a}^k$ but we distinguish the two families of operators because they play different roles. 
-	
-	\section{Strategies}
-	
-	\subsection{Computing in the space of harmonic polynomials}
-	
-	We first need to compute in a quotient by an ideal, $P / I_n$ where $I_n$ is the ideal of diagonal symmetric polynomials on $r$ sets of $n$ variables. 
-	A standard approach would be to compute a Gröbner basis of this ideal.
-	We haven't actually tried it, but given the number of variables and dimension of the quotient, we expect this calculation to be intractable.
-	
-	So we took the classical route of realizing the coinvariant ring as the space $\harmonics_{n,r}$ of diagonal harmonic polynomials.
-	This is the space of those polynomials that satisfy the equations given by the multisymmetric \pauline{multi symmetric vs diagonal symmetric ?} functions seen as differential operators.
-	
-	Solving those differential equations would not be that tractable either. So instead we used operators (partial derivatives and polarization operators).
-	
-	
-	\subsection{Polarization: diagonal harmonics from harmonics}
-		
 	\begin{definition}
 		The \emph{polarisation operator} $P_{x_a,x_b}^k$ is given by
 		$$P_{x_a,x_b}^k = \sum_{i=1}^{n} x_{bi} \partial_{x_{ai}}^k$$
 		where $x_a$ and $x_b$ are two sets of variables of $X$. 
 	\end{definition}
 	
+	For $k=1$, those operators implement the action of $\mathfrak{sl}_r$ induced by $\mathfrak{gl}_r$. Moreover, we have the following useful theorems. 
+	
 	\begin{theorem}
 		Multisymmetric polynomials are obtained by polarization of symmetric polynomials in the first set of variables.
 	\end{theorem}
 	
 	\begin{theorem} \label{DiagHarm}
-		Diagonal harmonic polynomials are obtained by polarization of harmonic polynomials in the first set of variables.
+		Diagonal harmonic polynomials $\harmonics_{n,r}$ are obtained by polarization of harmonic polynomials $\harmonics_{n,1}$ in the first set of variables.
 	\end{theorem}
-
-	Therorem \ref{DiagHarm} has been proven for two sets of variables. It is not proven yet for more than two sets of variables but it has been verified by calculation for a large number of sets of variables so we assume it to be true since we will never reach that number of sets in our case. 
 	
-	The space of harmonic polynomials $\harmonics_n$ itself can be constructed, for example, as the subspace spanned by the Vandermonde determinant under differentiation. \\
+	Therorem \ref{DiagHarm} has been proven for two sets of variables. It is not proven yet for more than two sets of variables but it has been verified by calculation for a large number of sets of variables so we assume it to be true since we will never reach that number of sets in our case.  \\
+	
+	The diagonal harmonics $\harmonics_{n,r}$ have been studied a lot until now. The character in the case $r=2$ is due to Garsia and Haiman (see \cite{GarsiaHaiman1993}) and some progress in the case $r=3$ had recently been made by Bergeron and Préville-Ratelle (see \cite{BergeronPreville2012}), but the general case is still unknown. Therefore, the computation of those characters should lead to a better understanding of those spaces. 
+	
+	\subsection{Generalizations}
+	
+	In their article \cite{GarsiaHaiman1993}, Garsia and Haiman also introduced a generalized version of the Vandermonde determinant and a generalization of the diagonal harmonics for two sets of variables called the Gasia-Haiman modules. 
+	
+	Let $X=(x_1, x_2, \dots, x_n)$ and $Y=(y_1, y_2, \dots, y_n)$ be two sets of variables and $\mu$ be a partition of $n$. We also denote $\mu$ the Ferrer's diagram (in French notation) associated to the partition $\mu$ and each cell of $\mu$ is given by the Cartesian coordinates $(a,b)$ of its bottom left corner. Then, let define
+	$$V_{\mu} := \det (x_i^ ay_i^ b)_{1 \leq i \leq n \atop (a,b) \in \mu}$$
+	and the Gasia-Haiman module associated to $\mu$ is the smallest subspace containing $V_{\mu}$ and closed under differentiation for both sets of variables. \\
+	
+	F. Bergeron recently introduced another generalization of the diagonal harmonics, with inert variables. We add a new row $\theta = (\theta_1, \theta_2, \dots, \theta_n)$ of variables in $X$. The symmetric group still acts diagonally on the columns of $X$, but $GL_r$ now acts only on the rows containing non-inert variables. 
+		 
+	Let $\lambda$ be a partition of $n$, note $(a,b)$ the Cartesian coordinates its cells. Then the determinant $V_{\lambda}$ associated to $\lambda$ is given by $$V_{\lambda} = \det (x_i^a \theta_i^b)_{1 \leq i \leq n \atop (a,b) \in \lambda} .$$
+	For example, the partition $21$ contains the cells $(0,0)$ and $(1,0)$ in the first row, and the cell $(0,1)$ in the second row, and $V_{21} = -x_2\theta_1 + x_3\theta_1 + x_1\theta_2 - x_3\theta_2 - x_1\theta_3 + x_2\theta_3$. 
+	
+	Like before, we consider the smallest subspace containing $V_{\lambda}$ and closed by partial derivation and polarization, except that this time the inert variables do not intervene in the operators. We denote this space by $\mathcal{E}_{\lambda}$. \\
+	
+	Since those subspaces are completely new, computing some characters on Sage helps understanding them better and allows to find some properties of thoses spaces. 
+	Plus, experimentation helped finding the right definition we needed for this generalization.
+	
+	
+	\section{Strategies}
+	
+	\subsection{Computing in the space of harmonic polynomials using polarization}
+	
+	We first need to compute in a quotient by an ideal, $R / \mathcal{I}_n$ where $\mathcal{I}_n$ is the ideal of diagonal symmetric polynomials on $r$ sets of $n$ variables. 
+	A standard approach would be to compute a Gröbner basis of this ideal.
+	We haven't actually tried it, but given the number of variables and dimension of the quotient, we expect this calculation to be intractable.
+	
+	So we took the classical route of realizing the coinvariant ring as the space $\harmonics_{n,r}$ of diagonal harmonic polynomials.
+	This is the space of those polynomials that satisfy the equations given by the multisymmetric \pauline{multi symmetric vs diagonal symmetric ?} functions seen as differential operators.
+	
+	Solving those differential equations would not be that tractable either. So instead we used operators, partial derivatives and polarization operators defined in the previous section. \\
 	
 	In practice, we implemented a general purpose utility in Sage, \texttt{Subspace(vectors, operators)} that computes the smallest subspace of a vector space which contains the given vectors and is stable under the action of the given linear operators.
 	\nicolas{put an example here}
@@ -279,6 +264,18 @@
 	
 	\section{Applications}
 	Ask Francois ... 
+	
+	\begin{definition} \pauline{find the right place for Steenrod op}
+		The \emph{Steenrod operator} $St_{x_a}^k$ for $k>1$ is given by
+		$$St_{x_a}^k = \sum_{i=1}^{n} x_{ai} \partial_{x_{ai}}^k$$
+		where $x_a$ is a set of variables of $X$. 
+	\end{definition}
+	
+	
+	Only the Steenrod operators for $k=2$ and $k=3$ are necessary since the other operators can be obtained from the two first ones. For example, $St_{x_a}^4 = St_{x_a}^3St_{x_a}^2 - St_{x_a}^2St_{x_a}^3$. 
+	
+	Note that $St_{x_a}^k = P_{x_a,x_a}^k$ but we distinguish the two families of operators because they play different roles. 
+	
 	
 \bibliographystyle{plain}
 \nocite{*}
