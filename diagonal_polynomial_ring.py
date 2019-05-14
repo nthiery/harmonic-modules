@@ -3,6 +3,7 @@
 
 import functools
 
+from sage.misc.cachefunc import cached_method, cached_function
 from sage.structure.parent import Parent
 from sage.structure.unique_representation import UniqueRepresentation
 from sage.structure.sage_object import load
@@ -18,9 +19,6 @@ from sage.categories.cartesian_product import cartesian_product
 from sage.functions.other import binomial
 from sage.combinat.words.word import Word
 
-from diagram import *
-from subspace import *
-from young_idempotent import *
 from polynomial_derivative import *
 
 from utilities import *
