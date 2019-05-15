@@ -88,7 +88,6 @@ class DiagonalPolynomialRing(IsomorphicObject):
         self._grading_set = cartesian_product([ZZ for i in range(r)])
         self._hilbert_parent = PolynomialRing(ZZ, r, 'q')
         
-    
     def Q_gens(self):
         """
         sage: D = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
@@ -233,11 +232,10 @@ class DiagonalPolynomialRing(IsomorphicObject):
             ....:     assert P.random_monomial(D).multidegree() == D
         """
         X = self.algebra_generators()
-        X_by_rows = [Set(list(row)) for row in X]
+        X_by_rows = [Set(list(X[i,j] for j in range(X.ncols()))) for i in range(X.nrows())]
         return prod( X_by_rows[i].random_element()
                      for i in range(len(D))
                      for j in range(D[i]) )
-                     
                      
     def random_element(self, D, l=10):
         """
@@ -315,10 +313,9 @@ class DiagonalPolynomialRing(IsomorphicObject):
             return self.parent()._grading_set([sum(v[n*i+j] for j in range(n))
                                       for i in range(r)])
                                       
-                                      
-        def derivative(self, x, k):
+        def derivative(self, *args):
             p = self.parent()._P(self)
-            return self.parent()(p.derivative(x, k))
+            return self.parent()(p.derivative(*args))
             
         def apply_permutation(self):
             d = self.multidegree()
@@ -480,7 +477,6 @@ class DiagonalPolynomialRing(IsomorphicObject):
                 result = result.apply_permutation()
             return result
             
-            
         def multi_polarization(self, D, i2):
             """
             Return the multi polarization `P_{D,i_2}. p` of `p`.
@@ -614,6 +610,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             # Goal: produce pjs such that:
             # - p = \sum_j e^j pjs[j]
             # - HW_{≤ i1, i2}(q) for q in pjs
+            polarization = self.parent().Element.polarization
             e = functools.partial(polarization, i1=i1, i2=i2, d=1)
             f = functools.partial(polarization, i1=i2, i2=i1, d=1)
             D = self.multidegree()
@@ -650,6 +647,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             """
             # TODO NICOLAS add documentation
             """
+            polarization = self.parent().Element.polarization
             e = functools.partial(polarization, i1=i1, i2=i2, d=1)
             f = functools.partial(polarization, i1=i2, i2=i1, d=1)
             pjs = list(self.highest_weight_vectors(i1, i2))
@@ -743,7 +741,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
                 sage: p = 1/2*x02*x10*x20 - 1/2*x03*x10*x20 - 5/2*x02*x11*x20 + 5/2*x03*x11*x20 - 3/2*x00*x12*x20 - 1/2*x01*x12*x20 + 2*x02*x12*x20 + 3/2*x00*x13*x20 + 1/2*x01*x13*x20 - 2*x03*x13*x20 - 2*x02*x10*x21 + 2*x03*x10*x21 + 2*x00*x12*x21 - 2*x03*x12*x21 - 2*x00*x13*x21 + 2*x02*x13*x21 - 2*x00*x10*x22 + 1/2*x01*x10*x22 + 3/2*x02*x10*x22 + 5/2*x00*x11*x22 - 5/2*x03*x11*x22 - 1/2*x00*x12*x22 + 1/2*x03*x12*x22 - 1/2*x01*x13*x22 - 3/2*x02*x13*x22 + 2*x03*x13*x22 + 2*x00*x10*x23 - 1/2*x01*x10*x23 - 3/2*x03*x10*x23 - 5/2*x00*x11*x23 + 5/2*x02*x11*x23 + 1/2*x01*x12*x23 - 2*x02*x12*x23 + 3/2*x03*x12*x23 + 1/2*x00*x13*x23 - 1/2*x02*x13*x23
 
                 sage: p = x02*x10*x20 - x00*x12*x20
-                sage: R.multidegree(p)
+                sage: p.multidegree()
                 (1, 1, 1)
 
                 sage: q = x00*x02*x10 - x00^2*x12
@@ -793,13 +791,13 @@ def e(P, i):
     """
     # TODO NICOLAS add documentation
     """
-    return functools.partial(P.polarization, i1=i, i2=i+1, d=1)
+    return functools.partial(P.Element.polarization, i1=i, i2=i+1, d=1)
 
 def f(P, i):
     """
     # TODO NICOLAS add documentation
     """
-    return functools.partial(P.polarization, i1=i+1, i2=i, d=1)
+    return functools.partial(P.Element.polarization, i1=i+1, i2=i, d=1)
     
 def e_polarization_degrees(D1, D2):
     """
@@ -836,6 +834,104 @@ def e_polarization_degrees(D1, D2):
         return None
     return i, D
     
+class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
+    """
+    The ring of diagonal antisymmetric polynomials in $n \times r$ variables 
+    and $n \times k$ inert variables.
+
+    EXAMPLES::
+
+        sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3)
+        sage: P
+        The image by some isomorphism of Multivariate Polynomial Ring in x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23 over Rational Field
+    """
+    def __init__(self, R, n, r, inert=0, antisymmetries=None):
+        DiagonalPolynomialRing.__init__(self, R, n, r, inert=inert)
+        self._antisymmetries = antisymmetries
+        
+    def antisymmetries(self):
+        return self._antisymmetries
+        
+    class Element(DiagonalPolynomialRing.Element):
+        def polarization(self, i1, i2, d, row_symmetry=None):
+            """
+            Return the polarization `P_{d,i_1,i_2}` of `self`. 
+            The result is reduced with respect to the given antisymmetries. 
+            
+            EXAMPLES::
+                sage: mu = Partition([3])
+                sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+                sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
+                sage: x = P.algebra_generators()
+                sage: v = (-1)*x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] + (-1)*x[0,1]^2*x[0,2] + (-1)*x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+                sage: v.polarization(0, 1, 1)
+                -2*x00*x01*x10 + x01^2*x10 + 2*x00*x02*x10 - x02^2*x10 - x00^2*x11 + 2*x00*x01*x11 - 2*x01*x02*x11 + x02^2*x11 + x00^2*x12 - x01^2*x12 - 2*x00*x02*x12 + 2*x01*x02*x12
+
+                sage: mu = Partition([2,1])
+                sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+                sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
+                sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
+                sage: x = P.algebra_generators()
+                sage: v = (-1)*x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] + (-1)*x[0,1]^2*x[0,2] + (-1)*x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+                sage: v.polarization(0, 1, 1)
+                -4*x00*x01*x10 + 2*x01^2*x10 + 4*x00*x02*x10 - 2*x00^2*x11 + 4*x00*x01*x11 + 2*x00^2*x12
+
+                sage: mu = Partition([1,1,1])
+                sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+                sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
+                sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
+                sage: x = P.algebra_generators()
+                sage: v = (-1)*x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] + (-1)*x[0,1]^2*x[0,2] + (-1)*x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+                sage: v.polarization(0, 1, 1)
+                -12*x00*x01*x10 - 6*x00^2*x11
+            """
+            antisymmetries = self.parent().antisymmetries()
+            n = self.parent().ncolumns()
+            r = self.parent().nrows()
+            inert = self.parent().ninert()
+            result = super(DiagonalAntisymmetricPolynomialRing.Element, self).polarization(i1, i2, d, row_symmetry=row_symmetry)
+            if antisymmetries and result:
+                result = antisymmetric_normal(self.parent()._P(result), n, r+inert, antisymmetries)
+            return self.parent()(result)
+
+        def multi_polarization(self, D, i2): 
+            """
+            Return the multi polarization `P_{D,i_2}` of `self`.
+            The result is reduced with respect to the given antisymmetries.
+            
+            EXAMPLES::
+                sage: mu = Partition([2,1])
+                sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
+                sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
+                sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
+                sage: x = P.algebra_generators()
+                sage: v = (-1)*x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] + (-1)*x[0,1]^2*x[0,2] + (-1)*x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+                sage: v.multi_polarization([1,0,0], 1)
+                    -2*x00*x01*x10 + x01^2*x10 + 2*x00*x02*x10 - x00^2*x11 + 2*x00*x01*x11 + x00^2*x12
+            """
+            antisymmetries = self.parent().antisymmetries()
+            n = self.parent().ncolumns()
+            r = self.parent().nrows()
+            inert = self.parent().ninert()
+            result = super(DiagonalAntisymmetricPolynomialRing.Element, self).multi_polarization(D,i2)
+            if antisymmetries and result:
+                result = reduce_antisymmetric_normal(self.parent()._P(result), n, r+inert, antisymmetries)
+            return self.parent()(result)
+            
+            
+        def steenrod_op(self, i, k, row_symmetry=None):
+            """
+            """
+            antisymmetries = self.parent().antisymmetries()
+            n = self.parent().ncolumns()
+            r = self.parent().nrows()
+            inert = self.parent().ninert()
+            result = super(DiagonalAntisymmetricPolynomialRing.Element, self).steenrod_op(i, k, row_symmetry=row_symmetry)
+            if antisymmetries and result:
+                result = antisymmetric_normal(result, n, r+inert, antisymmetries)
+            return result
+
+
 """
 
 sage: %runfile isomorphic_object.py #not tested
