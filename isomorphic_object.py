@@ -1,29 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import functools
+from sage.structure.unique_representation import UniqueRepresentation
+from sage.categories.isomorphic_objects import IsomorphicObjectsCategory
+from sage.structure.element_wrapper import ElementWrapper
 
+
+# To delete after remove DiagonalPolynomialRing
+import functools
 from sage.misc.cachefunc import cached_method, cached_function
 from sage.structure.parent import Parent
-from sage.structure.unique_representation import UniqueRepresentation
-from sage.structure.sage_object import load
 
+from sage.structure.sage_object import load
 from sage.parallel.decorate import parallel
 from sage.misc.misc_c import prod
 
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ
-from sage.categories.isomorphic_objects import IsomorphicObjectsCategory
 from sage.categories.algebras import Algebras
 from sage.categories.cartesian_product import cartesian_product
 from sage.functions.other import binomial
 from sage.combinat.words.word import Word
 
 from polynomial_derivative import *
-
 from utilities import *
 from antisymmetric_utilities import *
+
 
 
 
