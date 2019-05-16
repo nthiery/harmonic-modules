@@ -14,7 +14,6 @@ from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ
 from sage.categories.algebras import Algebras
 from sage.categories.cartesian_product import cartesian_product
-from sage.functions.other import binomial
 from sage.combinat.words.word import Word
 
 from isomorphic_object import *
@@ -83,8 +82,8 @@ class DiagonalPolynomialRing(IsomorphicObject):
         """
         return self._inert
         
-    def inject_variables(self):
-        self._P.inject_variables()
+    def variable_names(self):
+        return self._P.variable_names()
         
     def algebra_generators(self):
         """
@@ -345,7 +344,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             EXAMPLES::
                 sage: P = DiagonalPolynomialRing(QQ, 3, 4)
                 sage: X = P.algebra_generators()
-                sage: p = X[0,0]*X[1,1]^2 + (-1)*X[0,1]^2*X[1,0] # PB -
+                sage: p = X[0,0]*X[1,1]^2 - X[0,1]^2*X[1,0] # PB -
                 sage: p
                 -x01^2*x10 + x00*x11^2
                 sage: p.higher_polarization(0, 1, 1, 1)
@@ -382,7 +381,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             EXAMPLES::
                 sage: P = DiagonalPolynomialRing(QQ, 3, 1)
                 sage: x = P.algebra_generators()
-                sage: v = (-1)*x[0,0]^3*x[0,1] + x[0,0]*x[0,1]^3 + x[0,0]^3*x[0,2] + (-1)*x[0,1]^3*x[0,2] + (-1)*x[0,0]*x[0,2]^3 + x[0,1]*x[0,2]^3; v
+                sage: v = -x[0,0]^3*x[0,1] + x[0,0]*x[0,1]^3 + x[0,0]^3*x[0,2] - x[0,1]^3*x[0,2] - x[0,0]*x[0,2]^3 + x[0,1]*x[0,2]^3; v
                 -x00^3*x01 + x00*x01^3 + x00^3*x02 - x01^3*x02 - x00*x02^3 + x01*x02^3
                 sage: v.symmetric_derivative([1])
                 -3*x00^2*x01 + 3*x00*x01^2 + 3*x00^2*x02 - 3*x01^2*x02 - 3*x00*x02^2 + 3*x01*x02^2
@@ -428,7 +427,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             EXEMPLES::
                 sage: P = DiagonalPolynomialRing(QQ, 3, 4)
                 sage: X = P.algebra_generators()
-                sage: p = X[0,0]*X[0,1] + (-1)*X[0,1]*X[0,2]
+                sage: p = X[0,0]*X[0,1] - X[0,1]*X[0,2]
                 sage: p
                 x00*x01 - x01*x02
                 sage: p.steenrod_op(0, 1)
@@ -526,25 +525,24 @@ class DiagonalPolynomialRing(IsomorphicObject):
                 [0, 0, 0, 1/6*x00^3]
                 sage: (X[1,0]^3).test_highest_weight_vectors(0, 1)
 
-                sage: P.highest_weight_vectors(p, 0, 1)  # not tested NICOLAS
+                sage: p.highest_weight_vectors(0, 1)  # not tested NICOLAS
                 [-x01*x10 + x00*x11, x00^2 - x01^2]
-                sage: P.test_highest_weight_vectors(p, 0, 1)   # not tested NICOLAS
+                sage: p.test_highest_weight_vectors(0, 1)   # not tested NICOLAS
 
             A random example::
 
                 sage: P = DiagonalPolynomialRing(QQ, 4, 3)
                 sage: P.inject_variables()
                 Defining x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23
-                sage: x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23 = P._P.gens()
                 sage: p = 1/2*x10^2*x11*x20 + 3*x10*x11*x12*x20 + 1/3*x11^2*x12*x20 + 1/2*x10*x11*x12*x21 + x10*x11^2*x22 + 1/15*x10*x11*x12*x22 - 2*x11^2*x12*x22 - 2*x12^3*x22
                 sage: res = p.highest_weight_vectors()
-                sage: res # not tested NICOLAS
+                sage: res #not tested NICOLAS
                 [1/48*x00^2*x01*x10 + 1/4*x00*x01*x02*x10 - 1/48*x01^2*x02*x10 - 1/360*x01*x02^2*x10 - 1/48*x00^3*x11 - 1/8*x00^2*x02*x11 - 5/72*x00*x01*x02*x11 - 1/360*x00*x02^2*x11 + 1/6*x01*x02^2*x11 - 1/8*x00^2*x01*x12 + 13/144*x00*x01^2*x12 + 1/180*x00*x01*x02*x12 - 1/6*x01^2*x02*x12,
                 1/48*x00^3*x01 + 1/8*x00^2*x01*x02 + 11/144*x00*x01^2*x02 + 1/360*x00*x01*x02^2 - 1/12*x01^2*x02^2 - 1/12*x02^4]
                 sage: [q.multidegree() for q in res]
                 [(3, 1, 0), (4, 0, 0)]
-                sage: for q in res:
-                ....:     p.test_highest_weight_vector()
+                sage: for q in res: #not tested
+                ....:     p.test_highest_weight_vector() #not tested
 
             .. TODO:: Check that p is indeed in the span of res
 
@@ -673,8 +671,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
                 sage: R = DiagonalPolynomialRing(QQ, 3, 3)
                 sage: R.inject_variables()
                 Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
-                sage: x00, x01, x02, x10, x11, x12, x20, x21, x22 = R._P.gens()
-                sage: e0 = e(R, 0); e1 = e(R, 1)
+                sage: e0 = e(0); e1 = e(1)
                 sage: p = e1(e0(e0(3*x00^3))) + e0(e1(e0(x01*x02^2)))
                 sage: p.highest_weight_vectors_decomposition()
                 [[36*x00^3 + 6*x01*x02^2, [[0, 1], [1, 1], [0, 1]]]]
@@ -688,8 +685,8 @@ class DiagonalPolynomialRing(IsomorphicObject):
 
             On a non trivial highest weight vector::
 
-                sage: f0 = f(R, 0)
-                sage: f1 = f(R, 1)
+                sage: f0 = f(0)
+                sage: f1 = f(1)
                 sage: p = 891/2097152*x01^3*x02*x10 + 27/1048576*x00^2*x02^2*x10 - 81/16777216*x01*x02^3*x10 + 891/1048576*x00*x01^2*x02*x11 + 243/16777216*x00*x02^3*x11 - 2673/2097152*x00*x01^3*x12 - 27/1048576*x00^3*x02*x12 - 81/8388608*x00*x01*x02^2*x12
                 sage: f0(p)
                 0
@@ -703,10 +700,9 @@ class DiagonalPolynomialRing(IsomorphicObject):
             Found while computing harmonic::
 
                 sage: R = DiagonalPolynomialRing(QQ, 4, 3)
-                sage: e0 = e(R, 0); e1 = e(R, 1)
+                sage: e0 = e(0); e1 = e(1)
                 sage: R.inject_variables()
                 Defining x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23
-                sage: x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23 = R._P.gens()
                 sage: p = 1/2*x02*x10*x20 - 1/2*x03*x10*x20 - 5/2*x02*x11*x20 + 5/2*x03*x11*x20 - 3/2*x00*x12*x20 - 1/2*x01*x12*x20 + 2*x02*x12*x20 + 3/2*x00*x13*x20 + 1/2*x01*x13*x20 - 2*x03*x13*x20 - 2*x02*x10*x21 + 2*x03*x10*x21 + 2*x00*x12*x21 - 2*x03*x12*x21 - 2*x00*x13*x21 + 2*x02*x13*x21 - 2*x00*x10*x22 + 1/2*x01*x10*x22 + 3/2*x02*x10*x22 + 5/2*x00*x11*x22 - 5/2*x03*x11*x22 - 1/2*x00*x12*x22 + 1/2*x03*x12*x22 - 1/2*x01*x13*x22 - 3/2*x02*x13*x22 + 2*x03*x13*x22 + 2*x00*x10*x23 - 1/2*x01*x10*x23 - 3/2*x03*x10*x23 - 5/2*x00*x11*x23 + 5/2*x02*x11*x23 + 1/2*x01*x12*x23 - 2*x02*x12*x23 + 3/2*x03*x12*x23 + 1/2*x00*x13*x23 - 1/2*x02*x13*x23
 
                 sage: p = x02*x10*x20 - x00*x12*x20
@@ -756,17 +752,19 @@ def reverse_sorting_permutation(t): # TODO: put "stable sorting" as keyword some
     """
     return ~(Word([-i for i in t]).standard_permutation())
 
-def e(P, i):
+def e(i):
     """
     # TODO NICOLAS add documentation
     """
-    return functools.partial(P.Element.polarization, i1=i, i2=i+1, d=1)
+    if i==None:
+        i=P
+    return attrcall("polarization", i1=i, i2=i+1, d=1)
 
-def f(P, i):
+def f(i):
     """
     # TODO NICOLAS add documentation
     """
-    return functools.partial(P.Element.polarization, i1=i+1, i2=i, d=1)
+    return attrcall("polarization", i1=i+1, i2=i, d=1)
     
 def e_polarization_degrees(D1, D2):
     """
@@ -832,7 +830,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
                 sage: antisymmetries = antisymmetries_of_tableau(mu.initial_tableau())
                 sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
                 sage: x = P.algebra_generators()
-                sage: v = (-1)*x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] + (-1)*x[0,1]^2*x[0,2] + (-1)*x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+                sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
                 sage: v.polarization(0, 1, 1)
                 -2*x00*x01*x10 + x01^2*x10 + 2*x00*x02*x10 - x02^2*x10 - x00^2*x11 + 2*x00*x01*x11 - 2*x01*x02*x11 + x02^2*x11 + x00^2*x12 - x01^2*x12 - 2*x00*x02*x12 + 2*x01*x02*x12
 
@@ -841,7 +839,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
                 sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
                 sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
                 sage: x = P.algebra_generators()
-                sage: v = (-1)*x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] + (-1)*x[0,1]^2*x[0,2] + (-1)*x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+                sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
                 sage: v.polarization(0, 1, 1)
                 -4*x00*x01*x10 + 2*x01^2*x10 + 4*x00*x02*x10 - 2*x00^2*x11 + 4*x00*x01*x11 + 2*x00^2*x12
 
@@ -850,7 +848,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
                 sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
                 sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
                 sage: x = P.algebra_generators()
-                sage: v = (-1)*x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] + (-1)*x[0,1]^2*x[0,2] + (-1)*x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+                sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
                 sage: v.polarization(0, 1, 1)
                 -12*x00*x01*x10 - 6*x00^2*x11
             """
@@ -874,7 +872,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
                 sage: antisymmetries = tuple(tuple(a) for a in antisymmetries)
                 sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = antisymmetries)
                 sage: x = P.algebra_generators()
-                sage: v = (-1)*x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] + (-1)*x[0,1]^2*x[0,2] + (-1)*x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
+                sage: v = -x[0,0]^2*x[0,1] + x[0,0]*x[0,1]^2 + x[0,0]^2*x[0,2] - x[0,1]^2*x[0,2] - x[0,0]*x[0,2]^2 + x[0,1]*x[0,2]^2
                 sage: v.multi_polarization([1,0,0], 1)
                     -2*x00*x01*x10 + x01^2*x10 + 2*x00*x02*x10 - x00^2*x11 + 2*x00*x01*x11 + x00^2*x12
             """
