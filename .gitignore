@@ -8,3 +8,5 @@
 *.blg
 *.out
 *.log
+*.synctex.gz
+*.toc
