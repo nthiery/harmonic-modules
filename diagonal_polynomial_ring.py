@@ -56,6 +56,9 @@ class DiagonalPolynomialRing(IsomorphicObject):
         self._grading_set = cartesian_product([ZZ for i in range(r)])
         self._hilbert_parent = PolynomialRing(ZZ, r, 'q')
         
+    def _repr_(self):
+        return "Diagonal polynomial ring with %s rows of %s variables over %s"%(self._r, self._n, self.base_ring())
+        
     def Q_gens(self):
         """
         sage: D = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
@@ -70,7 +73,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
         """
         return self._r
         
-    def ncolumns(self):
+    def ncols(self):
         """
         Return the number of variables in each set.
         """
@@ -81,6 +84,12 @@ class DiagonalPolynomialRing(IsomorphicObject):
         Return the number of sets if inert variables.
         """
         return self._inert
+        
+    def grading_set(self):
+        """
+        Return the grading set
+        """
+        return self._grading_set
         
     def variable_names(self):
         return self._P.variable_names()
@@ -110,7 +119,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
 
         """
         vars = self.gens()
-        n = self.ncolumns()
+        n = self.ncols()
         r = self.nrows()
         inert = self.ninert()
         return matrix([[vars[i*n+j] for j in range(n)] for i in range(r+inert)])
@@ -127,8 +136,8 @@ class DiagonalPolynomialRing(IsomorphicObject):
             [x20 x21 x22]
                 
         """
-        vars = self._P.gens()
-        n = self.ncolumns()
+        vars = self.gens()
+        n = self.ncols()
         r = self.nrows()
         inert = self.ninert()
         return matrix([[vars[i*n+j] for j in range(n)] for i in range(r)])
@@ -147,8 +156,8 @@ class DiagonalPolynomialRing(IsomorphicObject):
             No inert variables
 
         """
-        vars = self._P.gens()
-        n = self.ncolumns()
+        vars = self.gens()
+        n = self.ncols()
         r = self.nrows()
         inert = self.ninert()
         if inert!= 0:
@@ -157,6 +166,21 @@ class DiagonalPolynomialRing(IsomorphicObject):
             print "No inert variables"
             return None
 
+    def derivative_variables(self):
+        """
+        Return only the classic variables as variables of a multivariate polynomial ring.
+        
+        EXAMPLES::
+            sage: DP = DiagonalPolynomialRing(QQ, 3, 3, inert=1)
+        
+                
+        """
+        vars = self._P.gens()
+        n = self.ncols()
+        r = self.nrows()
+        inert = self.ninert()
+        return matrix([[vars[i*n+j] for j in range(n)] for i in range(r)])
+        
     def multipower(self, d):
         """
         Return the product of the terms $q_i^{d_i}$.
@@ -183,7 +207,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
         """
         # TODO NICOLAS add documentation
         """
-        return self._P.monomial(*args)
+        return self(self._P.monomial(*args))
     
     def random_monomial(self, D):
         """
@@ -246,7 +270,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
         # TODO NICOLAS add documentation
         """
         r = self._r
-        X = self.variables()
+        X = self.derivative_variables()
         res = []
         for i in range(r):
             res.extend([X[i,j],D[i]])
@@ -275,10 +299,10 @@ class DiagonalPolynomialRing(IsomorphicObject):
             """
             if not self:
                 return -1
-            n = self.parent().ncolumns()
+            n = self.parent().ncols()
             r = self.parent().nrows()
             v = self.parent()._P(self).exponents()[0]
-            return self.parent()._grading_set([sum(v[n*i+j] for j in range(n))
+            return self.parent().grading_set()([sum(v[n*i+j] for j in range(n))
                                       for i in range(r)])
                                       
         def derivative(self, *args):
@@ -322,9 +346,9 @@ class DiagonalPolynomialRing(IsomorphicObject):
                 sage: p.polarization(2, 0, 1)
                 x01
             """
-            n = self.parent().ncolumns()
+            n = self.parent().ncols()
             r = self.parent().nrows()
-            X = self.parent().variables()
+            X = self.parent().derivative_variables()
             if i1>=r or i2 >=r:
                 print "Row number out of range."
                 return None
@@ -355,8 +379,8 @@ class DiagonalPolynomialRing(IsomorphicObject):
                 -2*x10*x11
 
             """
-            n = self.parent().ncolumns()
-            X = self.parent().variables()
+            n = self.parent().ncols()
+            X = self.parent().derivative_variables()
             if i1>=self.parent().nrows() or i2 >=self.parent().nrows():
                 print "Row number out of range."
                 return None 
@@ -400,9 +424,9 @@ class DiagonalPolynomialRing(IsomorphicObject):
                 -3*x00^2*x01 + 3*x00*x01^2 + 3*x00^2*x02 - 3*x01^2*x02 - 3*x00*x02^2 + 3*x01*x02^2
                 
             """
-            n = self.parent().ncolumns()
+            n = self.parent().ncols()
             r = self.parent().nrows()
-            X = self.parent().variables()
+            X = self.parent().derivative_variables()
             result = 0
             if not isinstance(d, (tuple, list)):
                 d = [d]
@@ -438,8 +462,8 @@ class DiagonalPolynomialRing(IsomorphicObject):
                 0
                             
             """
-            n = self.parent().ncolumns()
-            X = self.parent().variables()
+            n = self.parent().ncols()
+            X = self.parent().derivative_variables()
             result = sum(X[i,j]*self.derivative(X[i,j], k) for j in range(0, n))
             if row_symmetry=="permutation" and result:
                 result = result.apply_permutation()
@@ -477,9 +501,9 @@ class DiagonalPolynomialRing(IsomorphicObject):
                 sage: p.multi_polarization([1,2,0], 2)
                 6*x10*x11*x20
             """
-            n = self.parent().ncolumns()
+            n = self.parent().ncols()
             r = self.parent().nrows()
-            X = self.parent().variables()
+            X = self.parent().derivative_variables()
             D = tuple(D)
             if i2>=r:
                 return None
@@ -756,8 +780,6 @@ def e(i):
     """
     # TODO NICOLAS add documentation
     """
-    if i==None:
-        i=P
     return attrcall("polarization", i1=i, i2=i+1, d=1)
 
 def f(i):
@@ -816,10 +838,22 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         DiagonalPolynomialRing.__init__(self, R, n, r, inert=inert)
         self._antisymmetries = antisymmetries
         
+    def _repr_(self):
+        return "Diagonal antisymmetric polynomial ring with %s rows of %s variables over %s with antisymmetries %s"%(self._r, self._n, self.base_ring(), self.antisymmetries())
+        
     def antisymmetries(self):
         return self._antisymmetries
         
+    def set_antisymmetries(self, antisymmetries):
+        self._antisymmetries = antisymmetries
+        
     class Element(DiagonalPolynomialRing.Element):
+        def antisymmetries(self):
+            return self.parent().antisymmetries()
+            
+        def set_antisymmetries(self, antisymmetries):
+            self.parent().set_antisymmetries(antisymmetries)
+        
         def polarization(self, i1, i2, d, row_symmetry=None):
             """
             Return the polarization `P_{d,i_1,i_2}` of `self`. 
@@ -853,7 +887,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
                 -12*x00*x01*x10 - 6*x00^2*x11
             """
             antisymmetries = self.parent().antisymmetries()
-            n = self.parent().ncolumns()
+            n = self.parent().ncols()
             r = self.parent().nrows()
             inert = self.parent().ninert()
             result = super(DiagonalAntisymmetricPolynomialRing.Element, self).polarization(i1, i2, d, row_symmetry=row_symmetry)
@@ -877,7 +911,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
                     -2*x00*x01*x10 + x01^2*x10 + 2*x00*x02*x10 - x00^2*x11 + 2*x00*x01*x11 + x00^2*x12
             """
             antisymmetries = self.parent().antisymmetries()
-            n = self.parent().ncolumns()
+            n = self.parent().ncols()
             r = self.parent().nrows()
             inert = self.parent().ninert()
             result = super(DiagonalAntisymmetricPolynomialRing.Element, self).multi_polarization(D,i2)
@@ -890,7 +924,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
             """
             """
             antisymmetries = self.parent().antisymmetries()
-            n = self.parent().ncolumns()
+            n = self.parent().ncols()
             r = self.parent().nrows()
             inert = self.parent().ninert()
             result = super(DiagonalAntisymmetricPolynomialRing.Element, self).steenrod_op(i, k, row_symmetry=row_symmetry)
