@@ -237,7 +237,7 @@ class Subspace(object):
     def basis(self):
         self.finalize()
         basis = {}
-        for i,val in self._bases.iteritems() : 
+        for i, val in self._bases.iteritems() : 
             if val.vectors() != () :
                 basis[i] = val.vectors()
         #return sum((basis.vectors() for basis in self._bases.values()), ())

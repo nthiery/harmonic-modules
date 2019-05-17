@@ -14,7 +14,7 @@ from antisymmetric_utilities import *
 ##############################################################################
 
 
-def apply_young_idempotent(p, t, use_antisymmetry=False):
+def apply_young_idempotent(p, t):
     """
     Apply the Young idempotent indexed by `t` on the polynomial `p`
 
@@ -60,9 +60,12 @@ def apply_young_idempotent(p, t, use_antisymmetry=False):
     if isinstance(t, Partition):
         t = t.initial_tableau()
     p = sum(act(Permutation(sigma),p) for sigma in t.row_stabilizer() )
-    if use_antisymmetry:
+    if isinstance(p.parent(), DiagonalAntisymmetricPolynomialRing):
         antisymmetries = antisymmetries_of_tableau(t)
-        p = antisymmetric_normal(p, t.size(), 1, antisymmetries)
+        P = p.parent()
+        D = DiagonalAntisymmetricPolynomialRing(P._R,  P.ncols(), P.nrows(), P.ninert(), antisymmetries = antisymmetries)
+        p = reduce_antisymmetric_normal(p, t.size(), 1, antisymmetries)
+        p = D(p)
     else:
         p = sum(sigma.sign()*act(Permutation(sigma),p) for sigma in t.column_stabilizer() )
     return p
@@ -131,20 +134,4 @@ def make_deriv_comp_young(x, mu):
     """
     def f(p):
         return apply_young_idempotent(derivative(p,x), mu)
-    return f
-    
-def make_deriv_comp_young2(X, k, mu):
-    """
-    Return a function which corresponds to the operator $\sum_i X_i partial_{x_i}]^k$
-    composed with the young idempotent for the partition `mu`.
-
-    INPUT:
-        - `X` -- a set of variables
-        - `mu` -- a partition
-        - `k` -- an integer
-
-    EXAMPLES::
-    """
-    def f(p):
-        return apply_young_idempotent(sum(X[i]*p.derivative(X[i],k) for i in range(0,len(X))), mu)
     return f
