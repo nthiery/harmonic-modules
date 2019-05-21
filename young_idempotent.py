@@ -7,6 +7,7 @@ from sage.combinat.permutation import Permutation
 from sage.calculus.functional import derivative
 
 from antisymmetric_utilities import *
+from diagonal_polynomial_ring import *
 
 
 ##############################################################################
@@ -59,16 +60,17 @@ def apply_young_idempotent(p, t):
     """
     if isinstance(t, Partition):
         t = t.initial_tableau()
-    p = sum(act(Permutation(sigma),p) for sigma in t.row_stabilizer() )
+    res = sum(act(Permutation(sigma),p) for sigma in t.row_stabilizer())
     if isinstance(p.parent(), DiagonalAntisymmetricPolynomialRing):
         antisymmetries = antisymmetries_of_tableau(t)
         P = p.parent()
         D = DiagonalAntisymmetricPolynomialRing(P._R,  P.ncols(), P.nrows(), P.ninert(), antisymmetries = antisymmetries)
-        p = reduce_antisymmetric_normal(p, t.size(), 1, antisymmetries)
-        p = D(p)
+        res = P._P(res)
+        res = antisymmetric_normal(res, t.size(), 1, antisymmetries)
+        res = D(res)
     else:
-        p = sum(sigma.sign()*act(Permutation(sigma),p) for sigma in t.column_stabilizer() )
-    return p
+        res = sum(sigma.sign()*act(Permutation(sigma),res) for sigma in t.column_stabilizer())
+    return res
 
 def act(sigma,v) :
     """
@@ -99,28 +101,29 @@ def act(sigma,v) :
 
     """
 
-    X = v.parent().gens()
-    r = len(X)/len(sigma)
-    n = len(sigma)
+    X = v.parent().derivative_variables()
+    r = v.parent().nrows()
+    n = v.parent().ncols()
     sub = {}
     for j in range(0,r) :
-        sub.update({X[i+n*j]:X[sigma[i]-1+n*j] for i in range (0,n) if i!=sigma[i]-1})
+        sub.update({X[j,i]:X[j,sigma[i]-1] for i in range (0,n) if i!=sigma[i]-1})
     return v.subs(sub)
 
 def make_deriv_comp_young(x, mu):
     """
     Return a function which corresponds to a partial derivative in `x`
     composed with the young idempotent for the partition `mu`.
+    Delete this function?
 
     INPUT:
         - `x` -- a variable for the derivation
         - `mu` -- a partition
+        
 
     EXAMPLES::
-        sage: load("diagonal_polynomial_ring.py")
         sage: P = DiagonalPolynomialRing(QQ,3,3)
-        sage: X = P.algebra_generators()
-        sage: [make_deriv_comp_young(x,mu) for x in X[0] for mu in Partitions(3)] 
+        sage: X = P.variables() # not tested
+        sage: [make_deriv_comp_young(x,mu) for x in X[0] for mu in Partitions(3)]  # not tested
         [<function f at ...>,
          <function f at ...>,
          <function f at ...>,

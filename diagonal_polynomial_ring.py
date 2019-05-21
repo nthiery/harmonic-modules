@@ -15,6 +15,7 @@ from sage.rings.rational_field import QQ
 from sage.categories.algebras import Algebras
 from sage.categories.cartesian_product import cartesian_product
 from sage.combinat.words.word import Word
+from sage.matrix.constructor import matrix
 
 from isomorphic_object import *
 from polynomial_derivative import *
@@ -304,6 +305,10 @@ class DiagonalPolynomialRing(IsomorphicObject):
             v = self.parent()._P(self).exponents()[0]
             return self.parent().grading_set()([sum(v[n*i+j] for j in range(n))
                                       for i in range(r)])
+        
+        def subs(self, *args):
+            p = self.parent()._P(self)
+            return self.parent(p.subs(*args))
                                       
         def derivative(self, *args):
             p = self.parent()._P(self)
