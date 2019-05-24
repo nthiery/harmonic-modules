@@ -19,6 +19,7 @@ from sage.categories.algebras import Algebras
 from sage.categories.cartesian_product import cartesian_product
 from sage.functions.other import binomial
 from sage.combinat.words.word import Word
+from sage.matrix.constructor import matrix
 
 from isomorphic_object import *
 from polynomial_derivative import *
