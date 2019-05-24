@@ -312,6 +312,8 @@ class DiagonalPolynomialRing(IsomorphicObject):
                 sage: p = X[0,0]*X[0,1] * X[1,1]^3 * X[2,0]*X[2,1]^2 
                 sage: p.multidegree()
                 (2, 3)
+                
+            TODO : Add examples with inert variables
 
             """
             if not self:
@@ -340,7 +342,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             if list(d) != sorted(d, reverse=True):
                 s = reverse_sorting_permutation(d)
                 ss = self.parent().row_permutation(s)
-                result = act_on_polynomial(self.parent()._P(self), ss)
+                result = act_on_polynomial(self.lift(), ss)
             return self.parent()(result)
                                       
         def polarization(self, i1, i2, d, row_symmetry=None):
