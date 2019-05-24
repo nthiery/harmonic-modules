@@ -65,8 +65,8 @@ def apply_young_idempotent(p, t):
         antisymmetries = antisymmetries_of_tableau(t)
         P = p.parent()
         D = DiagonalAntisymmetricPolynomialRing(P._R,  P.ncols(), P.nrows(), P.ninert(), antisymmetries = antisymmetries)
-        res = P._P(res)
-        res = antisymmetric_normal(res, t.size(), 1, antisymmetries)
+        res = res.lift()
+        res = antisymmetric_normal(res, t.size(), 2, antisymmetries)
         res = D(res)
     else:
         res = sum(sigma.sign()*act(Permutation(sigma),res) for sigma in t.column_stabilizer())
@@ -101,12 +101,12 @@ def act(sigma,v) :
 
     """
 
-    X = v.parent().derivative_variables()
-    r = v.parent().nrows()
+    X = v.parent()._P.gens()
+    r = v.parent().nrows() + v.parent().ninert()
     n = v.parent().ncols()
     sub = {}
     for j in range(0,r) :
-        sub.update({X[j,i]:X[j,sigma[i]-1] for i in range (0,n) if i!=sigma[i]-1})
+        sub.update({X[j*n+i]:X[j*n+sigma[i]-1] for i in range (0,n) if i!=sigma[i]-1})
     return v.subs(sub)
 
 def make_deriv_comp_young(x, mu):

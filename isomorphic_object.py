@@ -56,8 +56,6 @@ class IsomorphicObject(UniqueRepresentation, Parent):
         
 
 """
-
-sage: %runfile isomorphic_object.py #not tested
 sage: P = PolynomialRing(QQ, ['x','y'])
 sage: PP = IsomorphicObject(P, Algebras(QQ))
 sage: x,y = PP.gens() 

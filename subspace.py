@@ -249,11 +249,6 @@ class Subspace(object):
     def dimensions(self):
         self.finalize()
         return {d: basis.cardinality() for d, basis in self._bases.iteritems()}
-        
-    def dimensions_isotyp(self):
-        self.finalize()
-        return {d: basis.cardinality() for d, basis in self._bases.iteritems() 
-                        if basis.cardinality() != 0}
 
     def matrix(self):
         self.finalize()

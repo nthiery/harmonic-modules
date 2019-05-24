@@ -36,13 +36,12 @@ class DiagonalPolynomialRing(IsomorphicObject):
 
         sage: P = DiagonalPolynomialRing(QQ, 4, 3)
         sage: P
-        The image by some isomorphism of Multivariate Polynomial Ring in x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23 over Rational Field
+        Diagonal Polynomial Ring with 3 rows of 4 variables over Rational Field
 
 
         sage: P = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
         sage: P
-        The image by some isomorphism of Multivariate Polynomial Ring in x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23, theta00, theta01, theta02, theta03 over Rational Field
-
+        Diagonal Polynomial Ring with 3 rows of 4 variables and inert variables over Rational Field
     """
     def __init__(self, R, n, r, inert=0):
         names = ["x%s%s"%(i,j) for i in range(r) for j in range(n)]+["theta%s%s"%(i,j) for i in range(inert) for j in range(n)]
@@ -57,8 +56,19 @@ class DiagonalPolynomialRing(IsomorphicObject):
         self._grading_set = cartesian_product([ZZ for i in range(r)])
         self._hilbert_parent = PolynomialRing(ZZ, r, 'q')
         
+        
+    def _element_constructor_(self, data):
+        if isinstance(data, DiagonalPolynomialRing.Element):
+            new_data = self._P(data.lift())
+        else:
+            new_data = self._P(data)
+        return self.element_class(self, new_data)
+        
     def _repr_(self):
-        return "Diagonal polynomial ring with %s rows of %s variables over %s"%(self._r, self._n, self.base_ring())
+        if self._inert ==0:
+            return "Diagonal Polynomial Ring with %s rows of %s variables over %s"%(self._r, self._n, self.base_ring())
+        else:
+            return "Diagonal Polynomial Ring with %s rows of %s variables and inert variables over %s"%(self._r, self._n, self.base_ring())
         
     def Q_gens(self):
         """
@@ -88,7 +98,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
         
     def grading_set(self):
         """
-        Return the grading set
+        Return the grading set.
         """
         return self._grading_set
         
@@ -102,8 +112,6 @@ class DiagonalPolynomialRing(IsomorphicObject):
         EXAMPLES ::
         
             sage: D = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
-            sage: D
-            The image by some isomorphism of Multivariate Polynomial Ring in x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23, theta00, theta01, theta02, theta03 over Rational Field
             sage: D.algebra_generators()
             [    x00     x01     x02     x03]
             [    x10     x11     x12     x13]
@@ -111,8 +119,6 @@ class DiagonalPolynomialRing(IsomorphicObject):
             [theta00 theta01 theta02 theta03]
             
             sage: D = DiagonalPolynomialRing(QQ, 4, 3)
-            sage: D
-            The image by some isomorphism of Multivariate Polynomial Ring in x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23 over Rational Field
             sage: D.algebra_generators()
             [x00 x01 x02 x03]
             [x10 x11 x12 x13]
@@ -206,13 +212,23 @@ class DiagonalPolynomialRing(IsomorphicObject):
         
     def monomial(self, *args):
         """
-        # TODO NICOLAS add documentation
+        Return the monomial with given exponents.
+        
+        EXAMPLES::
+            sage: P = DiagonalPolynomialRing(QQ, 3, 2)
+            sage: P.monomial(1,0,0,1,0,0)
+            x00*x10
+            sage: P.monomial(2,1,1,0,0,0)
+            x00^2*x01*x02
+            sage: P.monomial(0,0,0,2,0,0)
+            x10^2
+
         """
         return self(self._P.monomial(*args))
     
     def random_monomial(self, D):
         """
-        Return a random monomial of multidegree `D`
+        Return a random monomial of multidegree `D`.
 
         EXAMPLES::
 
@@ -307,8 +323,12 @@ class DiagonalPolynomialRing(IsomorphicObject):
                                       for i in range(r)])
         
         def subs(self, *args):
-            p = self.parent()._P(self)
+            p = self.lift()
             return self.parent(p.subs(*args))
+            
+        def factor(self, *args):
+            p = self.lift()
+            return p.factor(*args)
                                       
         def derivative(self, *args):
             p = self.parent()._P(self)
@@ -835,18 +855,47 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
 
     EXAMPLES::
 
-        sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3)
+        sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = Partition([2,1,1]))
         sage: P
-        The image by some isomorphism of Multivariate Polynomial Ring in x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23 over Rational Field
+        Diagonal Antisymmetric Polynomial Ring with 3 rows of 4 variables over Rational Field with antisymmetries ((0, 2, 3), (1,))
+    
+        sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 3, 3, inert=1, antisymmetries = Partition([1,1,1]))
+        sage: P
+        Diagonal Antisymmetric Polynomial Ring with 3 rows of 3 variables and inert variables over Rational Field with antisymmetries ((0, 1, 2),)
+
     """
     def __init__(self, R, n, r, inert=0, antisymmetries=None):
         DiagonalPolynomialRing.__init__(self, R, n, r, inert=inert)
-        self._antisymmetries = antisymmetries
+        if isinstance(antisymmetries, Partition):
+            self._antisymmetries = antisymmetries_of_tableau(antisymmetries.initial_tableau())
+        else:
+            self._antisymmetries = antisymmetries
         
     def _repr_(self):
-        return "Diagonal antisymmetric polynomial ring with %s rows of %s variables over %s with antisymmetries %s"%(self._r, self._n, self.base_ring(), self.antisymmetries())
+        if self._inert == 0:
+            return "Diagonal Antisymmetric Polynomial Ring with %s rows of %s variables over %s with antisymmetries %s"%(self._r, self._n, self.base_ring(), self.antisymmetries())
+        else:
+            return "Diagonal Antisymmetric Polynomial Ring with %s rows of %s variables and inert variables over %s with antisymmetries %s"%(self._r, self._n, self.base_ring(), self.antisymmetries())
         
     def antisymmetries(self):
+        """
+        Return the antisymmetries of `self`. 
+        
+        EXAMPLES ::
+            sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3, antisymmetries = Partition([2,1,1]))
+            sage: P.antisymmetries()
+            ((0, 2, 3), (1,)) 
+            
+            sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 4, 3)
+            sage: P.antisymmetries()
+            <BLANKLINE>
+            
+            sage: mu = Partition([3])
+            sage: antisym = antisymmetries_of_tableau(mu.initial_tableau())
+            sage: P = DiagonalAntisymmetricPolynomialRing(QQ, 3, 3, antisymmetries=antisym)
+            sage: P.antisymmetries()
+            ((0,), (1,), (2,))
+        """
         return self._antisymmetries
         
     def set_antisymmetries(self, antisymmetries):
@@ -854,6 +903,9 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         
     class Element(DiagonalPolynomialRing.Element):
         def antisymmetries(self):
+            """
+            Return the antisymmetries of `self`. 
+            """
             return self.parent().antisymmetries()
             
         def set_antisymmetries(self, antisymmetries):
@@ -862,7 +914,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         def polarization(self, i1, i2, d, row_symmetry=None):
             """
             Return the polarization `P_{d,i_1,i_2}` of `self`. 
-            The result is reduced with respect to the given antisymmetries. 
+            The result is reduced with respect to the ring antisymmetries. 
             
             EXAMPLES::
                 sage: mu = Partition([3])
@@ -903,7 +955,7 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         def multi_polarization(self, D, i2): 
             """
             Return the multi polarization `P_{D,i_2}` of `self`.
-            The result is reduced with respect to the given antisymmetries.
+            The result is reduced with respect to the ring antisymmetries.
             
             EXAMPLES::
                 sage: mu = Partition([2,1])
@@ -927,6 +979,8 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
             
         def steenrod_op(self, i, k, row_symmetry=None):
             """
+            Apply the Steenrod operator `St_i^k` to `self`. 
+            The result is reduced with respect to the ring antisymmetries.
             """
             antisymmetries = self.parent().antisymmetries()
             n = self.parent().ncols()

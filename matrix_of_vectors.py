@@ -113,7 +113,7 @@ class MatrixOfVectors:
         return m.stack(r)
 
     def add_vector(self, v):
-        """
+        """*
         Add `v` at the bottom of ``self``
         """
         self._stats["add_vector"] += 1
