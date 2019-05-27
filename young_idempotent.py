@@ -72,7 +72,7 @@ def apply_young_idempotent(p, t):
         res = sum(sigma.sign()*act(Permutation(sigma),res) for sigma in t.column_stabilizer())
     return res
 
-def act(sigma,v) :
+def act(sigma, v) :
     """
     Compute the action of the permutation sigma on the element v.
 

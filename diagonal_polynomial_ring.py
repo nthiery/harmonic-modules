@@ -259,7 +259,8 @@ class DiagonalPolynomialRing(IsomorphicObject):
         K = self.base_ring()
         return sum(K.random_element() * self.random_monomial(D)
                    for i in range(l))
-                
+                   
+    @cached_method            
     def row_permutation(self, sigma):
         """
         Return the permutation of the variables induced by a permutation of the rows
@@ -323,6 +324,9 @@ class DiagonalPolynomialRing(IsomorphicObject):
             v = self.parent()._P(self).exponents()[0]
             return self.parent().grading_set()([sum(v[n*i+j] for j in range(n))
                                       for i in range(r)])
+                                      
+        def degree(self):
+            return sum(self.multidegree())
         
         def subs(self, *args):
             p = self.lift()
@@ -335,14 +339,16 @@ class DiagonalPolynomialRing(IsomorphicObject):
         def derivative(self, *args):
             p = self.parent()._P(self)
             return self.parent()(p.derivative(*args))
-            
+        
+        @cached_method
         def apply_permutation(self):
             d = self.multidegree()
             d = tuple(d) + tuple(0 for i in range(self.parent().ninert()))
+            result = self.lift()
             if list(d) != sorted(d, reverse=True):
                 s = reverse_sorting_permutation(d)
                 ss = self.parent().row_permutation(s)
-                result = act_on_polynomial(self.lift(), ss)
+                result = act_on_polynomial(result, ss)
             return self.parent()(result)
                                       
         def polarization(self, i1, i2, d, row_symmetry=None):
@@ -377,7 +383,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             r = self.parent().nrows()
             X = self.parent().derivative_variables()
             if i1>=r or i2 >=r:
-                print "Row number out of range."
+                print "Row number out of range"
                 return None
             else:
                 result = sum(X[i2,j]*self.derivative(X[i1,j],d) for j in range(n))
