@@ -376,6 +376,7 @@ def add_degrees_symmetric(gen_deg,op_deg):
 # Polarization Space
 ##############################################################################
 
+@parallel
 def PolarizedSpace(S, operators, add_degrees=add_degrees_isotypic):
     """
     Polarize the subspace S with the given operators on the polynomial ring P. 
@@ -435,8 +436,12 @@ def PolarizedSpace(S, operators, add_degrees=add_degrees_isotypic):
         basis = S.basis()
         basis_element = basis.values().pop()[0]
         P1 = basis_element.parent()
-        r = len(operators.keys().pop())
-        row_symmetry = operators.values().pop()[0].kwds['row_symmetry']
+        if operators != {}:
+            r = len(operators.keys().pop())
+            row_symmetry = operators.values().pop()[0].kwds['row_symmetry']
+        else:
+            r=1
+            row_symmetry = None
         if row_symmetry == "permutation":
             add_degrees = add_degrees_symmetric
         D = cartesian_product([ZZ for i in range(r)])
@@ -696,7 +701,9 @@ def dimension(f, n):
 # Main function
 ############################################################################## 
 
-def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation"):
+@persist(hash=lambda k: 'character_%s_%s' % (k[0][1].size(),''.join(str(i) for i in k[0][1])),
+        funcname='character')
+def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=False):
     """
     Given a diagram `mu`, compute the character associated to this diagram.
     Compute the subspace span by the Vandermonde determinant associated to `mu`
@@ -729,12 +736,17 @@ def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation"):
     # Projection on isotypic components
     V_iso = IsotypicComponent(V, n, use_antisymmetry=use_antisymmetry)
     # Polarization
-    r = n-1
+    r = max(n-1, 1)
     deg = v.degree()
     if deg == 0:
         deg = 1
     op_pol = polarization_operators(r, deg, row_symmetry=row_symmetry)
-    V_pol = PolarizedSpace(V_iso, op_pol)
-    
-    # character
-    return character(V_pol, row_symmetry=row_symmetry)
+    if parallel:
+        charac = 0
+        for ((_,_),res) in PolarizedSpace([(subspace, op_pol) for subspace in V_iso.values()]):
+            # character
+            charac += character(V_pol, row_symmetry=row_symmetry)
+    else:
+        V_pol = PolarizedSpace(V_iso, op_pol)
+        # character
+        return character(V_pol, row_symmetry=row_symmetry)
