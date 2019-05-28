@@ -100,10 +100,14 @@ def act(sigma, v) :
         x1^2 + x0*x2 - x4
 
     """
-
-    X = v.parent()._P.gens()
-    r = v.parent().nrows() + v.parent().ninert()
-    n = v.parent().ncols()
+    if isinstance(v, DiagonalPolynomialRing.Element):
+        X = v.parent()._P.gens()
+        r = v.parent().nrows() + v.parent().ninert()
+        n = v.parent().ncols()
+    else:
+        X = v.parent().gens()
+        r = 1
+        n = len(X)
     sub = {}
     for j in range(0,r) :
         sub.update({X[j*n+i]:X[j*n+sigma[i]-1] for i in range (0,n) if i!=sigma[i]-1})
@@ -119,11 +123,10 @@ def make_deriv_comp_young(x, mu):
         - `x` -- a variable for the derivation
         - `mu` -- a partition
         
-
     EXAMPLES::
         sage: P = DiagonalPolynomialRing(QQ,3,3)
-        sage: X = P.variables() # not tested
-        sage: [make_deriv_comp_young(x,mu) for x in X[0] for mu in Partitions(3)]  # not tested
+        sage: X = P.derivative_variables()
+        sage: [make_deriv_comp_young(x,mu) for x in X[0] for mu in Partitions(3)] 
         [<function f at ...>,
          <function f at ...>,
          <function f at ...>,
@@ -133,7 +136,6 @@ def make_deriv_comp_young(x, mu):
          <function f at ...>,
          <function f at ...>,
          <function f at ...>]
-
     """
     def f(p):
         return apply_young_idempotent(derivative(p,x), mu)
