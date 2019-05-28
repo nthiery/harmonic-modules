@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from pypersist import persist
+
 from diagonal_polynomial_ring import*
 from subspace import*
 from young_idempotent import*

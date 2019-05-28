@@ -72,6 +72,7 @@ def apply_young_idempotent(p, t):
         res = sum(sigma.sign()*act(Permutation(sigma),res) for sigma in t.column_stabilizer())
     return res
 
+@cached_function
 def act(sigma, v) :
     """
     Compute the action of the permutation sigma on the element v.
@@ -81,7 +82,6 @@ def act(sigma, v) :
         - `v` -- a polynomial 
         
     EXAMPLES::
-    
         sage: P = PolynomialRing(QQ,5,'x')
         sage: X = P.gens()
         sage: X
