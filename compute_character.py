@@ -25,7 +25,7 @@ def vandermonde(gamma, r=0):
     - ``gamma`` -- A Partition or a Diagram
     
     OUtPUT:
-    - An element of a Diagonal Polynomial Ring in `r` rows of variables
+    - An element of a Diagonal Polynomial Ring in `r` rows of `n` variables
 
     EXAMPLES::
         sage: gamma = Diagram([(0,0),(1,0),(3,0)])
@@ -61,6 +61,25 @@ def partial_derivatives(P):
     INPUT:
     - `P` -- a diagonal polynomial ring
     
+    EXAMPLES::
+        sage: P = DiagonalPolynomialRing(QQ, 3, 1)
+        sage: partial_derivatives(P)
+        {(-1,): [*.derivative(x00), *.derivative(x01), *.derivative(x02)]}
+        sage: P = DiagonalPolynomialRing(QQ, 3, 2)
+        sage: partial_derivatives(P)
+        {(-1, 0): [*.derivative(x00), *.derivative(x01), *.derivative(x02)],
+         (0, -1): [*.derivative(x10), *.derivative(x11), *.derivative(x12)]}
+        sage: P = DiagonalPolynomialRing(QQ, 3, 1, inert=1)
+        sage: partial_derivatives(P)
+        {(-1,): [*.derivative(x00), *.derivative(x01), *.derivative(x02)]}
+
+        sage: v = vandermonde(Partition([2,1]))
+        sage: gen = {v.multidegree() : [v]}
+        sage: op = partial_derivatives(v.parent())
+        sage: Subspace(gen, op).basis()
+        {(0,): (theta01 - theta02, theta00 - theta02),
+         (1,): (x01*theta00 - x02*theta00 - x00*theta01 + x02*theta01 + x00*theta02 - x01*theta02,)}
+
     """
     n = P.ncols()
     r = P.nrows()
@@ -81,6 +100,31 @@ def polarization_operators(r, max_deg=1, side=None, row_symmetry=None):
     - `max_deg` -- an integer
     - `row_symmetry` -- "permutation" (only implemented case)
     
+    EXAMPLES::
+        sage: polarization_operators(2)
+        {(-1, 1): [*.polarization(i1=0, row_symmetry=None, i2=1, d=1)],
+         (1, -1): [*.polarization(i1=1, row_symmetry=None, i2=0, d=1)]}
+        sage: polarization_operators(2, max_deg=3)
+        {(-3, 1): [*.polarization(i1=0, row_symmetry=None, i2=1, d=3)],
+         (-2, 1): [*.polarization(i1=0, row_symmetry=None, i2=1, d=2)],
+         (-1, 1): [*.polarization(i1=0, row_symmetry=None, i2=1, d=1)],
+         (1, -3): [*.polarization(i1=1, row_symmetry=None, i2=0, d=3)],
+         (1, -2): [*.polarization(i1=1, row_symmetry=None, i2=0, d=2)],
+         (1, -1): [*.polarization(i1=1, row_symmetry=None, i2=0, d=1)]}
+        sage: polarization_operators(2, max_deg=3, side="down")
+        {(-3, 1): [*.polarization(i1=0, row_symmetry=None, i2=1, d=3)],
+         (-2, 1): [*.polarization(i1=0, row_symmetry=None, i2=1, d=2)],
+         (-1, 1): [*.polarization(i1=0, row_symmetry=None, i2=1, d=1)]}
+
+        sage: v = vandermonde(Partition([2,1]), 2)
+        sage: gen = {v.multidegree() : [v]}
+        sage: op = partial_derivatives(v.parent())
+        sage: S = Subspace(gen, op)
+        sage: polarizators = polarization_operators(2, max_deg=v.degree())
+        sage: Subspace(S.basis(), polarizators).basis()
+        {(0, 0): (-theta00 + theta01, -theta00 + theta02),
+         (0, 1): (-x11*theta00 + x12*theta00 + x10*theta01 - x12*theta01 - x10*theta02 + x11*theta02,),
+         (1, 0): (x01*theta00 - x02*theta00 - x00*theta01 + x02*theta01 + x00*theta02 - x01*theta02,)}
     """
     D = cartesian_product([ZZ for i in range(r)])
     return {D([-d if i==i1 else 1 if i==i2 else 0 for i in range(r)]):
@@ -101,6 +145,23 @@ def steenrod_operators(r, degree=1, row_symmetry=None):
     - `degree` -- an integer
     - `row_symmetry` -- "permutation" (only implemented case)
     
+    EXAMPLES ::
+        sage: steenrod_operators(2)
+        {(-1, 0): [*.steenrod_op(i=0, row_symmetry=None, k=2)],
+         (0, -1): [*.steenrod_op(i=1, row_symmetry=None, k=2)]}
+        sage: steenrod_operators(2, 2)
+        {(-2, 0): [*.steenrod_op(i=0, row_symmetry=None, k=3)],
+         (0, -2): [*.steenrod_op(i=1, row_symmetry=None, k=3)]}
+
+        sage: v = vandermonde(Diagram([(0,0),(1,0),(3,0)]))
+        sage: v
+        -x00^3*x01 + x00*x01^3 + x00^3*x02 - x01^3*x02 - x00*x02^3 + x01*x02^3
+        sage: gen = {v.multidegree() : [v]}
+        sage: op = merge(steenrod_operators(1,1), steenrod_operators(1,2))
+        sage: Subspace(gen, op).basis()
+        {(3,): (-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2,),
+         (4,): (-x00^3*x01 + x00*x01^3 + x00^3*x02 - x01^3*x02 - x00*x02^3 + x01*x02^3,)}
+
     """
     D = cartesian_product([ZZ for i in range(r)])
     op = {}
@@ -109,9 +170,9 @@ def steenrod_operators(r, degree=1, row_symmetry=None):
             attrcall("steenrod_op", i=i, k=degree+1, row_symmetry=row_symmetry)]
     return op
 
-def symmetric_derivatives(r, list_deg, row_symmetry=None):
+def symmetric_derivatives(list_deg, row_symmetry=None):
     """
-    Return the symmetric derivative functions in `r` sets of variables for the 
+    Return the symmetric derivative functions for the 
     degree listed in `list_deg`.
     
     INPUT:
@@ -119,7 +180,21 @@ def symmetric_derivatives(r, list_deg, row_symmetry=None):
     - `list_deg` -- a list of tuples
     - `row_symmetry` -- "permutation" (only implemented case)
     
+    EXAMPLES::
+        sage: list_deg = [(i,j) for i in range(3) for j in range(3) if i+j>0]
+        sage: list_deg
+        [(0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
+        sage: symmetric_derivatives(list_deg)
+        {(-2, -2): [*.symmetric_derivative(row_symmetry=None, d=(2, 2))],
+         (-2, -1): [*.symmetric_derivative(row_symmetry=None, d=(2, 1))],
+         (-2, 0): [*.symmetric_derivative(row_symmetry=None, d=(2, 0))],
+         (-1, -2): [*.symmetric_derivative(row_symmetry=None, d=(1, 2))],
+         (-1, -1): [*.symmetric_derivative(row_symmetry=None, d=(1, 1))],
+         (-1, 0): [*.symmetric_derivative(row_symmetry=None, d=(1, 0))],
+         (0, -2): [*.symmetric_derivative(row_symmetry=None, d=(0, 2))],
+         (0, -1): [*.symmetric_derivative(row_symmetry=None, d=(0, 1))]}
     """
+    r = len(list_deg[0])
     D = cartesian_product([ZZ for i in range(r)])
     return {D(-i for i in d) : [attrcall("symmetric_derivative", d=d, row_symmetry=row_symmetry)] 
             for d in list_deg}
@@ -187,7 +262,32 @@ def IsotypicComponent(S, arg, use_antisymmetry=False):
         - A dict of Suspaces, one Subspace for each isotypic component
         
     EXAMPLES::
-    
+        sage: v = vandermonde(Partition([3]))
+        sage: gen = {v.multidegree() : [v]}
+        sage: gen
+        {(3,): [-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2]}
+        sage: deriv = partial_derivatives(v.parent())
+        sage: S = Subspace(gen, deriv)
+        sage: S.basis()
+        {(0,): (1,),
+         (1,): (x00 - x02, x01 - x02),
+         (2,): (x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2,
+          -2*x00*x01 + x01^2 + 2*x00*x02 - x02^2),
+         (3,): (-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2,)}
+        sage: V = IsotypicComponent(S, 3)
+        sage: for value in V.values():
+        ....:     print(value.basis())
+        {((3,), (1, 1, 1)): (-x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2,)}
+        {((0,), (3,)): (1,)}
+        {((2,), (2, 1)): (x00^2 - 2*x00*x01 + 2*x01*x02 - x02^2,), ((1,), (2, 1)): (x00 - x02,)}
+        
+        sage: V = IsotypicComponent(S, 3, use_antisymmetry=True)
+        sage: for value in V.values():
+        ....:     print(value.basis())
+        {((3,), (1, 1, 1)): (x00^2*x01,)}
+        {((0,), (3,)): (1,)}
+        {((2,), (2, 1)): (x00^2 - 2*x00*x01,), ((1,), (2, 1)): (x00,)}
+
     """
     if isinstance(arg, Partition):
         list_partitions = [arg]
@@ -276,7 +376,7 @@ def add_degrees_symmetric(gen_deg,op_deg):
 
 def PolarizedSpace(S, operators, add_degrees=add_degrees_isotypic):
     """
-    Polarized the subspace S with the given operators on the polynomial ring P. 
+    Polarize the subspace S with the given operators on the polynomial ring P. 
     
     INPUT:
     - ``P`` -- a polynomial ring
@@ -285,6 +385,46 @@ def PolarizedSpace(S, operators, add_degrees=add_degrees_isotypic):
     - ``add_degrees`` -- a function that will be used to determine the degrees of the elements computed
     
     EXAMPLES::
+        sage: v = vandermonde(Partition([3]))
+        sage: gen = {v.multidegree() : [v]}
+        sage: deriv = partial_derivatives(v.parent())
+        sage: S = Subspace(gen, deriv)
+        sage: V = IsotypicComponent(S, 3)
+        sage: polarizators = polarization_operators(2, max_deg=v.degree())
+        sage: P = PolarizedSpace(V, polarizators)
+        sage: for value in P.values():
+        ....:     print(value.basis())
+        {((2, 1), (1, 1, 1)): (-x00*x01*x10 + 1/2*x01^2*x10 + x00*x02*x10 - 1/2*x02^2*x10 - 1/2*x00^2*x11 + x00*x01*x11 - x01*x02*x11 + 1/2*x02^2*x11 + 1/2*x00^2*x12 - 1/2*x01^2*x12 - x00*x02*x12 + x01*x02*x12,), ((1, 1), (1, 1, 1)): (-x01*x10 + x02*x10 + x00*x11 - x02*x11 - x00*x12 + x01*x12,), ((3, 0), (1, 1, 1)): (x00^2*x01 - x00*x01^2 - x00^2*x02 + x01^2*x02 + x00*x02^2 - x01*x02^2,), ((1, 2), (1, 1, 1)): (-1/2*x01*x10^2 + 1/2*x02*x10^2 - x00*x10*x11 + x01*x10*x11 + 1/2*x00*x11^2 - 1/2*x02*x11^2 + x00*x10*x12 - x02*x10*x12 - x01*x11*x12 + x02*x11*x12 - 1/2*x00*x12^2 + 1/2*x01*x12^2,), ((0, 3), (1, 1, 1)): (x10^2*x11 - x10*x11^2 - x10^2*x12 + x11^2*x12 + x10*x12^2 - x11*x12^2,)}
+        {((0, 0), (3,)): (1,)}
+        {((0, 2), (2, 1)): (1/2*x10^2 - x10*x11 + x11*x12 - 1/2*x12^2,), ((0, 1), (2, 1)): (x10 - x12,), ((1, 0), (2, 1)): (x00 - x02,), ((2, 0), (2, 1)): (-1/2*x00^2 + x00*x01 - x01*x02 + 1/2*x02^2,), ((1, 1), (2, 1)): (x00*x10 - x01*x10 - x00*x11 + x02*x11 + x01*x12 - x02*x12,)}
+
+        sage: V = IsotypicComponent(S, 3, use_antisymmetry=True)
+        sage: P = PolarizedSpace(V, polarizators)
+        sage: for value in P.values():
+        ....:     print(value.basis())
+        {((2, 1), (1, 1, 1)): (x00*x01*x10 + 1/2*x00^2*x11,), ((1, 1), (1, 1, 1)): (x00*x11,), ((3, 0), (1, 1, 1)): (x00^2*x01,), ((1, 2), (1, 1, 1)): (x00*x10*x11 - 1/2*x00*x11^2,), ((0, 3), (1, 1, 1)): (x10^2*x11,)}
+        {((0, 0), (3,)): (1,)}
+        {((0, 2), (2, 1)): (-1/2*x10^2 + x10*x11,), ((0, 1), (2, 1)): (x10,), ((1, 0), (2, 1)): (x00,), ((2, 0), (2, 1)): (-1/2*x00^2 + x00*x01,), ((1, 1), (2, 1)): (x00*x10 - x01*x10 - x00*x11,)}
+        
+        sage: v = vandermonde(Partition([2,1]))
+        sage: gen = {v.multidegree(): [v]}
+        sage: deriv = partial_derivatives(v.parent())
+        sage: S = Subspace(gen, deriv)
+        sage: V = IsotypicComponent(S, 3, use_antisymmetry=True)
+        sage: polarizators = polarization_operators(2, max_deg=v.degree())
+        sage: P = PolarizedSpace(V, polarizators)
+        sage: for value in P.values():
+        ....:     print(value.basis())
+        {((0, 1), (1, 1, 1)): (x10*theta01,), ((1, 0), (1, 1, 1)): (x00*theta01,)}
+        {((0, 0), (2, 1)): (theta00,)}
+        
+        sage: polarizators = polarization_operators(2, max_deg=v.degree(), row_symmetry="permutation")
+        sage: P = PolarizedSpace(V, polarizators)
+        sage: for value in P.values():
+        ....:     print(value.basis())
+        {((1, 0), (1, 1, 1)): (x00*theta01,)}
+        {((0, 0), (2, 1)): (theta00,)}
+
     """
     if isinstance(S, dict):
         return {key : PolarizedSpace(value, operators, add_degrees=add_degrees)
@@ -293,8 +433,8 @@ def PolarizedSpace(S, operators, add_degrees=add_degrees_isotypic):
         basis = S.basis()
         basis_element = basis.values().pop()[0]
         P1 = basis_element.parent()
-        r = len(op_pol.keys().pop())
-        row_symmetry = op_pol.values().pop()[0].kwds['row_symmetry']
+        r = len(operators.keys().pop())
+        row_symmetry = operators.values().pop()[0].kwds['row_symmetry']
         if row_symmetry == "permutation":
             add_degrees = add_degrees_symmetric
         D = cartesian_product([ZZ for i in range(r)])
@@ -353,16 +493,31 @@ def Range(S, operators, add_degrees=add_degrees_isotypic):
 def character(S, left_basis=s, right_basis=s, row_symmetry=None):
     """
     Return the bicharacter of the subspace `S` into the given bases. The subspace `S`
-    must be a multivariate polynomial subspace on `r` sets of `n` variables. 
+    must be a multivariate polynomial subspace projected on isotypic components of `S_n` 
+    or a dictionnary of subspaces projected on isotypic components.  
     
     INPUT:
-    - ``S`` -- a subspace
-    - ``n``, ``r`` -- integers
+    - ``S`` -- a subspace or a dictionnary of subspaces
     - ``left_basis`` -- a basis of the symmetric functions for the $GL_r$-character
     - ``right_basis`` -- a basis of the symmetric functions for the $S_n$-character
     - ``row_symmetry`` -- use "permutation" to compute using the symmetries on rows
     
     EXAMPLES::
+        sage: v = vandermonde(Partition([2,2]))
+        sage: gen = {v.multidegree(): [v]}
+        sage: op = partial_derivatives(v.parent())
+        sage: V = Subspace(gen, op)
+        sage: V_iso = IsotypicComponent(V, 4, use_antisymmetry=True)
+        sage: op_pol = polarization_operators(2, max_deg = v.degree())
+        sage: V_pol = PolarizedSpace(V_iso, op_pol)
+        sage: character(V_pol)
+        s[] # s[2, 2] + s[1] # s[2, 1, 1] + s[2] # s[1, 1, 1, 1]
+        
+        sage: op_pol = polarization_operators(2, max_deg = v.degree(), row_symmetry="permutation")
+        sage: V_pol = PolarizedSpace(V_iso, op_pol)
+        sage: character(V_pol, row_symmetry="permutation")
+        s[] # s[2, 2] + s[1] # s[2, 1, 1] + s[2] # s[1, 1, 1, 1]
+
     """
     if isinstance(S, dict):
         return sum(character(V,
@@ -416,7 +571,8 @@ def character(S, left_basis=s, right_basis=s, row_symmetry=None):
 def character_quotient(M, N, n, r, left_basis=s, right_basis=s):
     """
     Compute the difference of bicharacter between the subspaces `M` and `N`.
-    They have to be subspaces of multivariate polynomials on `r` sets of `n` variables. 
+    They have to be subspaces of multivariate polynomials projected on 
+    isotypic components of `S_n`. 
     
     INPUT:
     - ``M``, ``N`` -- subspaces
@@ -473,6 +629,19 @@ def factorise(f, n):
     INPUT:
     - ``f`` -- a sum of tensor products on symmetric functions
     - ``n`` -- an Integer
+    
+    EXAMPLES::
+    sage: factorise(compute_character(Partition([3,1])), 4)
+    [3, 1]
+    <html><script type="math/tex">\newcommand{\Bold}[1]{\mathbf{#1}}s_{}</script></html>
+    [1, 1, 1, 1]
+    <html><script type="math/tex">\newcommand{\Bold}[1]{\mathbf{#1}}s_{1,1} + s_{3}</script></html>
+    [2, 2]
+    <html><script type="math/tex">\newcommand{\Bold}[1]{\mathbf{#1}}s_{1}</script></html>
+    [2, 1, 1]
+    <html><script type="math/tex">\newcommand{\Bold}[1]{\mathbf{#1}}s_{1} + s_{2}</script></html>
+
+
     """
     SymmetricFunctions(QQ).s()
     supp = sorted(f.support())
@@ -498,6 +667,15 @@ def dimension(f, n):
     INPUT:
     - ``f`` -- a sum of tensor products on symmetric functions
     - ``n`` -- an Integer
+    
+    
+    EXAMPLES::
+        sage: f = compute_character(Partition([3,1]))
+        sage: dimension(f, 4)
+        [((3, 1), 1), ((1, 1, 1, 1), 1), ((2, 2), 1), ((2, 1, 1), 2)]
+        sage: dimension(compute_character(Partition([3])),3)
+        [((1, 1, 1), 1), ((3,), 1), ((2, 1), 2)]
+
     """
     supp = sorted(f.support())
     result = {}
@@ -507,7 +685,7 @@ def dimension(f, n):
         for (a, b), c in zip(supp, f.coefficients()):
             if b == mu :
                 result[mu] += [(a,c)]
-    result2 = [(mu,sum(c*s(nu) for (nu,c) in result[mu]).expand(1, alphabet=['q'])) for mu in result.keys()]
+    result2 = [(mu,sum(c*s(nu) for (nu,c) in result[mu]).expand(1, alphabet=['q'])) for mu in result.keys() if result[mu]!=[]]
     q = result2[0][1].parent().gens()[0]
     return [(tuple(a), b.subs({q:1})) for a,b in result2]
 
@@ -517,6 +695,28 @@ def dimension(f, n):
 ############################################################################## 
 
 def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation"):
+    """
+    Given a diagram `mu`, compute the character associated to this diagram.
+    Compute the subspace span by the Vandermonde determinant associated to `mu`
+    and closed by partial derivatives and polarization, and return its bicaracter.
+    If `use_antisymmetry` is `True`, use the optimisation on antisymmetries, and if
+    `row_symmetry` is "permutation", use the optimisation on row permutation. 
+    
+    INPUT:
+    - ``mu`` -- a Partition or a Diagram
+    - ``use_antisymmetry`` -- a boolean
+    - ``row_symmetry`` -- only implemented case "permutation" 
+    
+    EXAMPLES::
+        sage: compute_character(Partition([2,1,1]))
+        s[] # s[2, 1, 1] + s[1] # s[1, 1, 1, 1]
+        sage: for mu in Partitions(3):
+        ....:     print(compute_character(mu))
+        s[] # s[3] + s[1] # s[2, 1] + s[1, 1] # s[1, 1, 1] + s[2] # s[2, 1] + s[3] # s[1, 1, 1]
+        s[] # s[2, 1] + s[1] # s[1, 1, 1]
+        s[] # s[1, 1, 1]
+
+    """
     n = Integer(mu.size())
     # Determinant computation
     v = vandermonde(mu)
