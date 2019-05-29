@@ -376,7 +376,6 @@ def add_degrees_symmetric(gen_deg,op_deg):
 # Polarization Space
 ##############################################################################
 
-@parallel
 def PolarizedSpace(S, operators, add_degrees=add_degrees_isotypic):
     """
     Polarize the subspace S with the given operators on the polynomial ring P. 
@@ -573,6 +572,14 @@ def character(S, left_basis=s, right_basis=s, row_symmetry=None):
             if charac_nu != 0:
                 charac += tensor([charac_nu, right_basis(s(nu))])
         return charac
+        
+@parallel
+def ParallelCharacter(S, operators, row_symmetry="permutation", add_degrees=add_degrees_isotypic):
+    V = PolarizedSpace(S, operators, add_degrees=add_degrees)
+    charac = character(V, row_symmetry=row_symmetry)
+    print charac
+    print {tuple(support): coef for support, coef in charac}
+    return {tuple(support): coef for support, coef in charac}
     
     
 def character_quotient(M, N, n, r, left_basis=s, right_basis=s):
@@ -703,7 +710,7 @@ def dimension(f, n):
 
 #@persist(hash=lambda k: 'character_%s_%s' % (k[0][1].size(),''.join(str(i) for i in k[0][1])),
 #        funcname='character')
-def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=True):
+def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=False):
     """
     Given a diagram `mu`, compute the character associated to this diagram.
     Compute the subspace span by the Vandermonde determinant associated to `mu`
@@ -743,7 +750,7 @@ def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation", par
     op_pol = polarization_operators(r, deg, row_symmetry=row_symmetry)
     if parallel:
         charac = 0
-        for (((_,_),_), V_pol) in PolarizedSpace([(subspace, op_pol) for subspace in V_iso.values()]):
+        for (((_,_),_), V_pol) in ParallelCharacter([(subspace, op_pol) for subspace in V_iso.values()]):
             print "test parall"
             print V_pol
             print
