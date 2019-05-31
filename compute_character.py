@@ -708,8 +708,8 @@ def dimension(f, n):
 # Main function
 ############################################################################## 
 
-#@persist(hash=lambda k: 'character_%s_%s' % (k[0][1].size(),''.join(str(i) for i in k[0][1])),
-#        funcname='character')
+@persist(hash=lambda k: 'character_%s_%s' % (k[0][1].size(),''.join(str(i) for i in k[0][1])),
+        funcname='character')
 def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=False):
     """
     Given a diagram `mu`, compute the character associated to this diagram.
