@@ -46,6 +46,7 @@
 \newtheorem{lemme}{Lemma}
 \newtheorem{coroll}{Corollary}
 \newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
 
 
 %Tableaux
@@ -139,7 +140,7 @@
 		Diagonal harmonic polynomials $\harmonics_{n,r}$ are obtained by polarization of harmonic polynomials $\harmonics_{n,1}$ in the first set of variables.
 	\end{theorem}
 	
-	Therorem \ref{DiagHarm} has been proven for two sets of variables. It is not proven yet for more than two sets of variables but it has been verified by calculation for a large number of sets of variables so we assume it to be true since we will never reach that number of sets in our case.  \\
+	Therorem \ref{DiagHarm} has been proven for two sets of variables. It is not proven yet for more than two sets of variables but it has been verified by calculation by Mike Zabrocki for a large number of sets of variables so we assume it to be true (since we will never reach that number of sets in our case).  \\
 	
 	The diagonal harmonics $\harmonics_{n,r}$ have been studied a lot until now. The character in the case $r=2$ is due to Garsia and Haiman (see \cite{GarsiaHaiman1993}) and some progress in the case $r=3$ had recently been made by Bergeron and Préville-Ratelle (see \cite{BergeronPreville2012}), but the general case is still unknown. Therefore, the computation of those characters should lead to a better understanding of those spaces. 
 	
@@ -196,21 +197,22 @@
 	
 	\subsection{Exploiting representations of the symmetric group}
 	
-	The polarization operators, ie the action of $\GLr$, commute with the action of $\Sn$. Therefore, we can compute independently each $\Sn$ isotypic component of $\harmonics_{n,r}$ by starting from a basis of harmonic polynomials that itself is adapted to its decomposition into isotypic components:
-	$$\harmonics_{n}=:\bigoplus_\lambda \harmonics^\lambda\,.$$
+	First of all, we need an efficient way to compute the representations of $\Sn$. To do that, we will use an isotypic projector to obtain the isotypic components of $\Sn$ and from that we will be able to recover the irreducible characters of $\Sn$ and their multiplicities. 
+	The isotypic projector we use is called the Young symmetrizer and is define as follow.
 	
-	In practice, first we compute $\harmonics_{n}$ and decompose it into isotypic components using the Young symmetrizer. Then we use the polarization operators to obtain the isotypic components of $\harmonics_{n,r}$ from those of $\harmonics_{n}$. \\
-	
-	To define the Young symmetrizer, we first need to define two elements of the symmetric group algebra $\CC \Sn$. Let $P_{\lambda}$ be the subgroup of $\Sn$ of all row preserving permutations and $Q_{\lambda}$ the subgroup of the columns preserving permutations. Then we have $a_{\lambda} = \sum_{\sigma \in P_{\lambda}} \sigma$ and  $b_{\lambda} = \sum_{\sigma \in P_{\lambda}} \sgn(\sigma) \sigma$. Finally, the Young symmetrizer is the element $$c_{\lambda} = a_{\lambda} b_{\lambda}.$$
+	We first need to define two elements of the symmetric group algebra $\CC \Sn$. Let $P_{\lambda}$ be the subgroup of $\Sn$ of all row preserving permutations of $\lambda$ and $Q_{\lambda}$ the subgroup of the columns preserving permutations of $\lambda$. Then we have $a_{\lambda} = \sum_{\sigma \in P_{\lambda}} \sigma$ and  $b_{\lambda} = \sum_{\sigma \in P_{\lambda}} \sgn(\sigma) \sigma$. Finally, the Young symmetrizer is the element $$c_{\lambda} = a_{\lambda} b_{\lambda}.$$
 	
 	\begin{theorem} \cite{FultonHarris1991}
 		The Young symmetrizer $c_{\lambda}$ is idempotent up to a scalar and the image of $c_{\lambda}$ by right multiplication on $\CC \Sn$ is an irreducible representation $V_{\lambda}$ of $\Sn$.
 		Thus any irreducible representation can be obtain this way for a unique partition. 
 	\end{theorem}
-
-	This theorem guarantees that $c_{\lambda}$ is an isotypic projector and that applying it on the elements of $\harmonics_{n}$ gives representatives of the isotypic components of $\Sn$. \pauline{Do we need to prove explicitly commutation with symmetric operators?}
 	
-	As mentioned above, since the action of $\GLr$ and $\Sn$ commutes, at this stage we only have to apply the polarization operators on each isotypic component independently to be able to compute the bicharacter. \\
+	This theorem guarantees that $c_{\lambda}$ is an isotypic projector and that applying it on the elements of $\harmonics_{n}$ gives representatives of the isotypic components of $\Sn$. \pauline{Do we need to prove explicitly commutation with symmetric operators?}  \\
+	
+	The action of $\GLr$ commutes with the action of $\Sn$. Therefore, we can compute independently each $\Sn$ isotypic component of $\harmonics_{n,r}$ by starting from a basis of harmonic polynomials that itself is adapted to its decomposition into isotypic components:
+	$$\harmonics_{n}=:\bigoplus_\lambda \harmonics^\lambda\,.$$
+	
+	In practice, since the polarization operators commute with the Young symmetrizer, we first compute $\harmonics_{n}$ and decompose it into isotypic components using the Young symmetrizer. Then we use the polarization operators to obtain the isotypic components of $\harmonics_{n,r}$ from those of $\harmonics_{n}$. \\
 		
 	In fact we can do better.
 	
@@ -221,17 +223,28 @@
 	
 	Remark: For a fixed tableau $P$, denote by $\harmonics_k^P$ the space spanned by the higher Specht polynomials $(G_{P,Q})_Q$ under polarization. It's exactly the image of $\harmonics_n$ under the Young idempotent associated to $P$. For a given shape $\lambda$, the $\harmonics_k^P$ are all conjugate under $\Sn$, and their direct sum is the isotypic component $\harmonics_k^\lambda$.
 	
-	To conclude, it is sufficient to compute $\harmonics_k^P$ for one tableau of each shape $\lambda$. This reduces the complexity by the square of the number of standard tableaux of shape $\lambda$
+	To conclude, it is sufficient to compute $\harmonics_k^P$ for one tableau of each shape $\lambda$. This reduces the complexity by the square of the number of standard tableaux of shape $\lambda$.
 	
 	\subsection{Exploiting column antisymmetries}
 	
 	Specht polynomials tend to be big: in $6$ variables, the Vandermonde determinant has $6!=720$ monomials.
 	
-	But that's mostly because they are antisymmetric w.r.t. a large column stabilizer $S_P$. It's therefore sufficient to keep one representative monomial per $S_P$ orbit (and do some appropriate straightening whenever a new monomial is created). 
+	But that's mostly because they are anti-symmetric w.r.t. a large column stabilizer $S_P$. It's therefore sufficient to keep one representative monomial per $S_P$ orbit (and do some appropriate straightening whenever a new monomial is created). 
+	
+	Inside isotypic component, polynomials are anti-symmetric with respect to the type $\lambda$ of the component. This is due to the fact that applying the young symmetrizer $y_{\lambda}$ firt symmetrize the polynomial with respect to the row preserving permutations of $\lambda$ and then anti-symmetrize the result with respect to the column preserving permutations of $\lambda$.
+	
+	Thus it is sufficient to keep only a reduced form of the polynomials. 
+	
+	\begin{example}
+		$\Delta_{21} = -x_{2} \theta_{1} + x_{3} \theta_{1} + x_{1} \theta_{2} - x_{3} \theta_{2} - x_{1} \theta_{3} + x_{2} \theta_{3}$ is type $111$.
+		Reduce form : $x_1\theta_2$. \\
+		$\partial_{x_2}\Delta_{21} = -\theta_1 + \theta_3$ is type $21$. 
+		Reduce form : $-\theta_1$ 
+	\end{example} 
 	
 	This trick was already used by François for the polarizations of the Vandermonde (the diagram space). Using higher Specht polynomials further allowed  to generalize that optimization to each shape.
 	
-	**Gain**: in theory up to $n!$. In practice between one and two orders of magnitude due to the overhead of straightening monomials.
+	\textbf{Gain:} in theory up to $n!$. In practice between one and two orders of magnitude due to the overhead of straightening monomials.
 	
 	\subsection{Exploiting row symmetries}
 	
@@ -240,7 +253,14 @@
 	up to cycling of the rows. It is therefore sufficient, in principle, to compute homogeneous components with decreasing multidegree.
 	To achieve this, polarization operators can be tweaked: whenever the result of a polarization is not of decreasing multidegree, straighten it by applying an appropriate permutation of the rows. It can then easily be shown that those tweaked polarization operator properly generate the whole $\harmonics_k^P$ space from $\harmonics^P$.
 	
-	**Gain**: an order of magnitude; below are the total dimension of each $\harmonics_5^\lambda$ and its restriction to homogeneous components of decreasing multidegree:
+	\begin{example}
+		$x_1^2 - 2x_1x_2 + 2x_2x_3 - x_3^2 \in \mathcal{H}_{3}$ so $y_1^2 - 2y_1y_2 + 2y_2y_3 - y_3^2 \in \mathcal{H}_{3}$
+		
+		$-2x_{1} y_{1} y_{2} + x_{1} y_{2}^{2} \in \mathcal{H}_{3}$ so $-2y_{1} x_{1} x_{2} + y_{1} x_{2}^{2} \in \mathcal{H}_{3}$
+	\end{example}
+	
+	
+	\textbf{Gain:} an order of magnitude; below are the total dimension of each $\harmonics_5^\lambda$ and its restriction to homogeneous components of decreasing multidegree. 
 	
 	\subsection{Exploiting representations of $sl_k$}
 	
@@ -252,9 +272,9 @@
 	
 	We are currently exploring how to tweak the polarization operators to stabilize the space of highest weight vectors.
 	
-	**Current gain:** another order of magnitude; down from 3 days to 45 minutes for $\harmonics_5^{1^6}$
+	\textbf{Current gain:} another order of magnitude; down from 3 days to 45 minutes for $\harmonics_5^{1^6}$
 	
-	**Potential gain:** another order of magnitude, both in time and memory:
+	\textbf{Potential gain:} another order of magnitude, both in time and memory.
 	
 	\subsection{Exploiting the skew commutation of polarization operators}
 	
