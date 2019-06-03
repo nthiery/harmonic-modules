@@ -50,7 +50,7 @@ setup(
                ],
     cmdclass = {'test': SageTest}, # adding a special setup command for tests
     setup_requires   = ['sage-package'],
-    install_requires = ['sage-package', 'sphinx'],
+    install_requires = ['sage-package', 'sphinx', 'tqdm', 'RISE', 'pypersist'],
 
     ext_modules=cythonize([
         Extension('utilities',
