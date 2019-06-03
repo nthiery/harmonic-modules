@@ -10,7 +10,9 @@ from add_degree import*
 from diagram import*
 
 SymmetricFunctions(QQ).inject_shorthands(verbose=False)
-
+# Workaround #25491 which prevents early unpickling of tensor products
+# of symmetric functions
+HopfAlgebrasWithBasis.TensorProducts
 
 ##############################################################################
 # Vandermonde like determinant
@@ -709,7 +711,7 @@ def dimension(f, n):
 ############################################################################## 
 
 @persist(hash=lambda k: 'character_%s_%s' % (k[0][1].size(),''.join(str(i) for i in k[0][1])),
-        funcname='character')
+        funcname='truc')
 def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=False):
     """
     Given a diagram `mu`, compute the character associated to this diagram.
@@ -733,6 +735,8 @@ def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation", par
         s[] # s[1, 1, 1]
 
     """
+    print(mu)
+    return tensor([s[mu], s[mu]])
     n = Integer(mu.size())
     # Determinant computation
     v = vandermonde(mu)
