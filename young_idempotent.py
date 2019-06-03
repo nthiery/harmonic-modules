@@ -7,6 +7,7 @@ from sage.combinat.permutation import Permutation
 from sage.calculus.functional import derivative
 
 from antisymmetric_utilities import *
+from diagonal_polynomial_ring import *
 
 
 ##############################################################################
@@ -14,7 +15,7 @@ from antisymmetric_utilities import *
 ##############################################################################
 
 
-def apply_young_idempotent(p, t, use_antisymmetry=False):
+def apply_young_idempotent(p, t):
     """
     Apply the Young idempotent indexed by `t` on the polynomial `p`
 
@@ -59,15 +60,20 @@ def apply_young_idempotent(p, t, use_antisymmetry=False):
     """
     if isinstance(t, Partition):
         t = t.initial_tableau()
-    p = sum(act(Permutation(sigma),p) for sigma in t.row_stabilizer() )
-    if use_antisymmetry:
+    res = sum(act(Permutation(sigma),p) for sigma in t.row_stabilizer())
+    if isinstance(p.parent(), DiagonalAntisymmetricPolynomialRing):
         antisymmetries = antisymmetries_of_tableau(t)
-        p = antisymmetric_normal(p, t.size(), 1, antisymmetries)
+        P = p.parent()
+        D = DiagonalAntisymmetricPolynomialRing(P._R,  P.ncols(), P.nrows(), P.ninert(), antisymmetries = antisymmetries)
+        res = res.lift()
+        res = antisymmetric_normal(res, t.size(), 2, antisymmetries)
+        res = D(res)
     else:
-        p = sum(sigma.sign()*act(Permutation(sigma),p) for sigma in t.column_stabilizer() )
-    return p
+        res = sum(sigma.sign()*act(Permutation(sigma),res) for sigma in t.column_stabilizer())
+    return res
 
-def act(sigma,v) :
+@cached_function
+def act(sigma, v) :
     """
     Compute the action of the permutation sigma on the element v.
 
@@ -76,7 +82,6 @@ def act(sigma,v) :
         - `v` -- a polynomial 
         
     EXAMPLES::
-    
         sage: P = PolynomialRing(QQ,5,'x')
         sage: X = P.gens()
         sage: X
@@ -95,28 +100,32 @@ def act(sigma,v) :
         x1^2 + x0*x2 - x4
 
     """
-
-    X = v.parent().gens()
-    r = len(X)/len(sigma)
-    n = len(sigma)
+    if isinstance(v, DiagonalPolynomialRing.Element):
+        X = v.parent()._P.gens()
+        r = v.parent().nrows() + v.parent().ninert()
+        n = v.parent().ncols()
+    else:
+        X = v.parent().gens()
+        r = 1
+        n = len(X)
     sub = {}
     for j in range(0,r) :
-        sub.update({X[i+n*j]:X[sigma[i]-1+n*j] for i in range (0,n) if i!=sigma[i]-1})
+        sub.update({X[j*n+i]:X[j*n+sigma[i]-1] for i in range (0,n) if i!=sigma[i]-1})
     return v.subs(sub)
 
 def make_deriv_comp_young(x, mu):
     """
     Return a function which corresponds to a partial derivative in `x`
     composed with the young idempotent for the partition `mu`.
+    Delete this function?
 
     INPUT:
         - `x` -- a variable for the derivation
         - `mu` -- a partition
-
+        
     EXAMPLES::
-        sage: load("diagonal_polynomial_ring.py")
         sage: P = DiagonalPolynomialRing(QQ,3,3)
-        sage: X = P.algebra_generators()
+        sage: X = P.derivative_variables()
         sage: [make_deriv_comp_young(x,mu) for x in X[0] for mu in Partitions(3)] 
         [<function f at ...>,
          <function f at ...>,
@@ -127,24 +136,7 @@ def make_deriv_comp_young(x, mu):
          <function f at ...>,
          <function f at ...>,
          <function f at ...>]
-
     """
     def f(p):
         return apply_young_idempotent(derivative(p,x), mu)
-    return f
-    
-def make_deriv_comp_young2(X, k, mu):
-    """
-    Return a function which corresponds to the operator $\sum_i X_i partial_{x_i}]^k$
-    composed with the young idempotent for the partition `mu`.
-
-    INPUT:
-        - `X` -- a set of variables
-        - `mu` -- a partition
-        - `k` -- an integer
-
-    EXAMPLES::
-    """
-    def f(p):
-        return apply_young_idempotent(sum(X[i]*p.derivative(X[i],k) for i in range(0,len(X))), mu)
     return f

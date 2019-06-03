@@ -163,7 +163,7 @@ def antisymmetric_normal(p, int n, int r, tuple positions):
     An example with a collision in the result (failed at some point)::
 
         sage: R = DiagonalPolynomialRing(QQ, 3, 3)
-        sage: R._P.inject_variables()
+        sage: R.inject_variables()
         Defining x00, x01, x02, x10, x11, x12, x20, x21, x22
         sage: p1 = -2*x10*x11*x20 - 2*x10^2*x21 + 2*x10*x11*x21
         sage: antisymmetric_normal(p1, 3, 3, ((0,1,2),))

@@ -101,7 +101,7 @@ class MatrixOfVectors:
         R = self.ambient()
         unrank = self._unrank
         # TODO: this only works for polynomials!
-        return sum(v[i]* R.monomial(*unrank(i)) for i in range(len(v)))
+        return R.sum(v[i]* R.monomial(*unrank(i)) for i in range(len(v)))
 
     def vectors(self):
         return tuple(self.vector(v) for v in self._matrix)
@@ -113,7 +113,7 @@ class MatrixOfVectors:
         return m.stack(r)
 
     def add_vector(self, v):
-        """
+        """*
         Add `v` at the bottom of ``self``
         """
         self._stats["add_vector"] += 1

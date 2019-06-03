@@ -11,9 +11,7 @@ from sage.rings.semirings.non_negative_integer_semiring import NN
 from sage.rings.rational_field import QQ
 from sage.combinat.free_module import CombinatorialFreeModule
 
-
 from matrix_of_vectors import *
-from young_idempotent import *
 
 
 class Subspace(object):
@@ -135,6 +133,7 @@ class Subspace(object):
         sage: F.hilbert_polynomial()
         q^3 + 2*q^2 + 2*q + 1
 
+        sage: load("young_idempotent.py")
         sage: P = QQ['x,y,z,t']
         sage: x,y,z,t = P.gens()
         sage: Delta = apply_young_idempotent(x^3*y^2*z, Partition([1,1,1,1]))
@@ -237,7 +236,7 @@ class Subspace(object):
     def basis(self):
         self.finalize()
         basis = {}
-        for i,val in self._bases.iteritems() : 
+        for i, val in self._bases.iteritems() : 
             if val.vectors() != () :
                 basis[i] = val.vectors()
         #return sum((basis.vectors() for basis in self._bases.values()), ())
@@ -249,11 +248,6 @@ class Subspace(object):
     def dimensions(self):
         self.finalize()
         return {d: basis.cardinality() for d, basis in self._bases.iteritems()}
-        
-    def dimensions_isotyp(self):
-        self.finalize()
-        return {d: basis.cardinality() for d, basis in self._bases.iteritems() 
-                        if basis.cardinality() != 0}
 
     def matrix(self):
         self.finalize()
