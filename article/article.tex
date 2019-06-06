@@ -200,7 +200,7 @@
 	First of all, we need an efficient way to compute the representations of $\Sn$. To do that, we will use an isotypic projector to obtain the isotypic components of $\Sn$ and from that we will be able to recover the irreducible characters of $\Sn$ and their multiplicities. 
 	The isotypic projector we use is called the Young symmetrizer and is define as follow.
 	
-	We first need to define two elements of the symmetric group algebra $\CC \Sn$. Let $P_{\lambda}$ be the subgroup of $\Sn$ of all row preserving permutations of $\lambda$ and $Q_{\lambda}$ the subgroup of the columns preserving permutations of $\lambda$. Then we have $a_{\lambda} = \sum_{\sigma \in P_{\lambda}} \sigma$ and  $b_{\lambda} = \sum_{\sigma \in P_{\lambda}} \sgn(\sigma) \sigma$. Finally, the Young symmetrizer is the element $$c_{\lambda} = a_{\lambda} b_{\lambda}.$$
+	We first need to define two elements of the symmetric group algebra $\CC \Sn$. Let $P_{\mu}$ be the subgroup of $\Sn$ of all row preserving permutations of $\mu$ and $Q_{\mu}$ the subgroup of the columns preserving permutations of $\mu$. Then we have $a_{\mu} = \sum_{\sigma \in P_{\mu}} \sigma$ and  $b_{\mu} = \sum_{\sigma \in P_{\mu}} \sgn(\sigma) \sigma$. Finally, the Young symmetrizer is the element $$c_{\mu} = a_{\mu} b_{\mu}.$$
 	
 	\begin{theorem} \cite{FultonHarris1991}
 		The Young symmetrizer $c_{\lambda}$ is idempotent up to a scalar and the image of $c_{\lambda}$ by right multiplication on $\CC \Sn$ is an irreducible representation $V_{\lambda}$ of $\Sn$.
@@ -227,13 +227,12 @@
 	
 	\subsection{Exploiting column antisymmetries}
 	
-	Specht polynomials tend to be big: in $6$ variables, the Vandermonde determinant has $6!=720$ monomials.
+	One thing that can slow down the computation is that the polynomials we are working with tend to be big. For example, in $6$ variables, the Vandermonde determinant has $6!=720$ monomials. This means that we need a lot of space to store them and it takes time when we want to apply operators on them. 
 	
-	But that's mostly because they are anti-symmetric w.r.t. a large column stabilizer $S_P$. It's therefore sufficient to keep one representative monomial per $S_P$ orbit (and do some appropriate straightening whenever a new monomial is created). 
+	However, for all $p \in \mathcal{E}_\lambda$, p is anti-symmetric with respect to the column stabilizer $Q_\mu$, with $\mu$ the type of the isotypic component of $p$. Indeed, when projecting $p$ on its isotypic component using the Young idempotent $c_\mu$, by definition $a_\mu$ makes $p$ symmetric with respect to the row preserving permutations of $\mu$ and then $b_\mu$ makes $p.a_\mu$ anti-symmetric with respect to the column preserving permutations of $\mu$. 
+	It's therefore sufficient to keep one representative monomial per $S_P$ orbit \pauline{how do we guarantee one monomial is enough?} (and do some appropriate straightening whenever a new monomial is created). We chose to keep the smallest representative monomial in lexicographic order. \\
 	
-	Inside isotypic component, polynomials are anti-symmetric with respect to the type $\lambda$ of the component. This is due to the fact that applying the young symmetrizer $y_{\lambda}$ firt symmetrize the polynomial with respect to the row preserving permutations of $\lambda$ and then anti-symmetrize the result with respect to the column preserving permutations of $\lambda$.
-	
-	Thus it is sufficient to keep only a reduced form of the polynomials. 
+	Thus keeping reduced form of the polynomials reduce space complexity and time complexity when applying operators. Note that each time an operator is applied to an element, the reduced form of this element is computed again. 
 	
 	\begin{example}
 		$\Delta_{21} = -x_{2} \theta_{1} + x_{3} \theta_{1} + x_{1} \theta_{2} - x_{3} \theta_{2} - x_{1} \theta_{3} + x_{2} \theta_{3}$ is type $111$.
