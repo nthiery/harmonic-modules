@@ -87,12 +87,12 @@ class Diagram():
         
         return max([c[1] for c in self.cells()])
         
-    def print_diagram(self):
+    def draw(self):
         """
         Print the diagram. 
         
         EXAMPLES ::
-            sage: Diagram([(0,0),(1,1),(2,2)]).print_diagram()
+            sage: Diagram([(0,0),(1,1),(2,2)]).print()
                  _
                _|_|
              _|_| 
