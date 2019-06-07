@@ -666,7 +666,7 @@ def factorize(f, n=0):
         for (a, b), c in zip(supp, f.coefficients()):
             if b == mu :
                 result[mu] += [(a,c)]
-    result2 = [(mu,sum(c*s(nu) for (nu,c) in result[mu])) for mu in result.keys()]
+    result2 = [(tuple(mu),sum(c*s(nu) for (nu,c) in result[mu])) for mu in result.keys()]
     #for a, b in result2:
         #if b!=0:
             #print a
