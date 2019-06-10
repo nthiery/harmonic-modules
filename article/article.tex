@@ -18,7 +18,7 @@
 \usepackage{bbm, bm}
 \usepackage{mathrsfs}
 \usepackage{xargs}
-%\usepackage{sagetex}
+\usepackage{sagetex}
 \usepackage{hyperref} 
 
 
@@ -34,6 +34,7 @@
 \newcommand{\ZZ}{\mathbb{Z}}
 \newcommand{\QQ}{\mathbb{Q}}
 \newcommand{\CC}{\mathbb{C}}
+\newcommand{\Sym}[1]{\mathbb{S}_{#1}}
 
 \DeclareMathOperator{\Sn}{\mathbb{S}_n}
 \DeclareMathOperator{\GLr}{GL_r}
@@ -56,6 +57,15 @@
 \newcommand{\petitTableau}{\tiny \YFrench \Yboxdim{5pt}\young}
 
 
+%SageTex
+\renewcommand{\sagecommandlinetextoutput}{True} % False = output in Latex 
+\lstdefinestyle{SageInput}{
+	style=DefaultSageInput,
+	basicstyle=\small\normalfont\ttfamily,
+	numbers=none,
+ 	breaklines=true, }
+\lstdefinestyle{SageOutput}{style=DefaultSageOutput}
+
 %%- 1 ère page
 \title{Computing the bicharacter of huge subspaces of polynomials}
 \author{Pauline Hubert \and Nicolas Thiéry}
@@ -74,7 +84,7 @@
 
 	
 	\section{Introduction}
-	This package was developped at the occasion of a collaboration with François Bergeron to study the character of the space $\harmonics_{k,n}$ of diagonal harmonic polynomials on $k$ sets of $n$ variables, as a graded bi-$\GLr \times \Sn$-module. The main achievement is a calculation of this character for $n=6$ \pauline{+ some cases for $n=7$ ?} and $r=5$ (and therefore any $r$) in 45 minutes (and ~15Gb), which led to conjectures on its general value.
+	This package was developed at the occasion of a collaboration with François Bergeron to study the character of the space $\harmonics_{k,n}$ of diagonal harmonic polynomials on $k$ sets of $n$ variables, as a graded bi-$\GLr \times \Sn$-module. The main achievement is a calculation of this character for $n=6$ \pauline{+ some cases for $n=7$ ?} and $r=5$ (and therefore any $r$) in 45 minutes (and ~15Gb), which led to conjectures on its general value.
 	
 	This is a potentially huge calculation ($\harmonics_{5,6}$ is of dimension $5.8 \cdot10^5$), involving polynomials of degree up to $15$ in $30$ variables with thousands of terms. So we had to combine several strategies that each reduced the time and/or memory complexity by one or two orders of magnitude. As much as possible, the code was written to be modular and reusable.
 	
@@ -84,31 +94,33 @@
 		
 	Consider the polynomial ring $R=\QQ[X]$ with $k$ sets of $n$ variables. To fix conventions, we think of $X$ as a matrix of variables: \pauline{small $x$ for variables, capital $X$ for sets of variables? }
 	$$(x_{i,j})_{0\leq i<k \atop 0\leq j<n}$$
-	and we denote by $X_i = (x_{i1}, x_{i2}, \dots, x_{in})$ the i-th set of variables. 
+	and we denote by $\bm{x}_i = (x_{i1}, x_{i2}, \dots, x_{in})$ the i-th set of variables. We use the convention that bold letters stand for sets of variables and light letters stand for the variables themselves. 
 	
-	The polynomial ring $R$ is endowed with an action of the symmetric group $\Sn$ by diagonal permutation of the columns and of $\GLr$ by diagonal action on the rows. The invariant ring $R^{\Sn}$ is also known as the ring of multisymmetric functions. The co-invariant ring $R_{\Sn}$ is the quotient of $P$ by the ideal $\mathcal{I}_n = \langle {R^{\Sn^+}} \rangle$ of the multisymmetric functions without constant term. It inherits from $R$ a structure of graded $\GLr \times \Sn$ bi-module.
+	The polynomial ring $R$ is endowed with an action of the symmetric group $\Sn$ by diagonal permutation of the columns and of $\GLr$ by diagonal action on the rows. The invariant ring $R^{\Sn}$ is also known as the ring of multisymmetric functions, that is to say the elements of $R$ that remain unchanged under permutations of the rows of $X$. The co-invariant ring $R_{\Sn}$ is the quotient of $R$ by the ideal $\mathcal{I}_n = \langle {R^{\Sn^+}} \rangle$ of the multisymmetric functions without constant term. It inherits from $R$ a structure of graded $\GLr \times \Sn$ bi-module.
 	
-	The grading can be refined into a multigrading by rows. The multigrading is preserved by the action of $\Sn$. The multigrading is not preserved by the action of $\GLr$, but instead carries exactly the information about the $\GLr$ character. It's thus equivalent to consider the $\GLr \times \Sn$ bicharacter or the $\Sn$ multigraded character of $P_{\Sn}$.
+	The grading can be refined into a multigrading by rows. The multigrading is preserved by the action of $\Sn$. The multigrading is not preserved by the action of $\GLr$, but instead carries exactly the information about the $\GLr$ character. It's thus equivalent to consider the $\GLr \times \Sn$ bicharacter or the $\Sn$ multigraded character of $R_{\Sn}$.
 	
 	When $k=1$, the action of $GL_1$ is trivial; $R_{\Sn}$ is of dimension $n!$ and carries the usual graded representation of $\Sn$. Its character is given by a Hall-Littlewood polynomial.
-	When $k=2$, $R_{\Sn}$ is of dimension $(n+1)^{n-1}$ ($=16807$ for $n=6$); as a consequence of Haiman's proof of the $n!$-conjecture (see \cite{Haiman2002}), the bigraded character is a Macdonald polynomial.
+	When $k=2$, $R_{\Sn}$ is of dimension $(n+1)^{n-1}$ ($16807$ for $n=6$); as a consequence of Haiman's proof of the $n!$-conjecture (see \cite{Haiman2002}), the bigraded character is a Macdonald polynomial.
 	
-	Throughout this notebook, we implicitly use the Frobenius map, and identify $\Sn$ and $\GLr$ irreducible characters with their associated Schur symmetric functions. \\
+	Throughout this article, we implicitly use the Frobenius map, and identify $\Sn$ and $\GLr$ irreducible characters with their associated Schur symmetric functions. \\
 	
 	We denote the partial derivative the following way $\partial^k_x := \frac{\partial^k}{\partial x^k}$ for any variable $x \in X$.
 	When $X$ contains only on set of variable ($r=1$), $X = (x_1, x_2, \dots, x_n)$, we define the \emph{harmonic polynomials} as follow.
 	
 	\begin{definition}
-		Let $f \in \QQ[X]$, $f$ is \emph{harmonic} if and only if
+		Let $f \in R$, $f$ is \emph{harmonic} if and only if
 		$$\partial^k_{x_1} f + \partial^k_{x_2} f + \dots + \partial^k_{x_n} f = 0 $$
 		for all $k \geq 0$, $k \in \NN$.
 	\end{definition}
 
-	The space of harmonic polynomials in $n$ variables, denoted $\harmonics_{n}$ is the joint kernel of the differential operators $D_k := \partial_{x_1}^k + \cdots + \partial_{x_n}^k$. It is also a realization of the coinvariants of the symmetric group: $\QQ[X]\, /\, \langle Sym(X)^+ \rangle$ \pauline{$= \QQ[X] / \mathcal{I}_n$} and a graded regular representation of $\Sn$. 
+	For example the Vandermonde determinant $V_n:=$ $\prod_{i<j}(x_i-x_j)$ is harmonic. 
+
+	The space of harmonic polynomials in $n$ variables, denoted $\harmonics_{n}$ is the joint kernel of the differential operators $D_k := \partial_{x_1}^k + \cdots + \partial_{x_n}^k$. It is also a realization of the coinvariants of the symmetric group: $R\, /\, \langle Sym(X)^+ \rangle$ and a graded regular representation of $\Sn$. 
 	
-	As an example, $\harmonics_2 = \langle 1, x_1-x_2 \rangle_\QQ$. 
+	For example, $\harmonics_2 = \langle 1, x_1-x_2 \rangle_\QQ$. 
 	
-	Note that the Vandermonde determinant $V_n:=$ $\prod_{i<j}(x_i-x_j)$ is harmonic. It is also easy to see that if $f$ is harmonic then $\partial_{x_i} f$ is also harmonic for all $x_i \in X$. From that we have another way to define $\harmonics_{n}$, see (\cite{Haiman2002} and \cite{Bergeron2009}) for more details. 
+	It is easy to see that if $f$ is harmonic then $\partial_{x_i} f$ is also harmonic for all $x_i \in X$. Using that, one can define $\harmonics_{n}$ directly with  partial derivatives instead of seeing them as solutions of a system of partial differential equations as stated in the following theorem. See \cite{Haiman2002} and \cite{Bergeron2009} for more details. 
 	
 	\begin{theorem}
 		The space of harmonic polynomials $\harmonics_{n}$ is the smallest subspace containing the Vandermonde determinant $V_n$ and closed by partial derivatives.
@@ -117,20 +129,19 @@
 	Going back to an arbitrary number $r$ of sets of variables, we define the \emph{differential operators} $(D_\alpha)_{\alpha\in \NN^r}$:
 	$$D_{(\alpha_1, \dots, \alpha_r)} := \partial_{x_{11}}^{\alpha_1}\dots\partial_{x_{r1}}^{\alpha_r} + \dots + \partial_{x_{1n}}^{\alpha_1}\dots\partial_{x_{rn}}^{\alpha_r} = \sum_{j=1}^{n} \prod_{i=1}^{r} \partial_{x_{ij}}^{\alpha_i}$$
 	
-	For example, take $r=3$ and denote $x, y$ and $z$ the three sets of variables of $X$, then $D_{(3,0,4)} := \partial_{x_1}^3\partial_{z_1}^4 + \dots + \partial_{x_n}^3\partial_{z_n}^4$. 
+	For example, take $r=3$ and denote $\bm{x}, \bm{y}$ and $\bm{z}$ the three sets of variables of $X$, then $D_{(3,0,4)} := \partial_{x_1}^3\partial_{z_1}^4 + \dots + \partial_{x_n}^3\partial_{z_n}^4$. 
 	
-	The space of \emph{diagonal harmonic polynomials} $\harmonics_{n,r}$ is the joint kernel of the $(D_\alpha)_\alpha$. Note that $\harmonics_{n,r}$ contains $\harmonics_{n,1} = \harmonics_{n}$.\\
+	The space of \emph{diagonal harmonic polynomials} $\harmonics_{n,r}$ is the joint kernel of the differential operators $(D_\alpha)_\alpha$. Note that $\harmonics_{n,r}$ contains $\harmonics_{n,1} = \harmonics_{n}$.\\
 	
-	The previous definition means that the diagonal harmonic polynomials are solutions of differential equations systems. 
-	As for the harmonics, we have an alternative way to obtain $\harmonics_{n,r}$. 
+	As for the harmonics, we have an alternative way to obtain $\harmonics_{n,r}$ directly using operators. 
 	
 	\begin{definition}
-		The \emph{polarisation operator} $P_{x_a,x_b}^k$ is given by
-		$$P_{x_a,x_b}^k = \sum_{i=1}^{n} x_{bi} \partial_{x_{ai}}^k$$
-		where $x_a$ and $x_b$ are two sets of variables of $X$. 
+		The \emph{polarisation operator} $P_{x,y}^k$ is given by
+		$$P_{x,y}^k = \sum_{i=1}^{n} y \partial_{x}^k$$
+		where $\bm{x}$ and $\bm{y}$ are two sets of variables of $X$. 
 	\end{definition}
 	
-	For $k=1$, those operators implement the action of $\mathfrak{sl}_r$ induced by $\mathfrak{gl}_r$. Moreover, we have the following useful theorems. 
+	For $k=1$, those operators implement the action of $\mathfrak{sl}_r$ induced by $\mathfrak{gl}_r$.
 	
 	\begin{theorem}
 		Multisymmetric polynomials are obtained by polarization of symmetric polynomials in the first set of variables.
@@ -140,7 +151,7 @@
 		Diagonal harmonic polynomials $\harmonics_{n,r}$ are obtained by polarization of harmonic polynomials $\harmonics_{n,1}$ in the first set of variables.
 	\end{theorem}
 	
-	Therorem \ref{DiagHarm} has been proven for two sets of variables. It is not proven yet for more than two sets of variables but it has been verified by calculation by Mike Zabrocki for a large number of sets of variables so we assume it to be true (since we will never reach that number of sets in our case).  \\
+	Therorem \ref{DiagHarm} has been proven for two sets of variables. It is not proven yet for more than two sets of variables but it has been verified by computation by Mike Zabrocki for a large number of sets of variables so we assume it to be true (since we will never reach that number of sets in our case).  \\
 	
 	The diagonal harmonics $\harmonics_{n,r}$ have been studied a lot until now. The character in the case $r=2$ is due to Garsia and Haiman (see \cite{GarsiaHaiman1993}) and some progress in the case $r=3$ had recently been made by Bergeron and Préville-Ratelle (see \cite{BergeronPreville2012}), but the general case is still unknown. Therefore, the computation of those characters should lead to a better understanding of those spaces. 
 	
@@ -148,16 +159,16 @@
 	
 	In their article \cite{GarsiaHaiman1993}, Garsia and Haiman also introduced a generalized version of the Vandermonde determinant and a generalization of the diagonal harmonics for two sets of variables called the Gasia-Haiman modules. 
 	
-	Let $X=(x_1, x_2, \dots, x_n)$ and $Y=(y_1, y_2, \dots, y_n)$ be two sets of variables and $\mu$ be a partition of $n$. We also denote $\mu$ the Ferrer's diagram (in French notation) associated to the partition $\mu$ and each cell of $\mu$ is given by the Cartesian coordinates $(a,b)$ of its bottom left corner. Then, let define
+	Let $\bm{x}=(x_1, x_2, \dots, x_n)$ and $\bm{y}=(y_1, y_2, \dots, y_n)$ be two sets of variables and $\mu$ be a partition of $n$. We also denote $\mu$ the Ferrer's diagram (in French notation) associated to the partition $\mu$ and each cell of $\mu$ is given by the Cartesian coordinates $(a,b)$ of its bottom left corner. Then, let define
 	$$V_{\mu} := \det (x_i^ ay_i^ b)_{1 \leq i \leq n \atop (a,b) \in \mu}$$
 	and the Gasia-Haiman module associated to $\mu$ is the smallest subspace containing $V_{\mu}$ and closed under differentiation for both sets of variables. \\
 	
-	F. Bergeron recently introduced another generalization of the diagonal harmonics, with inert variables. We add a new row $\theta = (\theta_1, \theta_2, \dots, \theta_n)$ of variables in $X$. The symmetric group still acts diagonally on the columns of $X$, but $GL_r$ now acts only on the rows containing non-inert variables. 
+	F. Bergeron recently introduced another generalization of the diagonal harmonics, with inert variables. We add a new row $\bm{\theta} = (\theta_1, \theta_2, \dots, \theta_n)$ of variables in $X$. The symmetric group still acts diagonally on the columns of $X$, but $GL_r$ now acts only on the rows containing non-inert variables. 
 		 
-	Let $\lambda$ be a partition of $n$, note $(a,b)$ the Cartesian coordinates its cells. Then the determinant $V_{\lambda}$ associated to $\lambda$ is given by $$V_{\lambda} = \det (x_i^a \theta_i^b)_{1 \leq i \leq n \atop (a,b) \in \lambda} .$$
+	Let $\lambda$ be a partition of $n$ and note $(a,b)$ the Cartesian coordinates its cells. Then the determinant $V_{\lambda}$ associated to $\lambda$ is given by $$V_{\lambda} = \det (x_i^a \theta_i^b)_{1 \leq i \leq n \atop (a,b) \in \lambda} .$$
 	For example, the partition $21$ contains the cells $(0,0)$ and $(1,0)$ in the first row, and the cell $(0,1)$ in the second row, and $V_{21} = -x_2\theta_1 + x_3\theta_1 + x_1\theta_2 - x_3\theta_2 - x_1\theta_3 + x_2\theta_3$. 
 	
-	Like before, we consider the smallest subspace containing $V_{\lambda}$ and closed by partial derivation and polarization, except that this time the inert variables do not intervene in the operators. We denote this space by $\mathcal{E}_{\lambda}$. \\
+	Like before, we consider the smallest subspace containing $V_{\lambda}$ and closed by partial derivation and polarization, except that this time the inert variables do not intervene in the operators. We denote this space by $\mathcal{E}_{\lambda}$. The diagonal harmonics $\harmonics_{n,r}$ are thus a special case of $\mathcal{E}_{\lambda}$ for $\lambda = n$. \\
 	
 	Since those subspaces are completely new, computing some characters on Sage helps understanding them better and allows to find some properties of thoses spaces. 
 	Plus, experimentation helped finding the right definition we needed for this generalization.
@@ -167,23 +178,39 @@
 	
 	\subsection{Computing in the space of harmonic polynomials using polarization}
 	
-	We first need to compute in a quotient by an ideal, $R / \mathcal{I}_n$ where $\mathcal{I}_n$ is the ideal of diagonal symmetric polynomials on $r$ sets of $n$ variables. 
+	We first need to compute in a quotient by an ideal, $R / \mathcal{J}_n$ where $\mathcal{J}_n$ is the ideal of diagonal symmetric polynomials on $r$ sets of $n$ variables. 
 	A standard approach would be to compute a Gröbner basis of this ideal.
 	We haven't actually tried it, but given the number of variables and dimension of the quotient, we expect this calculation to be intractable.
 	
 	So we took the classical route of realizing the coinvariant ring as the space $\harmonics_{n,r}$ of diagonal harmonic polynomials.
-	This is the space of those polynomials that satisfy the equations given by the multisymmetric \pauline{multi symmetric vs diagonal symmetric ?} functions seen as differential operators.
+	This is the space of those polynomials that satisfy the equations given by the multisymmetric functions seen as differential operators.
 	
 	Solving those differential equations would not be that tractable either. So instead we used operators, partial derivatives and polarization operators defined in the previous section. \\
 	
 	In practice, we implemented a general purpose utility in Sage, \texttt{Subspace(vectors, operators)} that computes the smallest subspace of a vector space which contains the given vectors and is stable under the action of the given linear operators.
-	\nicolas{put an example here}
+	
+	\begin{example} Compute $\harmonics_3$ with one row of variables $\bm{x} = (x_1, x_2, x_3)$.
+		\begin{sagesilent}
+			load("../subspace.py")
+		\end{sagesilent}
+		\begin{sagecommandline}
+			sage: R = QQ['x1,x2,x3']
+			sage: M = matrix.vandermonde(R.gens(), R)
+			sage: M
+			sage: derivatives = [attrcall('derivative', x) for x in R.gens()]
+			sage: H_3 = Subspace([M.determinant()], derivatives)
+			sage: H_3.basis()
+			sage: H_3.dimension()
+		\end{sagecommandline}	
+	\end{example}
 	
 	No rocket science here: maintain a matrix in row echelon form representing a basis of the space computed so far, and a ToDo list of $op(v)$, that remain to be computed and inserted in the matrix, where $op$ is an operator and $v$ an element of the subspace in construction.
 	
 	This utility should already have been in Sage, and will end up there. \\
 	
-	Once a basis of $\harmonics_{n,r}$ is constructed, there still remains to recover its bicharacter. For $\GLr$ that's given by the multigrading. For $\Sn$ some additional work has to be done (e.g. computing the traces of the action of permutations of all cycle types).
+	The exact same strategy works to build the subspace generated by the Vandermonde $V_{\lambda}$ and its partial derivatives. 
+	
+	Once a basis of $\harmonics_{n,r}$ or $\mathcal{E}_\lambda$ is constructed, there still remains to recover its bicharacter. For $\GLr$ that's given by the multigrading. For $\Sn$ some additional work has to be done (e.g. computing the traces of the action of permutations of all cycle types).
 	
 	At this stage, we have an algorithm, but are still doing linear algebra in a huge space (cost $N^2 M$, where $N$ is the dimension of the result and $M$ the dimension of the ambient space).
 	
@@ -191,19 +218,66 @@
 	
 	The above utility can be adapted to exploit the multigrading. The input is now a collection of homogeneous vectors and operators together with their multidegrees, and a separate row echelon matrix is maintained for each multidegree.
 	
-	There are two advantages of doing that. 
+	\begin{example} Compute $\mathcal{E}_{2,1}$ with two rows of variables using the multidegree. 
+		\begin{sagesilent}
+			load("../compute_character.py")
+		\end{sagesilent}
+		First, we compute $\mathcal{E}_{2,1}$ for one row of variables. 
+		\begin{sagecommandline}
+			sage: v = vandermonde(Partition([2,1]))
+			sage: v
+			sage: derivatives = partial_derivatives(v.parent())
+			sage: derivatives
+			sage: E_21 = Subspace({v.multidegree(): [v]}, derivatives)
+			sage: E_21.basis()
+			sage: E_21.dimension()
+		\end{sagecommandline}
+		Then, we use polarization operators to introduce a second set of variables, still with multidegree. 
+		\begin{sagecommandline}
+			sage: polarizators = polarization_operators(2)
+			sage: polarizators
+			sage: E_21 = PolarizedSpace(E_21, polarizators)
+			sage: E_21.basis()
+			sage: E_21.dimension()
+			sage: E_21.dimensions()
+		\end{sagecommandline}	
+	\end{example}
+	
+	Note that \texttt{PolarizedSpace} takes in argument a \texttt{Subspace} from which it extracts the basis and returns a \texttt{Subspace} given by this basis and the operators. The difference is that this time, the computation is adapted to take care of the change of polynomial ring between one and two (or more) sets of variables. \\
+	
+	There are two advantages of considering the multidegree. 
 	First, writing $N=:\sum N_D$, the complexity becomes $(\sum N_D^2) M$ instead of $(\sum N_D)^2M_D$ (in fact better).
 	Second, the multidegrees, and therefore $\GLr$ character, can be directly read off the result.
 	
 	\subsection{Exploiting representations of the symmetric group}
 	
-	First of all, we need an efficient way to compute the representations of $\Sn$. To do that, we will use an isotypic projector to obtain the isotypic components of $\Sn$ and from that we will be able to recover the irreducible characters of $\Sn$ and their multiplicities. 
-	The isotypic projector we use is called the Young symmetrizer and is define as follow.
+	First of all, we need an efficient way to compute the representations of $\Sn$. Computing the traces of the action of permutations of all cycle types would not be an option because of the dimension and the high number of terms of the polynomials. 
+	Instead, we use an isotypic projector to obtain the isotypic components of $\Sn$ and from that we will be able to recover the irreducible characters of $\Sn$ and their multiplicities. \\
 	
-	We first need to define two elements of the symmetric group algebra $\CC \Sn$. Let $P_{\mu}$ be the subgroup of $\Sn$ of all row preserving permutations of $\mu$ and $Q_{\mu}$ the subgroup of the columns preserving permutations of $\mu$. Then we have $a_{\mu} = \sum_{\sigma \in P_{\mu}} \sigma$ and  $b_{\mu} = \sum_{\sigma \in P_{\mu}} \sgn(\sigma) \sigma$. Finally, the Young symmetrizer is the element $$c_{\mu} = a_{\mu} b_{\mu}.$$
+	We first need to define two elements of the symmetric group algebra $\CC \Sn$. Note that we use the cyclic notation for permutations.
+	Let $P_{\mu}$ be the subgroup of $\Sn$ of all row preserving permutations of $\mu$ and $Q_{\mu}$ the subgroup of the columns preserving permutations of $\mu$. To determine the row and column preserving permutations, we consider the canonical Young tableau of $\mu$, that is to say to tableau filled in by integer from $1$ to $n$ in order, from left to right ans from bottom to top. 
+	\begin{example} Consider $\Sym{3}$ and let $\mu = 21$.
+		The canonical tableau associated is \tableau(12,3).\\
+		Then $P_\lambda = \{1, (12)\}$ and $Q_\lambda = \{1, (13)\}$.
+	\end{example}
+	
+	With those subgroups, we define $a_{\mu} = \sum_{\sigma \in P_{\mu}} \sigma$ and  $b_{\mu} = \sum_{\sigma \in P_{\mu}} \sgn(\sigma) \sigma$. And finally, the Young symmetrizer is the element $$c_{\mu} = a_{\mu} b_{\mu}.$$
+	
+	\addtocounter{example}{-1}
+	\begin{example} (suite) 
+		For $\mu=21$, we have
+		$a_{21} = 1 + (12)$ and
+		$b_{21} = 1 - (13)$. 
+		
+		Therefore, $c_{21} = (1 + (12)) . (1 - (13)) = 1 + (12) - (13) - (132)$. 
+		
+		For the other partitions of size $3$, one can verify that 
+		$y_{111} = \sum_{\sigma \in \Sym{3}} \sigma$ and 
+		$y_{3} = \sum_{\sigma \in \Sym{3}} \sgn(\sigma)\sigma$
+	\end{example}
 	
 	\begin{theorem} \cite{FultonHarris1991}
-		The Young symmetrizer $c_{\lambda}$ is idempotent up to a scalar and the image of $c_{\lambda}$ by right multiplication on $\CC \Sn$ is an irreducible representation $V_{\lambda}$ of $\Sn$.
+		The Young symmetrizer $c_{\lambda}$ is idempotent up to a scalar and the image of $c_{\lambda}$ by right multiplication on $\CC \Sn$ is an irreducible representation $A_{\lambda}$ of $\Sn$.
 		Thus any irreducible representation can be obtain this way for a unique partition. 
 	\end{theorem}
 	
@@ -212,7 +286,35 @@
 	The action of $\GLr$ commutes with the action of $\Sn$. Therefore, we can compute independently each $\Sn$ isotypic component of $\harmonics_{n,r}$ by starting from a basis of harmonic polynomials that itself is adapted to its decomposition into isotypic components:
 	$$\harmonics_{n}=:\bigoplus_\lambda \harmonics^\lambda\,.$$
 	
-	In practice, since the polarization operators commute with the Young symmetrizer, we first compute $\harmonics_{n}$ and decompose it into isotypic components using the Young symmetrizer. Then we use the polarization operators to obtain the isotypic components of $\harmonics_{n,r}$ from those of $\harmonics_{n}$. \\
+	In practice, since the polarization operators commute with the Young symmetrizer, we first compute $\harmonics_{n}$ or $\mathcal{E}_\lambda$ for one set of variables and decompose it into isotypic components using the Young symmetrizer. Then we use the polarization operators to obtain the isotypic components of $\harmonics_{n,r}$ (resp. $\mathcal{E}_\lambda$ in $r>1$ sets of variables) from those of $\harmonics_{n}$ (resp. $\mathcal{E}_\lambda$ in 1 set of variables) .
+	
+	\begin{example}
+		Compute $\harmonics_{3,2} = \mathcal{E}_3$ using the Vandermonde determinant associated to $\lambda=3$. We still use the multigrading. 
+		\begin{sagecommandline}
+			sage: v = vandermonde(Partition([3]))
+			sage: v
+			sage: derivatives = partial_derivatives(v.parent())
+			sage: E_3 = Subspace({v.multidegree(): [v]}, derivatives)
+		\end{sagecommandline}
+		At this stage, we project onto the isotypic components of $\Sym{3}$.
+		\begin{sagecommandline}
+			sage: E_3 = IsotypicComponent(E_3, 3)
+			sage: E_3
+		\end{sagecommandline}
+		The result is now a dictionnary of subspaces.
+		\begin{sagecommandline}
+			sage: E_3[Partition([3])].basis()
+			sage: E_3[Partition([2,1])].basis()
+			sage: E_3[Partition([1,1,1])].basis()
+		\end{sagecommandline}
+		Now we polarize each isotypic component. Note that, \texttt{PolarizedSpace} can receive a dictionary of subspaces, it then consider each subspace separately. 
+		\begin{sagecommandline}
+			sage: polarizators = polarization_operators(2)
+			sage: E_3 = PolarizedSpace(E_3, polarizators)
+			sage: E_3[Partition([2,1])].basis()
+		\end{sagecommandline}
+	We chose to print only the polarized isotypic component of type $21$ to avoid unreadable outputs in the example. 	
+	\end{example}
 		
 	In fact we can do better.
 	
