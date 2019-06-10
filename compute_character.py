@@ -373,7 +373,6 @@ def add_degrees_symmetric(gen_deg,op_deg):
     d = D(gen_deg[0])+D(op_deg)
     return D(sorted(d, reverse=True)), gen_deg[1]
     
-    
 ##############################################################################
 # Polarization Space
 ##############################################################################
@@ -459,7 +458,11 @@ def PolarizedSpace(S, operators, add_degrees=add_degrees_isotypic):
         else :
             P2 = DiagonalPolynomialRing(P1._R, P1.ncols(), r , P1.ninert())
             for key, value in basis.iteritems():
-                d = (D((key[0][0] if i==0 else 0 for i in range(0,r))), key[1])
+                if isinstance(key[0], Integer):
+                    d = (D((key[0] if i==0 else 0 for i in range(0,r))))
+                    add_degrees = add_degree
+                else:
+                    d = (D((key[0][0] if i==0 else 0 for i in range(0,r))), key[1])
                 generators[d] = tuple(P2(b) for b in value)
         return Subspace(generators, operators, add_degrees=add_degrees)
     
