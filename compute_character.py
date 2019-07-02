@@ -373,7 +373,6 @@ def add_degrees_symmetric(gen_deg,op_deg):
     d = D(gen_deg[0])+D(op_deg)
     return D(sorted(d, reverse=True)), gen_deg[1]
     
-    
 ##############################################################################
 # Polarization Space
 ##############################################################################
@@ -459,7 +458,11 @@ def PolarizedSpace(S, operators, add_degrees=add_degrees_isotypic):
         else :
             P2 = DiagonalPolynomialRing(P1._R, P1.ncols(), r , P1.ninert())
             for key, value in basis.iteritems():
-                d = (D((key[0][0] if i==0 else 0 for i in range(0,r))), key[1])
+                if isinstance(key[0], Integer):
+                    d = (D((key[0] if i==0 else 0 for i in range(0,r))))
+                    add_degrees = add_degree
+                else:
+                    d = (D((key[0][0] if i==0 else 0 for i in range(0,r))), key[1])
                 generators[d] = tuple(P2(b) for b in value)
         return Subspace(generators, operators, add_degrees=add_degrees)
     
@@ -636,7 +639,7 @@ def character_quotient(M, N, n, r, left_basis=s, right_basis=s):
 # Tools on character
 ##############################################################################      
 
-def factorise(f, n):
+def factorize(f, n=0):
     """
     Return the factorization of the tensor product `f` w.r.t the right symmetric
     functions. The right symmetric functions have their supports in the partitions
@@ -647,20 +650,18 @@ def factorise(f, n):
     - ``n`` -- an Integer
     
     EXAMPLES::
-    sage: factorise(compute_character(Partition([3,1])), 4)
-    [3, 1]
-    <html><script type="math/tex">\newcommand{\Bold}[1]{\mathbf{#1}}s_{}</script></html>
-    [1, 1, 1, 1]
-    <html><script type="math/tex">\newcommand{\Bold}[1]{\mathbf{#1}}s_{1,1} + s_{3}</script></html>
-    [2, 2]
-    <html><script type="math/tex">\newcommand{\Bold}[1]{\mathbf{#1}}s_{1}</script></html>
-    [2, 1, 1]
-    <html><script type="math/tex">\newcommand{\Bold}[1]{\mathbf{#1}}s_{1} + s_{2}</script></html>
+    sage: factorize(compute_character(Partition([3,1])), 4)
+    [([3, 1], s[]),
+     ([1, 1, 1, 1], s[1, 1] + s[3]),
+     ([2, 2], s[1]),
+     ([2, 1, 1], s[1] + s[2]),
+     ([4], 0)]
 
-
+    TODO : Delete n and correct code and worksheets 
     """
     SymmetricFunctions(QQ).s()
     supp = sorted(f.support())
+    n = f.support().pop()[1].size()
     result = {}
     res = []
     for mu in Partitions(n):
@@ -668,11 +669,43 @@ def factorise(f, n):
         for (a, b), c in zip(supp, f.coefficients()):
             if b == mu :
                 result[mu] += [(a,c)]
-    result2 = [(mu,sum(c*s(nu) for (nu,c) in result[mu])) for mu in result.keys()]
-    for a, b in result2:
-        if b!=0:
-            print a
-            show(b)
+    result2 = [(tuple(mu),sum(c*s(nu) for (nu,c) in result[mu])) for mu in result.keys()]
+    #for a, b in result2:
+        #if b!=0:
+            #print a
+            #show(b)
+    return result2
+    
+def latex_output_character(f):
+    """
+    Return the latex code of the character `f`. 
+    
+    INPUT:
+    - ``f`` -- a sum of tensor products
+    
+    EXAMPLES:: 
+        sage: for mu in Partitions(3):
+        ....:     print(latex_output_character(compute_character(mu)))
+        1 \otimes s_{3} +(s_{1} + s_{2}) \otimes s_{2,1} +(s_{1,1} + s_{3}) \otimes s_{1,1,1} 
+        1 \otimes s_{2,1} + s_{1} \otimes s_{1,1,1} 
+        1 \otimes s_{1,1,1} 
+
+    """
+    n = f.support().pop()[1].size()
+    tensor = sorted(factorize(f, n), reverse=True)
+    output = ''
+    for a,b in tensor:
+        if b != 0 :
+            if b == s([]) or b == 1:
+                b = 1
+                output += str(b)
+            elif len(b) > 1:
+                output += "(%s)"%latex(b)
+            else:
+                output += latex(b)
+            output += " \otimes %s +"%latex(s(a))
+    output = output[:len(output)-1]
+    return output
         
 def dimension(f, n):
     """
@@ -711,7 +744,7 @@ def dimension(f, n):
 ############################################################################## 
 
 @persist(hash=lambda k: 'character_%s_%s' % (k[0][1].size(),''.join(str(i) for i in k[0][1])),
-        funcname='truc')
+        funcname='character')
 def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=False):
     """
     Given a diagram `mu`, compute the character associated to this diagram.
@@ -735,8 +768,7 @@ def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation", par
         s[] # s[1, 1, 1]
 
     """
-    print(mu)
-    return tensor([s[mu], s[mu]])
+
     n = Integer(mu.size())
     # Determinant computation
     v = vandermonde(mu)
