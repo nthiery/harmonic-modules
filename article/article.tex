@@ -95,6 +95,9 @@
 	\section{Context}
 	
 	\subsection{Harmonic and diagonal harmonic polynomials}
+
+\nicolas{Ajouter des exemples au fur et à mesure}
+\nicolas{figure de la matrice avec les actions de $\Sn$ et $\GLr$}
 		
 	Consider the polynomial ring $R=\QQ[X]$ with $r$ sets of $n$ variables. To fix conventions, we think of $X$ as a matrix of variables:
 	$$(x_{i,j})_{0\leq i<r \atop 0\leq j<n}$$
@@ -102,7 +105,7 @@
 	
 	The polynomial ring $R$ is endowed with an action of the symmetric group $\Sn$ by diagonal permutation of the columns of $X$ and of the general linear group $\GLr$ by diagonal action on the rows of $X$. The invariant ring $R^{\Sn}$ is also known as the ring of multisymmetric functions, that is to say the elements of $R$ that remain unchanged under permutations of the rows of $X$. The co-invariant ring $R_{\Sn}$ is the quotient of $R$ by the ideal $\mathcal{I}_n = \langle {R^{\Sn^+}} \rangle$ of the multisymmetric functions without constant term. It inherits from $R$ a structure of graded $\GLr \times \Sn$ bi-module.
 	
-	The grading can be refined into a multigrading by rows. The multigrading is preserved by the action of $\Sn$. The multigrading is not preserved by the action of $\GLr$, but instead carries exactly the information about the $\GLr$-character. It is thus equivalent to consider the $\GLr \times \Sn$-bicharacter or the $\Sn$ multigraded character of $R_{\Sn}$.
+	The natural grading of $R$ can be refined into a multigrading by rows. The multigrading is preserved by the action of $\Sn$. The multigrading is not preserved by the action of $\GLr$, but instead carries exactly the information about the $\GLr$-character. It is thus equivalent to consider the $\GLr \times \Sn$-bicharacter or the $\Sn$ multigraded character of $R_{\Sn}$.
 	
 	When $r=1$, the action of $GL_1$ is trivial; $R_{\Sn}$ is of dimension $n!$ and carries the usual graded representation of $\Sn$. Its character is given by a Hall-Littlewood polynomial.
 	When $r=2$, $R_{\Sn}$ is of dimension $(n+1)^{n-1}$ ($16807$ for $n=6$); as a consequence of Haiman's proof of the $n!$-conjecture (see \cite{Haiman2002}), the bigraded character is a Macdonald polynomial.
@@ -158,12 +161,16 @@
 		Diagonal harmonic polynomials $\harmonics_n^{(r)}$ are obtained by polarization of harmonic polynomials $\harmonics_n^{(1)}$ in the first set of variables.
 	\end{theorem}
 	
-	Therorem \ref{DiagHarm} has been proven for two sets of variables (see for example \cite{Bergeron2009}). It is not proven yet for more than two sets of variables but it has been verified by computation by Mike Zabrocki for a large number of sets of variables so we assume it to be true (since we will never reach that number of sets in our case).  \\
-	
+	Theorem \ref{DiagHarm} has been proven for two sets of variables (see for example \cite{Bergeron2009}). It is not proven yet for more than two sets of variables but it has been verified by computation by Mike Zabrocki for a large number of sets of variables so we assume it to be true (since we will never reach that number of sets in our case).  \\
+        \nicolas{state conjecture explicitly + comment that we assume
+          that it holds}
+
+	\nicolas{fuse this paragraph with the earlier context about coinvariants}
 	The diagonal harmonics $\harmonics_n^{(r)}$ have been studied a lot until now. The character in the case $r=2$ is due to Garsia and Haiman (see \cite{GarsiaHaiman1993}) and some progress in the case $r=3$ had recently been made by Bergeron and Préville-Ratelle (see \cite{BergeronPreville2012}), but the general case is still unknown. Therefore, the computation of those characters should lead to a better understanding of those spaces. 
 	
 	\subsection{Generalizations}
-	
+	\nicolas{move to a later section, with 2-3 paragraphs of
+          announcement in the introduction}
 	In their article \cite{GarsiaHaiman1993}, Garsia and Haiman also introduced a generalized version of the Vandermonde determinant and a generalization of the diagonal harmonics for two sets of variables called the Gasia-Haiman modules. 
 	
 	Let $\bm{x}=(x_1, x_2, \dots, x_n)$ and $\bm{y}=(y_1, y_2, \dots, y_n)$ be two sets of variables and $\lambda$ be a partition of $n$. We also denote $\lambda$ the Ferrer's diagram (in French notation) associated to the partition $\lambda$ and each cell of $\lambda$ is given by the Cartesian coordinates $(a,b)$ of its bottom left corner. Then, let define
