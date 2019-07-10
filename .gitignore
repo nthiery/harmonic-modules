@@ -12,3 +12,7 @@
 *.tikz
 *.out
 *.sagetex*
+*.sage
+build/*
+.eggs/*
+*.egg-info/*
