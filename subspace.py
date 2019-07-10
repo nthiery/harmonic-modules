@@ -214,6 +214,10 @@ class Subspace(object):
                     self.todo(g, d, [])
             self._bases[d] = basis
 
+    
+    def __getstate__(self):
+        return {}
+    
     def todo(self, vector, d1, word):
         todo = self._todo
         for d2, ops in self._operators.iteritems():

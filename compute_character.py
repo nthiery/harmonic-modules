@@ -579,11 +579,13 @@ def character(S, left_basis=s, right_basis=s, row_symmetry=None):
         return charac
         
 @parallel
-def ParallelCharacter(S, operators, row_symmetry="permutation", add_degrees=add_degrees_isotypic):
+def parallel_character(S, operators, row_symmetry="permutation", add_degrees=add_degrees_isotypic):
+    """
+    Return a dictionnary corresponding to the character of the polarized version of the 
+    subspace S.
+    """
     V = PolarizedSpace(S, operators, add_degrees=add_degrees)
     charac = character(V, row_symmetry=row_symmetry)
-    print charac
-    print {tuple(support): coef for support, coef in charac}
     return {tuple(support): coef for support, coef in charac}
     
     
