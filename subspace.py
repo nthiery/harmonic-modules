@@ -14,6 +14,7 @@ from sage.combinat.free_module import CombinatorialFreeModule
 from matrix_of_vectors import *
 
 
+
 class Subspace(object):
     """
     Construct a subspace from generators and linear operators
@@ -215,8 +216,8 @@ class Subspace(object):
             self._bases[d] = basis
 
     
-    def __getstate__(self):
-        return {}
+    #def __getstate__(self):
+    #    return {}
     
     def todo(self, vector, d1, word):
         todo = self._todo
