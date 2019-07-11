@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from sage.misc.cachefunc import cached_method
+
 class OnFly:
     """
     Returns a pair of enumeration functions rank / unrank.
