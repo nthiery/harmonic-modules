@@ -10,3 +10,9 @@
 *.synctex.gz
 *.toc
 *.tikz
+*.out
+*.sagetex*
+*.sage
+build/*
+.eggs/*
+*.egg-info/*
