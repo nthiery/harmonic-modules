@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from pypersist import persist
+from sage.misc.misc import attrcall
+from sage.categories.tensor import tensor
+
 
 from diagonal_polynomial_ring import*
 from subspace import*
@@ -9,9 +12,13 @@ from young_idempotent import*
 from add_degree import*
 from diagram import*
 
+from sage.combinat.sf.sf import SymmetricFunctions
 SymmetricFunctions(QQ).inject_shorthands(verbose=False)
+m = SymmetricFunctions(QQ).m()
+s = SymmetricFunctions(QQ).s()
 # Workaround #25491 which prevents early unpickling of tensor products
 # of symmetric functions
+from sage.categories.hopf_algebras_with_basis import HopfAlgebrasWithBasis
 HopfAlgebrasWithBasis.TensorProducts
 
 ##############################################################################
@@ -541,6 +548,7 @@ def character(S, left_basis=s, right_basis=s, row_symmetry=None):
         n = P.ncols()
         r = P.nrows()
         
+        
         charac = 0
         if row_symmetry != "permutation":
             q = PolynomialRing(QQ,'q',r).gens()
@@ -584,9 +592,11 @@ def parallel_character(S, operators, row_symmetry="permutation", add_degrees=add
     Return a dictionnary corresponding to the character of the polarized version of the 
     subspace S.
     """
+
     V = PolarizedSpace(S, operators, add_degrees=add_degrees)
     charac = character(V, row_symmetry=row_symmetry)
-    return {tuple(support): coef for support, coef in charac}
+    res = {tuple((tuple(support[0]),tuple(support[1]))): coef for support, coef in charac}
+    return res
     
     
 def character_quotient(M, N, n, r, left_basis=s, right_basis=s):
