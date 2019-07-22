@@ -5,7 +5,6 @@ from pypersist import persist
 from sage.misc.misc import attrcall
 from sage.categories.tensor import tensor
 
-
 from diagonal_polynomial_ring import*
 from subspace import*
 from young_idempotent import*
@@ -757,7 +756,7 @@ def dimension(f, n):
 
 @persist(hash=lambda k: 'character_%s_%s' % (k[0][1].size(),''.join(str(i) for i in k[0][1])),
         funcname='character')
-def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=False):
+def E_mu(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=False):
     """
     Given a diagram `mu`, compute the character associated to this diagram.
     Compute the subspace span by the Vandermonde determinant associated to `mu`
@@ -798,12 +797,9 @@ def compute_character(mu, use_antisymmetry=True, row_symmetry="permutation", par
     op_pol = polarization_operators(r, deg, row_symmetry=row_symmetry)
     if parallel:
         charac = 0
-        for (((_,_),_), V_pol) in ParallelCharacter([(subspace, op_pol) for subspace in V_iso.values()]):
-            print "test parall"
-            print V_pol
-            print
-            # character
-            #charac += character(V_pol, row_symmetry=row_symmetry)
+        for (((_,_),_), V_pol) in parallel_character([(subspace, op_pol) for subspace in V_iso.values()]):
+            for key, coeff in V_pol.iteritems():
+                charac += coeff*tensor([s(key[0]), s(key[1])])
         return charac
     else:
         V_pol = PolarizedSpace(V_iso, op_pol)
