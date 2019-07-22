@@ -9,7 +9,7 @@
 %\geometry{margin=2.5cm}
 \usepackage{color,xcolor,moreverb}
 \usepackage{tikz,graphicx}
-\usepackage{fancyhdr}
+\usepackage{float}
 \usepackage{url}
 \usepackage{enumitem}
 \usepackage[mathcal]{euscript}
@@ -19,12 +19,13 @@
 \usepackage{mathrsfs}
 \usepackage{xargs}
 \usepackage{sagetex}
-\usepackage{hyperref} 
+\usepackage{hyperref}
+
 
 
 %Notes
 \usepackage[colorinlistoftodos,prependcaption,textsize=small,textwidth=2.5cm]{todonotes}
-\newcommand{\pauline}[1]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue]{#1}}
+\newcommand{\pauline}[1]{\todo[linecolor=blue,backgroundcolor=cyan!25,bordercolor=blue]{#1}}
 \newcommand{\nicolas}[1]{\todo[linecolor=green,backgroundcolor=green!25,bordercolor=green]{#1}}
 
 % Maths
@@ -89,31 +90,49 @@
 	
 	The main achievement is a calculation of the character of the diagonal harmonic polynomials for $n=6$ \pauline{+ some cases for $n=7$} and $r=5$ (and therefore any $r$) in 45 minutes (and ~15Gb), which led to conjectures on its general value.
 	
-	This is a potentially huge calculation ($\harmonics_6^{(5)}$ is of dimension $5.8 \cdot10^5$), involving polynomials of degree up to $15$ in $30$ variables with thousands of terms. So we had to combine several strategies that each reduced the time and/or memory complexity by one or two orders of magnitude\pauline{orders of magnitude?}. As much as possible, the code was written to be modular and reusable.
+	This is a potentially huge calculation ($\harmonics_6^{(5)}$ is of dimension $5.8 \cdot10^5$), involving polynomials of degree up to $15$ in $30$ variables with thousands of terms. So we had to combine several strategies that each reduced the time and/or memory complexity by one or two orders of magnitude. As much as possible, the code was written to be modular and reusable.
 
 	
-	\section{Context}
-	
-	\subsection{Harmonic and diagonal harmonic polynomials}
+	\section{Context : harmonic and diagonal harmonic polynomials}
 
 \nicolas{Ajouter des exemples au fur et à mesure}
-\nicolas{figure de la matrice avec les actions de $\Sn$ et $\GLr$}
 		
 	Consider the polynomial ring $R=\QQ[X]$ with $r$ sets of $n$ variables. To fix conventions, we think of $X$ as a matrix of variables:
-	$$(x_{i,j})_{0\leq i<r \atop 0\leq j<n}$$
+	$$X := \begin{pmatrix}
+	x_{1,1} & x_{1,2} & \cdots & x_{1,n} \\
+	x_{2,1} & x_{2,2} & \cdots & x_{2,n} \\
+	\vdots & \vdots & \ddots & \vdots \\
+	x_{r,1} & x_{r,2} & \cdots & x_{r,n} \\
+	\end{pmatrix}$$
 	and we denote by $\bm{x}_i = (x_{i,1}, x_{i,2}, \dots, x_{i,n})$ the i-th set of variables. We use the convention that bold letters stand for sets of variables and light letters stand for the variables themselves. 
 	
-	The polynomial ring $R$ is endowed with an action of the symmetric group $\Sn$ by diagonal permutation of the columns of $X$ and of the general linear group $\GLr$ by diagonal action on the rows of $X$. The invariant ring $R^{\Sn}$ is also known as the ring of multisymmetric functions, that is to say the elements of $R$ that remain unchanged under permutations of the rows of $X$. The co-invariant ring $R_{\Sn}$ is the quotient of $R$ by the ideal $\mathcal{I}_n = \langle {R^{\Sn^+}} \rangle$ of the multisymmetric functions without constant term. It inherits from $R$ a structure of graded $\GLr \times \Sn$ bi-module.
+	The polynomial ring $R$ is endowed with an action of the symmetric group $\Sn$ by diagonal permutation of the columns of $X$ and of the general linear group $\GLr$ by diagonal action on the rows of $X$. 
+	\begin{figure}[H]
+		\centering
+		\begin{tikzpicture}
+		\draw node{$\begin{pmatrix}
+			x_{1,1} & x_{1,2} & \cdots & x_{1,n} \\
+			x_{2,1} & x_{2,2} & \cdots & x_{2,n} \\
+			\vdots & \vdots & \ddots & \vdots \\
+			x_{r,1} & x_{r,2} & \cdots & x_{r,n} \\
+			\end{pmatrix}$ } (0,0);
+		\draw (-2.4,.2)+(60:.25)
+		[xscale=.5,yscale=3.2,->,rotate=80] arc(-40:290:.25);
+		\node at (-3,0) {{\small$\GLr$}};
+		\draw (-.5,-1.5)+(60:.25)
+		[xscale=5.5,yscale=.6,->,rotate=-210] arc(-40:290:.25);
+		\node at (0,-2) {{\small$\Sn$}};
+		\end{tikzpicture}
+		\caption{Simultaneous actions of $\GLr$ and $\Sn$ on $X$.}
+	\end{figure}
 	
-	The natural grading of $R$ can be refined into a multigrading by rows. The multigrading is preserved by the action of $\Sn$. The multigrading is not preserved by the action of $\GLr$, but instead carries exactly the information about the $\GLr$-character. It is thus equivalent to consider the $\GLr \times \Sn$-bicharacter or the $\Sn$ multigraded character of $R_{\Sn}$.
+	The invariant ring $R^{\Sn}$ is known as the ring of multisymmetric functions, that is to say the elements of $R$ that remain unchanged under permutations of the rows of $X$. The co-invariant ring $R_{\Sn}$ is the quotient of $R$ by the ideal $\mathcal{I}_n = \langle {R^{\Sn^+}} \rangle$ of the multisymmetric functions without constant term. It inherits from $R$ a structure of graded $\GLr \times \Sn$ bi-module. \pauline{Add details about grading.}
 	
-	When $r=1$, the action of $GL_1$ is trivial; $R_{\Sn}$ is of dimension $n!$ and carries the usual graded representation of $\Sn$. Its character is given by a Hall-Littlewood polynomial.
-	When $r=2$, $R_{\Sn}$ is of dimension $(n+1)^{n-1}$ ($16807$ for $n=6$); as a consequence of Haiman's proof of the $n!$-conjecture (see \cite{Haiman2002}), the bigraded character is a Macdonald polynomial.
+	The natural grading of $R$ can be refined into a multigrading by rows. The multigrading is preserved by the action of $\Sn$. The multigrading is not preserved by the action of $\GLr$, but instead carries exactly the information about the $\GLr$-character. It is thus equivalent to consider the $\GLr \times \Sn$-bicharacter or the $\Sn$ multigraded character of $R_{\Sn}$. \\
 	
-	Throughout this article, we implicitly use the Frobenius map, and identify $\Sn$ and $\GLr$ irreducible characters with their associated Schur functions. \\
 	
 	We denote the partial derivatives by $\partial^k_x := \frac{\partial^k}{\partial x^k}$ for all variables $x \in X$.
-	When $X$ contains only one set of variables ($r=1$), $X = (x_1, x_2, \dots, x_n)$, we define the \emph{harmonic polynomials} as follow.
+	When $X$ contains only one set of variables, $X = (x_1, x_2, \dots, x_n)$, we define the \emph{harmonic polynomials} as follow.
 	
 	\begin{definition}
 		Let $f \in R$, $f$ is \emph{harmonic} if and only if, for all $k \geq 0$,
@@ -141,58 +160,48 @@
 		Take $r=3$ and denote $\bm{x}, \bm{y}$ and $\bm{z}$ the three sets of variables of $X$, then $D_{(3,0,4)} := \partial_{x_1}^3\partial_{z_1}^4 + \dots + \partial_{x_n}^3\partial_{z_n}^4$. 
 	\end{example}
 
-	The space of \emph{diagonal harmonic polynomials} $\harmonics_n^{(r)}$ is the joint kernel of the differential operators $(D_\alpha)_\alpha$. Note that $\harmonics_n^{(r)}$ contains $\harmonics_{n}^{(1)} = \harmonics_{n}$.\\
+	\begin{definition}
+		The space of \emph{diagonal harmonic polynomials} $\harmonics_n^{(r)}$ is the joint kernel of the differential operators $(D_\alpha)_\alpha$. Note that $\harmonics_n^{(r)}$ contains $\harmonics_{n}^{(1)} = \harmonics_{n}$.
+	\end{definition}
 	
 	As for harmonic polynomials, we have an alternative way to obtain $\harmonics_n^{(r)}$ directly using operators. 
 	
 	\begin{definition}
 		The \emph{polarisation operator} $P_{x,y}^k$ is given by
-		$$P_{x,y}^k = \sum_{i=1}^{n} y \partial_{x}^k$$
+		$$P_{x,y}^k = \sum_{i=1}^{n} y_i \partial_{x_i}^k$$
 		where $\bm{x}$ and $\bm{y}$ are two sets of variables of $X$. 
 	\end{definition}
 	
 	For $k=1$, those operators implement the action of $\mathfrak{sl}_r$ induced by $\mathfrak{gl}_r$.
 	
-	\begin{theorem} \pauline{Ref for this theorem.}
+	\begin{theorem} \pauline{Nicolas as-tu la réf pour ce thm?}
 		Multisymmetric polynomials are obtained by polarization of symmetric polynomials in the first set of variables.
 	\end{theorem}
 	
-	\begin{theorem} \label{DiagHarm}
+	\begin{conjecture} \label{DiagHarm}
 		Diagonal harmonic polynomials $\harmonics_n^{(r)}$ are obtained by polarization of harmonic polynomials $\harmonics_n^{(1)}$ in the first set of variables.
-	\end{theorem}
+	\end{conjecture}
 	
-	Theorem \ref{DiagHarm} has been proven for two sets of variables (see for example \cite{Bergeron2009}). It is not proven yet for more than two sets of variables but it has been verified by computation by Mike Zabrocki for a large number of sets of variables so we assume it to be true (since we will never reach that number of sets in our case).  \\
-        \nicolas{state conjecture explicitly + comment that we assume
-          that it holds}
+	Conjecture \ref{DiagHarm} has been proven for two sets of variables (see for example \cite{Bergeron2009}). It is not proven yet for more than two sets of variables but it has been verified by computation by Mike Zabrocki for a large number of sets of variables so we assume it to be true. \pauline{talk to Mike for more informations} \\
 
-	\nicolas{fuse this paragraph with the earlier context about coinvariants}
-	The diagonal harmonics $\harmonics_n^{(r)}$ have been studied a lot until now. The character in the case $r=2$ is due to Garsia and Haiman (see \cite{GarsiaHaiman1993}) and some progress in the case $r=3$ had recently been made by Bergeron and Préville-Ratelle (see \cite{BergeronPreville2012}), but the general case is still unknown. Therefore, the computation of those characters should lead to a better understanding of those spaces. 
-	
-	\subsection{Generalizations}
-	\nicolas{move to a later section, with 2-3 paragraphs of
-          announcement in the introduction}
-	In their article \cite{GarsiaHaiman1993}, Garsia and Haiman also introduced a generalized version of the Vandermonde determinant and a generalization of the diagonal harmonics for two sets of variables called the Gasia-Haiman modules. 
-	
-	Let $\bm{x}=(x_1, x_2, \dots, x_n)$ and $\bm{y}=(y_1, y_2, \dots, y_n)$ be two sets of variables and $\lambda$ be a partition of $n$. We also denote $\lambda$ the Ferrer's diagram (in French notation) associated to the partition $\lambda$ and each cell of $\lambda$ is given by the Cartesian coordinates $(a,b)$ of its bottom left corner. Then, let define
-	$$M_{\lambda} := \det (x_i^ ay_i^ b)_{1 \leq i \leq n \atop (a,b) \in \lambda}$$
-	and the Gasia-Haiman module associated to $\lambda$ is the smallest subspace containing $M_{\lambda}$ and closed under differentiation for both sets of variables. \\
-	
-	With a similar idea, François Bergeron recently introduced another generalization of the diagonal harmonics, with \emph{inert variables}. We add a new row $\bm{\theta} = (\theta_1, \theta_2, \dots, \theta_n)$ of variables in $X$ and call them inert. The symmetric group still acts by permutation of the columns of $X$, but $GL_r$ now acts diagonally only on the $r$ rows containing non-inert variables. 
-		 
-	Let $\lambda$ be a partition of $n$ and note $(a,b)$ the Cartesian coordinates of its cells. Then the determinant $V_{\lambda}$ associated to $\lambda$ is given by $$V_{\lambda} = \det (x_i^a \theta_i^b)_{1 \leq i \leq n \atop (a,b) \in \lambda} .$$
-	
-	\begin{example}
-		The partition $2,1$ contains the cells $(0,0)$ and $(1,0)$ in the first row, and the cell $(0,1)$ in the second row, and $V_{2,1} = -x_2\theta_1 + x_3\theta_1 + x_1\theta_2 - x_3\theta_2 - x_1\theta_3 + x_2\theta_3$. 
-	\end{example}
+     
+    Since diagonal harmonics polynomials spaces are of huge dimension, they are not easy to study. Indeed, when $r=1$, $R_{\Sn}$ is of dimension $n!$, and when $r=2$, $R_{\Sn}$ is of dimension $(n+1)^{n-1}$ ($16807$ for $n=6$).
+    
+    In order to study those spaces, we will use representation theory and characters.  Intuitively, through representation theory, the purpose is to cut modules into irreducible submodules according to the group action. Those submodules are then represented by irreducible characters that encodes the group action on each submodule. For $\GLr$ and $\Sn$, irreducible characters can be indexed by partitions and encoded by Schur functions. Knowing the irreducible characters gives informations of the studied module such as the dimension. 
+    
+    We will not enter into details on representation theory here but for more on this topic see \cite{FultonHarris1991}. Also, \cite{Sagan} is a classical reference for representation theory of the symmetric group and see \cite{Green2007} for more on the polynomial representations of the general linear group. \\ 
+   	
+   	
+   	The characters of the harmonic and diagonal harmonic polynomials spaces have been studied a lot until now. For example, it is known that, when r=1, the action of $GL_1$ is trivial and $R_{\Sn}$ carries the usual graded representation of $\Sn$. Its character is given by a Hall-Littlewood polynomial.
+   	
+    The case r=2 has been studied by Garsia and Haiman (see \cite{GarsiaHaiman1993}) and the bigraded character, as a consequence of Haiman's proof of the $n!$-conjecture (see \cite{Haiman2002}), is a Macdonald polynomial.
+    
+	Finally, some progress in the case $r=3$ had recently been made by Bergeron and Préville-Ratelle (see \cite{BergeronPreville2012}), but the general case is still unknown. Therefore, the computation of the characters of $\harmonics_{n}^{(r)}$ should lead to a better understanding of those spaces. \\
 
+	Throughout this article, we will write the spaces and their the character the same way, except if there might be a confusion, then the variables will be added to the character and we will write $\mathcal{H}_n^{(r)}(\bm{q};\bm{w})$ for the character of $\mathcal{H}_n^{(r)}$,  with $\bm{q}$ the variables used to express the $\GLr$ part of the character and $\bm{w}$ for the $\Sn$ part.
 	
-	Like before, we consider the smallest subspace containing $V_{\lambda}$ and closed by partial derivation and polarization, except that this time the inert variables do not intervene in these operators. We denote this space by $\mathcal{E}_{\lambda}^{(r)}$. The space of diagonal harmonics $\harmonics_n^{(r)}$ is thus a special case of $\mathcal{E}_{\lambda}^{(r)}$ for $\lambda = n$. \\
-	
-	The character of $\mathcal{E}_{\lambda}^{(r)}$ stabilizes for $r \geq n$ (see \cite{Bergeron2013} or \cite{Bergeron2009}). Therefore, when the precision is not necessary, we will drop the exponent and simply write $\mathcal{E}_{\lambda}$ for $\mathcal{E}_{\lambda}^{(r)}$ with $r \geq n$. \\
-	
-	Like for $\harmonics_n^{(r)}$, the $\GLr \times \Sn$-character of $\mathcal{E}_\lambda^{(r)}$ is not easy to compute. In the next section, we expose strategies used to go further in the computation of those characters. 
-	
-	Throughout this article, we will write the spaces and their the character the same way, except if there might be a confusion, then the variables will be added to the character and we will write $\mathcal{E}_\lambda^{(r)}(\bm{q};\bm{w})$ for the character of $\mathcal{E}_\lambda^{(r)}$,  with $\bm{q}$ the variables used to express the $\GLr$ part of the character and $\bm{w}$ for the $\Sn$ part. 
+	In the next section, we expose strategies used to go further in the computation of those characters. In the last section, we present some applications/generalizations we are able to make using the same computation strategies. \pauline{annonce du contenu à réécrire}
+	 
 	
 	
 	\section{Strategies}
@@ -461,6 +470,34 @@
 	However we have not yet been able put to use that optimization together with the other $sl_k$ optimizations, because the tweaked polarization operators don't skew commute consistently.
 	
 	\section{Applications}
+	
+	\subsection{Inert variables}
+	\nicolas{2-3 paragraphs of announcement in the introduction}
+	In their article \cite{GarsiaHaiman1993}, Garsia and Haiman also introduced a generalized version of the Vandermonde determinant and a generalization of the diagonal harmonics for two sets of variables called the Gasia-Haiman modules. 
+	
+	Let $\bm{x}=(x_1, x_2, \dots, x_n)$ and $\bm{y}=(y_1, y_2, \dots, y_n)$ be two sets of variables and $\lambda$ be a partition of $n$. We also denote $\lambda$ the Ferrer's diagram (in French notation) associated to the partition $\lambda$ and each cell of $\lambda$ is given by the Cartesian coordinates $(a,b)$ of its bottom left corner. Then, let define
+	$$M_{\lambda} := \det (x_i^ ay_i^ b)_{1 \leq i \leq n \atop (a,b) \in \lambda}$$
+	and the Gasia-Haiman module associated to $\lambda$ is the smallest subspace containing $M_{\lambda}$ and closed under differentiation for both sets of variables. \\
+	
+	With a similar idea, François Bergeron recently introduced another generalization of the diagonal harmonics, with \emph{inert variables}. We add a new row $\bm{\theta} = (\theta_1, \theta_2, \dots, \theta_n)$ of variables in $X$ and call them inert. The symmetric group still acts by permutation of the columns of $X$, but $GL_r$ now acts diagonally only on the $r$ rows containing non-inert variables. 
+	
+	Let $\lambda$ be a partition of $n$ and note $(a,b)$ the Cartesian coordinates of its cells. Then the determinant $V_{\lambda}$ associated to $\lambda$ is given by $$V_{\lambda} = \det (x_i^a \theta_i^b)_{1 \leq i \leq n \atop (a,b) \in \lambda} .$$
+	
+	\begin{example}
+		The partition $2,1$ contains the cells $(0,0)$ and $(1,0)$ in the first row, and the cell $(0,1)$ in the second row, and $V_{2,1} = -x_2\theta_1 + x_3\theta_1 + x_1\theta_2 - x_3\theta_2 - x_1\theta_3 + x_2\theta_3$. 
+	\end{example}
+	
+	
+	Like before, we consider the smallest subspace containing $V_{\lambda}$ and closed by partial derivation and polarization, except that this time the inert variables do not intervene in these operators. We denote this space by $\mathcal{E}_{\lambda}^{(r)}$. The space of diagonal harmonics $\harmonics_n^{(r)}$ is thus a special case of $\mathcal{E}_{\lambda}^{(r)}$ for $\lambda = n$. \\
+	
+	The character of $\mathcal{E}_{\lambda}^{(r)}$ stabilizes for $r \geq n$ (see \cite{Bergeron2013} or \cite{Bergeron2009}). Therefore, when the precision is not necessary, we will drop the exponent and simply write $\mathcal{E}_{\lambda}$ for $\mathcal{E}_{\lambda}^{(r)}$ with $r \geq n$. \\
+	
+	Like for $\harmonics_n^{(r)}$, the $\GLr \times \Sn$-character of $\mathcal{E}_\lambda^{(r)}$ is not easy to compute. \\
+	
+	\subsection{Further work} 
+	
+	\pauline{Change title}
+	
 	Ask Francois.\\
 	Talk about non partition diagram, with or without hole (compositions). 
 	
