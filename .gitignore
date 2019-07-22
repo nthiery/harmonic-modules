@@ -10,7 +10,6 @@
 *.synctex.gz
 *.toc
 *.tikz
-*.out
 *.sagetex*
 *.sage
 build/*
