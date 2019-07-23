@@ -48,6 +48,8 @@ def vandermonde(gamma, r=0):
         Diagonal Polynomial Ring with 2 rows of 3 variables and inert variables over Rational Field
 
     """
+    if isinstance(gamma, Integer):
+        gamma = Partition([gamma])
     n = gamma.size()
     if r == 0:
         r = 1
@@ -661,12 +663,12 @@ def factorize(f, n=0):
     - ``n`` -- an Integer
     
     EXAMPLES::
-    sage: factorize(compute_character(Partition([3,1])), 4)
-    [([3, 1], s[]),
-     ([1, 1, 1, 1], s[1, 1] + s[3]),
-     ([2, 2], s[1]),
-     ([2, 1, 1], s[1] + s[2]),
-     ([4], 0)]
+    sage: factorize(E_mu(Partition([3,1])), 4)
+    [((3, 1), s[]),
+     ((1, 1, 1, 1), s[1, 1] + s[3]),
+     ((2, 2), s[1]),
+     ((2, 1, 1), s[1] + s[2]),
+     ((4,), 0)]
 
     TODO : Delete n and correct code and worksheets 
     """
@@ -696,7 +698,7 @@ def latex_output_character(f):
     
     EXAMPLES:: 
         sage: for mu in Partitions(3):
-        ....:     print(latex_output_character(compute_character(mu)))
+        ....:     print(latex_output_character(E_mu(mu)))
         1 \otimes s_{3} +(s_{1} + s_{2}) \otimes s_{2,1} +(s_{1,1} + s_{3}) \otimes s_{1,1,1} 
         1 \otimes s_{2,1} + s_{1} \otimes s_{1,1,1} 
         1 \otimes s_{1,1,1} 
@@ -730,10 +732,10 @@ def dimension(f, n):
     
     
     EXAMPLES::
-        sage: f = compute_character(Partition([3,1]))
+        sage: f = E_mu(Partition([3,1]))
         sage: dimension(f, 4)
         [((3, 1), 1), ((1, 1, 1, 1), 1), ((2, 2), 1), ((2, 1, 1), 2)]
-        sage: dimension(compute_character(Partition([3])),3)
+        sage: dimension(E_mu(Partition([3])),3)
         [((1, 1, 1), 1), ((3,), 1), ((2, 1), 2)]
 
     """
@@ -770,10 +772,10 @@ def E_mu(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=False):
     - ``row_symmetry`` -- only implemented case "permutation" 
     
     EXAMPLES::
-        sage: compute_character(Partition([2,1,1]))
+        sage: E_mu(Partition([2,1,1]))
         s[] # s[2, 1, 1] + s[1] # s[1, 1, 1, 1]
         sage: for mu in Partitions(3):
-        ....:     print(compute_character(mu))
+        ....:     print(E_mu(mu))
         s[] # s[3] + s[1] # s[2, 1] + s[1, 1] # s[1, 1, 1] + s[2] # s[2, 1] + s[3] # s[1, 1, 1]
         s[] # s[2, 1] + s[1] # s[1, 1, 1]
         s[] # s[1, 1, 1]
