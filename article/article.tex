@@ -528,11 +528,11 @@
 	
 	Like before, we consider the smallest subspace containing $V_{\lambda}$ and closed by partial derivation and polarization, except that this time the inert variables do not intervene in these operators. We denote this space by $\Elambdar{\lambda}{r}$. The space of diagonal harmonics $\harmonics_n^{(r)}$ is thus a special case of $\Elambdar{\lambda}{r}$ for $\lambda = (n)$. \\
 	
-	The character of $\Elambdar{\lambda}{r}$ stabilizes for $r \geq n$ (see \cite{Bergeron2013} or \cite{Bergeron2009}). Therefore, when the precision is not necessary, we will drop the exponent and simply write $\Elambda{\lambda}$ for $\Elambdar{\lambda}{r}$ with $r \geq n$. 
+	The character of $\Elambdar{\lambda}{r}$ stabilizes for $r \geq n$ (see \cite{Bergeron2013} or \cite{Bergeron2009}). Therefore, when the precision is not necessary, we drop the exponent and simply write $\Elambda{\lambda}$ for $\Elambdar{\lambda}{r}$ with $r \geq n$. 
 	
 	This property also gives use an upper bound for the number of sets of variables needed in the computation. \\
 	
-	Like for $\harmonics_n^{(r)}$, the $\GLr \times \Sn$-character of $\Elambdar{\lambda}{r}$ is not easy to compute due to the dimension but hopefully most of the strategies we used to compute the character of $\harmonics_{n}^{(r)}$ work for $\Elambdar{\lambda}{r}$. 
+	Like for $\harmonics_n^{(r)}$, the $\GLr \times \Sn$-character of $\Elambdar{\lambda}{r}$ is not easy to compute due to the dimension but hopefully most of the strategies we use to compute the character of $\harmonics_{n}^{(r)}$ work for $\Elambdar{\lambda}{r}$. 
 	
 	Therefore, we, once again, use polarization to compute $\Elambdar{\lambda}{r}$ from $\Elambda{\lambda}{1}$ and exploit the multigrading. We use the same isotypic projector to obtain the isotypic components, then we can still exploit the columns antisymmetries. 
 %	\begin{example} ~
@@ -577,7 +577,7 @@
 
 	~
 
-	We presented in the previous examples all the steps of the computation using or not different strategies to optimize the computations. Thus, the code can be easily adapted to other generators and other operators (see section \ref{section_futher_work} for examples) at each step. 
+	We presente in the previous examples all the steps of the computation using or not different strategies to optimize the computations. Thus, the code can be easily adapted to other generators and other operators (see section \ref{section_futher_work} for examples) at each step. 
 	
 	Therefore, to simply compute the character of $\Elambda{\mu}$ only setting the optimizations used, one can use the function \texttt{E\_mu} that takes in argument a partition or a diagram and returns the complete character $\Elambda{\mu}$. By default, this function uses antisymmetries of column and symmetries of rows, but this can be disabled.
 	
