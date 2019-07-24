@@ -587,7 +587,7 @@ def character(S, left_basis=s, right_basis=s, row_symmetry=None):
                 charac += tensor([charac_nu, right_basis(s(nu))])
         return charac
         
-@parallel
+@parallel(4)
 def parallel_character(S, operators, row_symmetry="permutation", add_degrees=add_degrees_isotypic):
     """
     Return a dictionnary corresponding to the character of the polarized version of the 
@@ -781,7 +781,6 @@ def E_mu(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=False):
         s[] # s[1, 1, 1]
 
     """
-
     n = Integer(mu.size())
     # Determinant computation
     v = vandermonde(mu)
