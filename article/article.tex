@@ -88,11 +88,11 @@
 	
 	\section{Introduction}
 	In this article, we present a new SageMath package to compute bicharacter of some multivariate polynomials spaces. 
-	The development of this package started at the occasion of a collaboration with François Bergeron to study the character of the space $\harmonics_n^{(r)}$ of diagonal harmonic polynomials on $r$ sets of $n$ variables, as a graded bi-$\GLr \times \Sn$-module. It was then extended to compute other characters of polynomial spaces. 
+	The development of this package started at the occasion of a collaboration with François Bergeron to study the character of the space $\harmonics_n^{(r)}$ of diagonal harmonic polynomials on $r$ sets of $n$ variables, as a graded bi-$\GLr \times \Sn$-module. It is then extended to compute other characters of polynomial spaces. 
 	
-	The main achievement is a calculation of the character of the diagonal harmonic polynomials for $n=6$ \pauline{+ some cases for $n=7$} and $r=5$ (and therefore any $r$) in 45 minutes (and ~15Gb), which led to conjectures on its general value.
+	The main achievement is a calculation of the character of the diagonal harmonic polynomials for $n=6$ and $r=5$ (and therefore any $r$) in 45 minutes (and ~15Gb), which led to conjectures on its general value.
 	
-	This is a potentially huge calculation ($\harmonics_6^{(5)}$ is of dimension $5.8 \cdot10^5$), involving polynomials of degree up to $15$ in $30$ variables with thousands of terms. So we had to combine several strategies that each reduced the time and/or memory complexity by one or two orders of magnitude. As much as possible, the code was written to be modular and reusable.
+	This is a potentially huge calculation ($\harmonics_6^{(5)}$ is of dimension $5.8 \cdot10^5$), involving polynomials of degree up to $15$ in $30$ variables with thousands of terms. So we have to combine several strategies that each reduced the time and/or memory complexity by one or two orders of magnitude. As much as possible, the code is written to be modular and reusable.
 
 	
 	\section{Context : harmonic and diagonal harmonic polynomials}
@@ -129,7 +129,7 @@
 		\caption{Simultaneous actions of $\GLr$ and $\Sn$ on $X$.}
 	\end{figure}
 	
-	The invariant ring $R^{\Sn}$ is known as the ring of multisymmetric functions, that is to say the elements of $R$ that remain unchanged under permutations of the rows of $X$. The co-invariant ring $R_{\Sn}$ is the quotient of $R$ by the ideal $\mathcal{I}_n = \langle {R^{\Sn^+}} \rangle$ of the multisymmetric functions without constant term. It inherits from $R$ a structure of graded $\GLr \times \Sn$ bi-module. \pauline{Add details about grading.}
+	The invariant ring $R^{\Sn}$ is known as the ring of multisymmetric functions, that is to say the elements of $R$ that remain unchanged under permutations of the rows of $X$. The co-invariant ring $R_{\Sn}$ is the quotient of $R$ by the ideal $\mathcal{I}_n = \langle {R^{\Sn^+}} \rangle$ of the multisymmetric functions without constant term. It inherits from R a structure of graded $\GLr \times \Sn$ bi-module. The degree of a polynomial in $R_{\Sn}$ is defined to be the sum of the degrees in each set of variables. 
 	
 	The natural grading of $R$ can be refined into a multigrading by rows. The multigrading is preserved by the action of $\Sn$. The multigrading is not preserved by the action of $\GLr$, but instead carries exactly the information about the $\GLr$-character. It is thus equivalent to consider the $\GLr \times \Sn$-bicharacter or the $\Sn$ multigraded character of $R_{\Sn}$. \\
 	
@@ -190,18 +190,18 @@
      
     Since diagonal harmonics polynomials spaces are of huge dimension, they are not easy to study. Indeed, when $r=1$, $R_{\Sn}$ is of dimension $n!$, and when $r=2$, $R_{\Sn}$ is of dimension $(n+1)^{n-1}$ ($16807$ for $n=6$).
     
-    In order to study those spaces, we will use representation theory and characters.  Intuitively, through representation theory, the purpose is to cut modules into irreducible submodules according to the group action. Those submodules are then represented by irreducible characters that encodes the group action on each submodule. For $\GLr$ and $\Sn$, irreducible characters can be indexed by partitions and encoded by Schur functions. Knowing the irreducible characters gives informations of the studied module such as the dimension. 
+    In order to study those spaces, we use representation theory and characters.  Intuitively, we want to decompose modules into irreducible submodules according to the group action. Those submodules are then represented by irreducible characters that encode the group action on each submodule. For $\GLr$ and $\Sn$, irreducible characters can be indexed by partitions and encoded by Schur functions. Knowing the irreducible characters gives information on the studied module such as the dimension. 
     
-    We will not enter into details on representation theory here but for more on this topic see \cite{FultonHarris1991}. Also, \cite{Sagan} is a classical reference for representation theory of the symmetric group and see \cite{Green2007} for more on the polynomial representations of the general linear group. \\ 
+    We don't enter into details on representation theory here but for more on this topic see \cite{FultonHarris1991}. Also, \cite{Sagan} is a classical reference for representation theory of the symmetric group and \cite{Green2007} is about polynomial representations of the general linear group. \\ 
    	
    	
-   	The characters of the harmonic and diagonal harmonic polynomials spaces have been studied a lot until now. For example, it is known that, when r=1, the action of $GL_1$ is trivial and $R_{\Sn}$ carries the usual graded representation of $\Sn$. Its character is given by a Hall-Littlewood polynomial.
+   	The characters of the harmonic and diagonal harmonic polynomial spaces have been studied a lot until now. For example, it is known that, when r=1, the action of $GL_1$ is trivial and $R_{\Sn}$ carries the usual graded representation of $\Sn$. Its character is given by a Hall-Littlewood polynomial.
    	
     The case r=2 has been studied by Garsia and Haiman (see \cite{GarsiaHaiman1993}) and the bigraded character, as a consequence of Haiman's proof of the $n!$-conjecture (see \cite{Haiman2002}), is a Macdonald polynomial.
     
 	Finally, some progress in the case $r=3$ had recently been made by Bergeron and Préville-Ratelle (see \cite{BergeronPreville2012}), but the general case is still unknown. Therefore, the computation of the characters of $\harmonics_{n}^{(r)}$ should lead to a better understanding of those spaces. \\
 	
-	Throughout this article, we will write the spaces and their the character the same way, except if there might be a confusion, then the variables will be added to the character and we will write $\mathcal{H}_n^{(r)}(\bm{q};\bm{w})$ for the character of $\mathcal{H}_n^{(r)}$,  with $\bm{q}$ the variables used to express the $\GLr$ part of the character and $\bm{w}$ for the $\Sn$ part.\\
+	Throughout this article, we write the spaces and their the character the same way, except if there might be a confusion, then the variables are added to the character and we write $\mathcal{H}_n^{(r)}(\bm{q};\bm{w})$ for the character of $\mathcal{H}_n^{(r)}$,  with $\bm{q}$ the variables used to express the $\GLr$ part of the character and $\bm{w}$ for the $\Sn$ part.\\
 	
 	In the next section, we expose strategies used to go further in the computation of those characters. Those strategies are not limited to the diagonal harmonic polynomials. They can be used in other generalizations. We introduced some of these generalizations in the last section and discuss some applications of these computations.
 	 
@@ -214,10 +214,10 @@
 	A standard approach would be to compute a Gröbner basis of this ideal.
 	We haven't actually tried it, but given the number of variables and dimension of the quotient, we expect this calculation to be intractable.
 	
-	So we took the classical route of realizing the coinvariant ring as the space $\harmonics_n^{(r)}$ of diagonal harmonic polynomials.
+	So we take the classical route of realizing the coinvariant ring as the space $\harmonics_n^{(r)}$ of diagonal harmonic polynomials.
 	This is the space of those polynomials that satisfy the equations given by the multisymmetric functions seen as differential operators.
 	
-	Solving those differential equations would not be tractable either. So instead we used operators, partial derivatives and polarization operators defined in the previous section. \\
+	Solving those differential equations would not be tractable either. So instead we use partial derivatives and polarization operators defined in the previous section. \\
 	
 	In practice, we implemented a general purpose utility in Sage, \texttt{Subspace(vectors, operators)} that computes the smallest subspace of a vector space which contains the given vectors and is stable under the action of the given linear operators.
 	
@@ -368,7 +368,7 @@
 	One thing that can slow down the computation is that the polynomials we are working with tend to be big. For example, for $\lambda \vdash 6$, the Vandermonde determinant $V_\lambda$, is a homogeneous polynomial of degree $\sum_{i=1}^{5}i = 15$ with $6!=720$ monomials . This means that we need a lot of space to store them and it takes time when we want to apply operators. 
 	
 	However, since we use the Young symmetrizer to construct $\harmonics_{n}^{(r)}$, for all $v \in \harmonics_{n}^{(r)}$, $v$ is anti-symmetric with respect to the column stabilizer $Q_\mu$, with $\mu$ the type of the isotypic component of $v$. Indeed, when projecting a polynomial $p$ on its isotypic component using the Young idempotent $c_\mu$, by definition $p.a_\mu$ is symmetric with respect to the row preserving permutations of $\mu$ and then $v = p.a_\mu.b_\mu$ is anti-symmetric with respect to the column preserving permutations of $\mu$. 
-	It's therefore sufficient to keep one representative monomial per $S_P$ orbit \pauline{$S_P$ orbit?} (and do some appropriate straightening whenever a new monomial is created). We chose to keep the smallest representative monomial in lexicographic order and call the result the \emph{normal reduced form} of $v$. \\
+	It is therefore sufficient to keep one representative monomial per $S_P$ orbit \pauline{$S_P$ orbit?} (and do some appropriate straightening whenever a new monomial is created). We chose to keep the smallest representative monomial in lexicographic order and call the result the \emph{normal reduced form} of $v$. \\
 	
 	Thus keeping reduced forms of the polynomials decreases space complexity, and also time complexity when applying operators. Note that each time a polarization operator is applied to an element, the normal reduced form of the new element obtained is computed again. 
 	
