@@ -36,6 +36,8 @@
 \newcommand{\QQ}{\mathbb{Q}}
 \newcommand{\CC}{\mathbb{C}}
 \newcommand{\Sym}[1]{\mathbb{S}_{#1}}
+\newcommand{\Elambda}[1]{\mathcal{E}_{#1}}
+\newcommand{\Elambdar}[2]{\mathcal{E}_{#1}^{(#2)}}	
 
 \DeclareMathOperator{\Sn}{\mathbb{S}_n}
 \DeclareMathOperator{\GLr}{GL_r}
@@ -96,6 +98,7 @@
 	\section{Context : harmonic and diagonal harmonic polynomials}
 
 \nicolas{Ajouter des exemples au fur et à mesure}
+\pauline{J'ai déjà mis pas mal d'exemples. Il en faut plus?}
 		
 	Consider the polynomial ring $R=\QQ[X]$ with $r$ sets of $n$ variables. To fix conventions, we think of $X$ as a matrix of variables:
 	$$X := \begin{pmatrix}
@@ -198,11 +201,10 @@
     
 	Finally, some progress in the case $r=3$ had recently been made by Bergeron and Préville-Ratelle (see \cite{BergeronPreville2012}), but the general case is still unknown. Therefore, the computation of the characters of $\harmonics_{n}^{(r)}$ should lead to a better understanding of those spaces. \\
 	
-	Throughout this article, we will write the spaces and their the character the same way, except if there might be a confusion, then the variables will be added to the character and we will write $\mathcal{H}_n^{(r)}(\bm{q};\bm{w})$ for the character of $\mathcal{H}_n^{(r)}$,  with $\bm{q}$ the variables used to express the $\GLr$ part of the character and $\bm{w}$ for the $\Sn$ part.
+	Throughout this article, we will write the spaces and their the character the same way, except if there might be a confusion, then the variables will be added to the character and we will write $\mathcal{H}_n^{(r)}(\bm{q};\bm{w})$ for the character of $\mathcal{H}_n^{(r)}$,  with $\bm{q}$ the variables used to express the $\GLr$ part of the character and $\bm{w}$ for the $\Sn$ part.\\
 	
-	In the next section, we expose strategies used to go further in the computation of those characters. In the last section, we present some applications/generalizations we are able to make using the same computation strategies. \pauline{annonce du contenu à réécrire}
+	In the next section, we expose strategies used to go further in the computation of those characters. Those strategies are not limited to the diagonal harmonic polynomials. They can be used in other generalizations. We introduced some of these generalizations in the last section and discuss some applications of these computations.
 	 
-	
 	
 	\section{Strategies}
 	
@@ -349,7 +351,7 @@
 	We print only the polarized isotypic component of type $(2,1)$ to avoid unreadable outputs in this example. 	
 	\end{example}
 		
-	In fact we can do better. \pauline{Does it work only for $\harmonics_n^{(r)}$ or also for $\mathcal{E}_\lambda$?}
+	In fact we can do better. \pauline{Does it work only for $\harmonics_n^{(r)}$ or also for $\Elambda{\lambda}$?}
 	Fix a partition $\mu$. Recall that a basis of the Specht module $S_\mu$  is given by the family of Garnir/Specht polynomials $(G_{P})_P$ indexed by standard tableaux $P$ of shape $\mu$.
 	
 	To get a basis of the full isotypic component $\harmonics_{\mu}$ of $\harmonics_n$, we can, for example, use a generalization of this construction (see \cite{Ariki1997}): a family of polynomials $(G_{P,Q})_{P,Q}$ indexed by a pairs $(P,Q)$ of standard tableaux of shape $\mu$ where $Q$ specifies the copy of $S_\mu$ and $P$ specifies the location within that copy of $S_\mu$.
@@ -482,7 +484,7 @@
 	
 	However we have not yet been able put to use that optimization together with the other $sl_k$ optimizations, because the tweaked polarization operators don't skew commute consistently.
 	
-	\section{Applications}
+	\section{Applications / Generalizations}
 	
 	\subsection{Inert variables}
 	\nicolas{2-3 paragraphs of announcement in the introduction}
@@ -492,7 +494,9 @@
 	$$M_{\lambda} := \det (x_i^ ay_i^ b)_{1 \leq i \leq n \atop (a,b) \in \lambda}$$
 	and the Gasia-Haiman module associated to $\lambda$ is the smallest subspace containing $M_{\lambda}$ and closed under differentiation for both sets of variables. \\
 	
-	With a similar idea, François Bergeron introduce another generalization of the diagonal harmonics, with \emph{inert variables}. We add a new row $\bm{\theta} = (\theta_1, \theta_2, \dots, \theta_n)$ of variables in $X$ and call them inert. The symmetric group still acts by permutation of the columns of $X$, but $GL_r$ now acts diagonally only on the $r$ rows containing non-inert variables. 
+	With a similar idea, François Bergeron introduce another generalization of the diagonal harmonics, with \emph{inert variables}. We add a new row $\bm{\theta} = (\theta_1, \theta_2, \dots, \theta_n)$ of variables in $X$ and call them inert. The symmetric group still acts by permutation of the columns of $X$, but $GL_r$ now acts diagonally only on the $r$ rows containing non-inert variables.
+	
+	Note that inert variables, like constants, do not contribute to the degree of the polynomials in which they intervene. They can be considered as "degree 0 variables".  
 	
 	\begin{figure}[H]
 		\centering
@@ -510,9 +514,9 @@
 		\draw (-.6,-1.7)+(60:.25)
 		[xscale=5.8,yscale=.6,->,rotate=-210] arc(-40:290:.25);
 		\node at (0,-2.1) {{\small$\Sn$}};
-		\draw (-3,-.85) -- (-1.5,-.85);
+		\draw (-1.8,-.85) -- (1.8,-.85);
 		\end{tikzpicture}
-		\caption{Simultaneous actions of $\GLr$ and $\Sn$ on $X$ with inert variables.}
+		\caption{Simultaneous actions of $\GLr$ and $\Sn$ on classical and inert variables.}
 	\end{figure}
 	
 	Let $\lambda$ be a partition of $n$ and note $(a,b)$ the Cartesian coordinates of its cells. Then the determinant $V_{\lambda}$ associated to $\lambda$ is given by $$V_{\lambda} := \det (x_i^a \theta_i^b)_{1 \leq i \leq n \atop (a,b) \in \lambda} .$$
@@ -522,24 +526,26 @@
 	\end{example}
 	
 	
-	Like before, we consider the smallest subspace containing $V_{\lambda}$ and closed by partial derivation and polarization, except that this time the inert variables do not intervene in these operators. We denote this space by $\mathcal{E}_{\lambda}^{(r)}$. The space of diagonal harmonics $\harmonics_n^{(r)}$ is thus a special case of $\mathcal{E}_{\lambda}^{(r)}$ for $\lambda = (n)$. \\
+	Like before, we consider the smallest subspace containing $V_{\lambda}$ and closed by partial derivation and polarization, except that this time the inert variables do not intervene in these operators. We denote this space by $\Elambdar{\lambda}{r}$. The space of diagonal harmonics $\harmonics_n^{(r)}$ is thus a special case of $\Elambdar{\lambda}{r}$ for $\lambda = (n)$. \\
 	
-	The character of $\mathcal{E}_{\lambda}^{(r)}$ stabilizes for $r \geq n$ (see \cite{Bergeron2013} or \cite{Bergeron2009}). Therefore, when the precision is not necessary, we will drop the exponent and simply write $\mathcal{E}_{\lambda}$ for $\mathcal{E}_{\lambda}^{(r)}$ with $r \geq n$. \\
+	The character of $\Elambdar{\lambda}{r}$ stabilizes for $r \geq n$ (see \cite{Bergeron2013} or \cite{Bergeron2009}). Therefore, when the precision is not necessary, we will drop the exponent and simply write $\Elambda{\lambda}$ for $\Elambdar{\lambda}{r}$ with $r \geq n$. 
 	
-	Like for $\harmonics_n^{(r)}$, the $\GLr \times \Sn$-character of $\mathcal{E}_\lambda^{(r)}$ is not easy to compute but hopefully most of the strategies we used to compute the character of $\harmonics_{n}^{(r)}$ work for $\mathcal{E}_\lambda^{(r)}$. 
+	This property also gives use an upper bound for the number of sets of variables needed in the computation. \\
 	
-	Therefore, we, once again, use polarization to compute $\mathcal{E}_\lambda^{(r)}$ from $\mathcal{E}_\lambda^{(1)}$, exploit the multigrading. We use the same isotypic projector to obtain the isotypic components, then we can still exploit the columns antisymmetries. 
+	Like for $\harmonics_n^{(r)}$, the $\GLr \times \Sn$-character of $\Elambdar{\lambda}{r}$ is not easy to compute due to the dimension but hopefully most of the strategies we used to compute the character of $\harmonics_{n}^{(r)}$ work for $\Elambdar{\lambda}{r}$. 
+	
+	Therefore, we, once again, use polarization to compute $\Elambdar{\lambda}{r}$ from $\Elambda{\lambda}{1}$ and exploit the multigrading. We use the same isotypic projector to obtain the isotypic components, then we can still exploit the columns antisymmetries. 
 %	\begin{example} ~
 %		
 %		$V_{21} = -x_{2} \theta_{1} + x_{3} \theta_{1} + x_{1} \theta_{2} - x_{3} \theta_{2} - x_{1} \theta_{3} + x_{2} \theta_{3}$ is of type $(1,1,1)$ and has reduced form $x_1\theta_2$.
 %		
 %		$\partial_{x_2}V_{21} = -\theta_1 + \theta_3$ is of type $(2,1)$ and has reduced form $-\theta_1$.
 %	\end{example}
-	Finally, $\mathcal{E}_\lambda^{(r)}$ is still symmetric with respect to a permutation of the rows of $X$ containing classical variables so we exploit row symmetries in this case too.\\
+	Finally, $\Elambdar{\lambda}{r}$ is still symmetric with respect to a permutation of the rows of $X$ containing classical variables so we exploit row symmetries in this case too.\\
 	
-	\begin{example} In the following example, we use different strategies to compute $\mathcal{E}_{2,1}^{(2)}$. 
+	\begin{example} In the following example, we use different strategies to compute $\Elambdar{2,1}{2}$. 
 		
-		First, we compute $\mathcal{E}_{2,1}^{(1)}$, for one row of variables exploiting multidegree. 
+		First, we compute $\Elambdar{2,1}{1}$, for one row of variables exploiting multidegree. 
 		\begin{sagecommandline}
 			sage: v = vandermonde(Partition([2,1]))
 			sage: v
@@ -554,22 +560,38 @@
 			sage: E_21 = IsotypicComponent(E_21, 3,use_antisymmetry=True)
 			sage: E_21
 		\end{sagecommandline}
-		Then, we use polarization operators to introduce a second set of variables, and thus obtain $\mathcal{E}_{2,1}^{(2)}$, still with multidegree. We also exploit row symmetries. 
+		Then, we use polarization operators to introduce a second set of variables, and thus obtain $\Elambdar{2,1}{2}$, still with multidegree. We also exploit row symmetries. 
 		\begin{sagecommandline}
 			sage: polarizators = polarization_operators(2, row_symmetry="permutation")
 			sage: E_21 = PolarizedSpace(E_21, polarizators)
 			sage: E_21[Partition([1,1,1])].basis()
 			sage: E_21[Partition([2,1])].basis()
 		\end{sagecommandline}
-		And we easily obtain the character for $\mathcal{E}_{2,1}$. 
+		And we obtain the character for $\Elambda{2,1}$. 
 	 	\begin{sagecommandline}
 		 	sage: character(E_21, row_symmetry="permutation")
 		\end{sagecommandline}
 	
-	So the character of $\mathcal{E}_{2,1}^{(r)}$ for $r \geq 2$ is $$\mathcal{E}_{2,1}^{(r)} = 1 \otimes s_{2,1} + s_{1} \otimes s_{1,1,1} .$$
+	So the character of $\Elambdar{2,1}{r}$ for $r \geq 2$ is $$\Elambdar{2,1}{r} = 1 \otimes s_{2,1} + s_{1} \otimes s_{1,1,1} .$$
+	\end{example} 
+
+	~
+
+	We presented in the previous examples all the steps of the computation using or not different strategies to optimize the computations. Thus, the code can be easily adapted to other generators and other operators (see section \ref{section_futher_work} for examples) at each step. 
+	
+	Therefore, to simply compute the character of $\Elambda{\mu}$ only setting the optimizations used, one can use the function \texttt{E\_mu} that takes in argument a partition or a diagram and returns the complete character $\Elambda{\mu}$. By default, this function uses antisymmetries of column and symmetries of rows, but this can be disabled.
+	
+	Furthermore, parallel computation can be activate in this function. Indeed, once $\Elambda{\lambda}{1}$ is projected on its isotypic component, the computation is independent on each isotypic component and the character is simply the sum of the characters of all isotypic components. 
+	
+	\begin{example} \pauline{Ajouter d'autres exemples pertinents.}
+		We compute $\Elambda{1,1,1}$
+		
+		\begin{sagecommandline}
+			sage: E_mu(Partition([1,1,1]))
+		\end{sagecommandline}	
 	\end{example}
 	
-	\subsection{Further work} 
+	\subsection{Further work}\label{section_futher_work}
 	
 	Talk about non partition diagram : compositions and diagram with hole(s) (quotient). 
 	
