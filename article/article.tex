@@ -486,7 +486,7 @@
 	
 	\section{Applications / Generalizations}
 	
-	\subsection{Inert variables}
+	\subsection{Inert variables} \label{section_inert_variables}
 	\nicolas{2-3 paragraphs of announcement in the introduction}
 	In their article \cite{GarsiaHaiman1993}, Garsia and Haiman introduce a generalized version of the Vandermonde determinant and a generalization of the diagonal harmonics for two sets of variables called the Gasia-Haiman modules. 
 	
@@ -593,7 +593,31 @@
 	
 	\subsection{Further work}\label{section_futher_work}
 	
-	Talk about non partition diagram : compositions and diagram with hole(s) (quotient). 
+	The generalization of the Vandermonde determinant given in subsection \ref{section_inert_variables} is also well defined for other diagrams that are not Ferrer's diagrams of partitions. 
+	
+	For example, we could consider a diagram corresponding to a composition $\alpha = (\alpha_1, \alpha_2, \dots, \alpha_\ell)$. Like for a partition, the diagram of $\alpha$ is bottom left justified and the $i$-th row contains $\alpha_i$ boxes, for all $1 \leq i \leq \ell$. Then the exact same definition applied for $V_\alpha$ and we can defined the subspace associated to $\alpha$ and compute its character. 
+	
+	Thanks to our computations, we are able to show the following proposition. 
+	
+	\begin{prop}
+		Let $\alpha$ be a composition of $n$ and denote $\lambda(\alpha)$ the partition obtained by reordering the parts of $\alpha$. And denote by $\Elambdar{\alpha}{r}$ the character of the smallest $\GLr \times \Sn$-submodule containing $V_\alpha$ and closed by partial derivation and polarization. Then we have 
+		$$\Elambdar{\alpha}{r} = \Elambdar{\lambda(\alpha)}{r}.$$
+	\end{prop} 
+	
+	\begin{example}
+		Add example. 
+	\end{example}
+
+	~
+
+	Following the same idea, let $\gamma$ by any set of cells of $\NN^2$ given by the cartesian coordinates of their bottom left corner. The determinant associated to $\gamma$ still have the same definition. $$V_{\gamma} := \det (x_i^a \theta_i^b)_{1 \leq i \leq n \atop (a,b) \in \lambda} .$$
+	
+	We define $\mathcal{M}_{\gamma}^{(r)}$ to be the smallest $\GLr \times \Sn$-submodule containing $V_\gamma$ and closed by partial derivation and polarization and we use the same notation for the character. \pauline{motivate introduction of the quotient ans Steenrod operators.}
+	
+	Let $f \in \QQ[X]$, we define $f(\partial X)$ to be the function $f$ in which we replaced $x_{i,j}^k$ by $\partial_{x_{i,j}}^k$. If $f$ is invariant under the diagonal action of $\Sn$ on $X$, $f(\partial X)$ is called a symmetric derivative. 
+	
+	We denote by $\mathcal{N}_{\gamma}^{(r)}$ the union of all the images of $\mathcal{M}_{\gamma}^{(r)}$ by a symmetric derivative. Finally, we have $$\Elambdar{\gamma}{r} := \mathcal{M}_{\gamma}^{(r)} / \mathcal{N}_{\gamma}^{(r)}. $$
+	Note that when $\gamma$ is a composition or a partition,$ \mathcal{N}_{\gamma}^{(r)} = \emptyset$ and we still have the same definition for $\Elambdar{\gamma}{r} = \mathcal{M}_{\gamma}^{(r)}$. 
 	
 	\begin{definition}
 		The \emph{Steenrod operator} $St_{x_a}^k$ for $k>1$ is given by
