@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from sage.misc.cachefunc import cached_function
+
 from sage.combinat.partition import Partition, Partitions
 from sage.combinat.permutation import Permutation
-
 from sage.calculus.functional import derivative
 
 from antisymmetric_utilities import *
