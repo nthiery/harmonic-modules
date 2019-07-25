@@ -311,14 +311,14 @@
 	\end{example}
 	
 	\begin{theorem}
-		The Young symmetrizer $c_{\lambda}$ is idempotent up to a scalar and the image of $c_{\lambda}$ by right multiplication on $\CC \Sn$ is an irreducible representation $A_{\lambda}$ of $\Sn$.
+		The Young symmetrizer $c_{\mu}$ is idempotent up to a scalar and the image of $c_{\lambda}$ by right multiplication on $\CC \Sn$ is an irreducible representation $A_{\mu}$ of $\Sn$.
 		Thus any irreducible representation can be obtain this way for a unique partition. 
 	\end{theorem}
 	
 	The proof of the above theorem is given by Fulton and Harris in \cite{FultonHarris1991}. 
-	This theorem guarantees that $c_{\lambda}$ is an isotypic projector and that applying it on an adapted basis of $\harmonics_{n}^{(r)}$ gives representatives of the isotypic components of $\Sn$. \pauline{Need more details here.}  \\
+	This theorem guarantees that $c_{\mu}$ is an isotypic projector. Thus applying $c_\mu$ on $\harmonics_{n}^{(r)}$ gives the $\Sn$-isotypic component of type $\mu$ of $\harmonics_{n}^{(r)}$. Moreover, using an adapted basis \pauline{On a vraiment besoin d'une base particulière?} of $\harmonics_{n}^{(r)}$ guarantees that we obtain enough elements to be able to construct a basis of the isotypic component and thus we obtain the multiplicity of the irreducible representation of $\Sn$ corresponding to $\mu$. \\
 	
-	The action of $\GLr$ commutes with the action of $\Sn$, then the polarization operators commute with the Young symmetrizer. Therefore, we can compute independently each $\Sn$ isotypic component of $\harmonics_{n}^{(r)}$ by starting from a basis of $\harmonics_{n}^{(1)}$ that itself is adapted to its decomposition into isotypic components:
+	The action of $\GLr$ commutes with the action of $\Sn$, then the polarization operators commute with the Young symmetrizer. Therefore, in practice, we can compute independently each $\Sn$ isotypic component of $\harmonics_{n}^{(r)}$ by starting from a basis of $\harmonics_{n}^{(1)}$ and decomposing it into isotypic components:
 	$$\harmonics_{n}^{(1)}=:\bigoplus_{\mu \vdash n} \harmonics_{\mu}^{(1)},$$
 	
 	where $\harmonics_{\mu}^{(1)}$ is the isotypic component of type $\mu$ of $\harmonics_{n}^{(1)}$.
