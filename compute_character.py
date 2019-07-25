@@ -340,46 +340,6 @@ def IsotypicComponent(S, arg, use_antisymmetry=False):
         return result[key]
     else:
         return result
-
-
-def add_degrees_isotypic(gen_deg, op_deg):
-    """
-    Compute the sum componentwise of the lists of integrers contained in d1 and d2 
-    and return a grading set and the partition contained in d2 as result.
-    
-    INPUT:
-        - ``d1`` -- list containing a list of integers and a partition
-        - ``d2`` -- list of integers
-
-    EXAMPLES::
-        sage: d1 = ([3,0],[2,1])
-        sage: d2 = [-1,0]
-        sage: add_degrees_isotypic(d1,d2)
-        ((2, 0), [2, 1])
-
-    """
-    D = cartesian_product([ZZ for i in range(len(gen_deg[0]))])
-    return D(gen_deg[0])+D(op_deg), gen_deg[1]
-    
-def add_degrees_symmetric(gen_deg,op_deg):
-    """
-    Compute the sum componentwise of the lists of integrers contained in d1 and d2 
-    and return an ordered grading set and the partition contained in d2 as result.
-    
-    INPUT:
-        - ``d1`` -- list containing a list of integers and a partition
-        - ``d2`` -- list of integers
-
-    EXAMPLES::
-        sage: d1 = ([0, 3],[2,1])
-        sage: d2 = [0, -1]
-        sage: add_degrees_symmetric(d1,d2)
-        ((2, 0), [2, 1])
-
-    """
-    D = cartesian_product([ZZ for i in range(len(gen_deg[0]))])
-    d = D(gen_deg[0])+D(op_deg)
-    return D(sorted(d, reverse=True)), gen_deg[1]
     
 ##############################################################################
 # Polarization Space
