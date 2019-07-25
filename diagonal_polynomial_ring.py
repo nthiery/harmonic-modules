@@ -3,12 +3,10 @@
 
 import functools
 
-from sage.misc.cachefunc import cached_method, cached_function
-from sage.structure.sage_object import load
-
+from sage.misc.cachefunc import cached_method
 from sage.parallel.decorate import parallel
-from sage.misc.misc_c import prod
 
+from sage.misc.misc_c import prod
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.integer_ring import ZZ
 from sage.rings.rational_field import QQ
@@ -17,11 +15,11 @@ from sage.categories.cartesian_product import cartesian_product
 from sage.combinat.words.word import Word
 from sage.matrix.constructor import matrix
 
+from utilities import *
+from antisymmetric_utilities import *
 from isomorphic_object import *
 from polynomial_derivative import *
 
-from utilities import *
-from antisymmetric_utilities import *
 
 ##############################################################################
 # Polynomial ring with diagonal action
@@ -38,7 +36,6 @@ class DiagonalPolynomialRing(IsomorphicObject):
         sage: P
         Diagonal Polynomial Ring with 3 rows of 4 variables over Rational Field
 
-
         sage: P = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
         sage: P
         Diagonal Polynomial Ring with 3 rows of 4 variables and inert variables over Rational Field
@@ -52,7 +49,6 @@ class DiagonalPolynomialRing(IsomorphicObject):
         self._inert = inert
         self._P = P
         self._R = R
-        self._Q = PolynomialRing(QQ,'q',r)
         self._grading_set = cartesian_product([ZZ for i in range(r)])
         self._hilbert_parent = PolynomialRing(ZZ, r, 'q')
         
@@ -69,45 +65,76 @@ class DiagonalPolynomialRing(IsomorphicObject):
             return "Diagonal Polynomial Ring with %s rows of %s variables over %s"%(self._r, self._n, self.base_ring())
         else:
             return "Diagonal Polynomial Ring with %s rows of %s variables and inert variables over %s"%(self._r, self._n, self.base_ring())
-        
-    def Q_gens(self):
+            
+    def variable_names(self):
         """
-        sage: D = DiagonalPolynomialRing(QQ, 4, 3, inert=1)
-        sage: D.Q_gens()
-        (q0, q1, q2)
+        Return the variable names. This is use when calling function
+        inject_variables() on self. 
         """
-        return self._Q.gens()
-        
+        return self._P.variable_names()
+
     def nrows(self):
         """
-        Return the number of sets of variables.
+        Return the number of sets of classic variables of self.
+        
+        EXAMPLES::
+        
+            sage: DiagonalPolynomialRing(QQ, 4, 3, inert=1).nrows()
+            3
+            sage: DiagonalPolynomialRing(QQ, 4, 3).nrows()
+            3
+            sage: DiagonalPolynomialRing(QQ, 4, 1).nrows()
+            1
         """
         return self._r
         
     def ncols(self):
         """
-        Return the number of variables in each set.
+        Return the number of variables in each set of self.
+        
+        EXAMPLES::
+        
+            sage: DiagonalPolynomialRing(QQ, 4, 3, inert=1).ncols()
+            4
+            sage: DiagonalPolynomialRing(QQ, 2, 3).ncols()
+            2
+            sage: DiagonalPolynomialRing(QQ, 2, 1).ncols()
+            2
         """
         return self._n
         
     def ninert(self):
         """
-        Return the number of sets if inert variables.
+        Return the number of sets if inert variables of self.
+        
+        EXAMPLES::
+        
+            sage: DiagonalPolynomialRing(QQ, 4, 3, inert=1).ninert()
+            1
+            sage: DiagonalPolynomialRing(QQ, 2, 1).ninert()
+            0
         """
         return self._inert
         
     def grading_set(self):
         """
-        Return the grading set.
+        Return the grading set of self.
+        
+        EXAMPLES::
+        
+            sage: DiagonalPolynomialRing(QQ, 4, 3, inert=1).grading_set()
+            The Cartesian product of (Integer Ring, Integer Ring, Integer Ring)
+            sage: DiagonalPolynomialRing(QQ, 2, 1).grading_set()
+            The Cartesian product of (Integer Ring,)
+            sage: DiagonalPolynomialRing(QQ, 2, 1, inert=1).grading_set()
+            The Cartesian product of (Integer Ring,)
+
         """
         return self._grading_set
         
-    def variable_names(self):
-        return self._P.variable_names()
-        
     def algebra_generators(self):
         """
-        Return all the variables including the inert variables.
+        Return all the variables of self including the inert variables.
         
         EXAMPLES ::
         
@@ -136,6 +163,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
         Return only the classic variables.
         
         EXAMPLES::
+        
             sage: DP = DiagonalPolynomialRing(QQ, 3, 3, inert=1)
             sage: DP.variables()
             [x00 x01 x02]
@@ -151,9 +179,10 @@ class DiagonalPolynomialRing(IsomorphicObject):
         
     def inert_variables(self):
         """
-        Return only the inert variables. 
-        git trac config --user USERNAME --pass 'PASSWORD'
+        Return only the inert variables of self. 
+        
         EXAMPLES::
+        
             sage: DP = DiagonalPolynomialRing(QQ, 3, 3, inert=1)
             sage: DP.inert_variables()
             [theta00 theta01 theta02]
@@ -178,9 +207,22 @@ class DiagonalPolynomialRing(IsomorphicObject):
         Return only the classic variables as variables of a multivariate polynomial ring.
         
         EXAMPLES::
-            sage: DP = DiagonalPolynomialRing(QQ, 3, 3, inert=1)
         
-                
+            sage: DP = DiagonalPolynomialRing(QQ, 3, 3, inert=1)
+            sage: DP.variables()
+            [x00 x01 x02]
+            [x10 x11 x12]
+            [x20 x21 x22]
+            sage: DP.variables()[0,0].parent()
+            Diagonal Polynomial Ring with 3 rows of 3 variables and inert variables over Rational Field
+
+            sage: DP.derivative_variables()
+            [x00 x01 x02]
+            [x10 x11 x12]
+            [x20 x21 x22]
+            sage: DP.derivative_variables()[0,0].parent()
+            Multivariate Polynomial Ring in x00, x01, x02, x10, x11, x12, x20, x21, x22, theta00, theta01, theta02 over Rational Field
+
         """
         vars = self._P.gens()
         n = self.ncols()
@@ -190,7 +232,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
         
     def multipower(self, d):
         """
-        Return the product of the terms $q_i^{d_i}$.
+        Return the product of the terms $q_i^{d_i}$ for all $d_i \in d$ .
         
         INPUT:
             - `d` -- a multidegree
@@ -207,7 +249,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             q0^4*q1^3*q2^2*q3
 
         """
-        q = self.Q_gens()
+        q = PolynomialRing(QQ,'q',self._r).gens()
         return prod(q[i]**d[i] for i in range(0,len(q)))
         
     def monomial(self, *args):
@@ -263,7 +305,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
     @cached_method            
     def row_permutation(self, sigma):
         """
-        Return the permutation of the variables induced by a permutation of the rows
+        Return the permutation of the variables induced by a permutation of the rows.
 
         INPUT:
         - ``sigma`` -- a permutation of the rows, as a permutation of `\{1,\ldots,r\}`
