@@ -2,15 +2,11 @@ from sage.structure.parent cimport Parent
 from sage.structure.element cimport Element
 from sage.rings.polynomial.polydict cimport ETuple
 
-from sage.combinat.partition import Partition, Partitions
+from sage.combinat.partition import Partition
 from sage.groups.perm_gps.permgroup_element import PermutationGroupElement
-import sage.combinat.tableau
-from sage.combinat.tableau import StandardTableau, StandardTableaux
+from sage.combinat.tableau import StandardTableau
 
 import utilities
-#from utilities cimport diagonal_cmp
-#from utilities cimport diagonal_swap
-#from utilities cimport items_of_vector
 
 cpdef diagonal_antisort(exponents, int n, int r, tuple positions_list):
     """
@@ -99,8 +95,7 @@ cpdef is_diagonal_antisorted(exponents, int n, int r, tuple positions_list):
         False
         sage: is_diagonal_antisorted([1,2,3,4,5,6], 6, 1, ((0,2,4),(1,3,5)))
         False
-
-
+        
     """
     cdef int i, j
     cdef tuple positions
@@ -168,8 +163,6 @@ def antisymmetric_normal(p, int n, int r, tuple positions):
         sage: p1 = -2*x10*x11*x20 - 2*x10^2*x21 + 2*x10*x11*x21
         sage: antisymmetric_normal(p1, 3, 3, ((0,1,2),))
         -4*x10*x11*x20 - 2*x10^2*x21
-
-
     """
     cdef Parent R = p.parent()
     cdef dict d = {}
@@ -186,6 +179,8 @@ def antisymmetric_normal(p, int n, int r, tuple positions):
 def reduce_antisymmetric_normal(p, int n, int r, tuple positions):
     """
     Return the terms of `p` which are diagonally antisorted.
+    
+    See :func:`antisymmetric_normal` for details.
 
     INPUT:
 
@@ -193,7 +188,7 @@ def reduce_antisymmetric_normal(p, int n, int r, tuple positions):
     - ``r``, ``n`` -- nonnegative integers
     - ``positions`` -- a tuple of tuple of positions
 
-    This coincides with reduce_antisymmetric_normal (and is faster) if
+    This coincides with antisymmetric_normal (and is faster) if
     `p` is antisymmetric.
 
     EXAMPLES::
