@@ -99,6 +99,9 @@ class MatrixOfVectors:
         return vector(self._base_ring, len(self._rank.cache), d, sparse=False)
 
     def vector(self, v):
+        """
+        TODO :: Add Documentation Nicolas
+        """
         R = self.ambient()
         unrank = self._unrank
         # TODO: this only works for polynomials!
