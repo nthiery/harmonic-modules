@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import operator
-
-from utilities import items_of_vector
-
 from sage.structure.parent import Parent
 from sage.matrix.constructor import matrix
 from sage.modules.free_module_element import vector
 
+from utilities import items_of_vector
 from ranker import *
 
 
