@@ -4,8 +4,8 @@
 from sage.misc.misc_c import prod
 from sage.functions.other import factorial
 from sage.functions.other import binomial
-
 from sage.structure.element import have_same_parent
+
 from matrix_of_vectors import items_of_vector
 
 ##############################################################################
