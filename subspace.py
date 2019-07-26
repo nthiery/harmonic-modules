@@ -4,9 +4,8 @@
 import functools
 
 from sage.misc.constant_function import ConstantFunction
-from sage.misc.cachefunc import cached_method, cached_function
-from sage.structure.parent import Parent
-from sage.combinat.partition import Partition, Partitions
+from sage.misc.cachefunc import cached_method
+from sage.combinat.partition import Partition
 from sage.rings.semirings.non_negative_integer_semiring import NN
 from sage.rings.rational_field import QQ
 from sage.combinat.free_module import CombinatorialFreeModule
