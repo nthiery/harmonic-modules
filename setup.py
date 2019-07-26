@@ -15,7 +15,7 @@ def readfile(filename):
 # For the tests
 class SageTest(TestCommand):
     def run_tests(self):
-        errno = os.system("sage -t funcpersist.py matrix_of_vectors.py subspace.py diagram.py diagonal_polynomial_ring.py harmonic.py polarization_space.py add_degree.py derivative_space.py polynomial_derivative.py quotient.py young_idempotent.py isomorphic_object.py ranker.py")
+        errno = os.system("sage -t matrix_of_vectors.py subspace.py diagram.py diagonal_polynomial_ring.py add_degree.py polynomial_derivative.py young_idempotent.py isomorphic_object.py ranker.py")
         if errno != 0:
             sys.exit(1)
 
@@ -41,12 +41,10 @@ setup(
       'Programming Language :: Python :: 2.7',
     ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords = "",
-    py_modules=['funcpersist',
-                'matrix_of_vectors', 'subspace',
-                'diagram',
-                'diagonal_polynomial_ring', 'harmonic', 'polarization_space',
-                'add_degree', 'derivative_space', 'polynomial_derivative',
-                'quotient', 'young_idempotent', 'isomorphic_object',
+    py_modules=['matrix_of_vectors', 'subspace',
+                'diagram', 'diagonal_polynomial_ring',
+                'add_degree', 'polynomial_derivative',
+                'young_idempotent', 'isomorphic_object',
                 'ranker'
                ],
     cmdclass = {'test': SageTest}, # adding a special setup command for tests
