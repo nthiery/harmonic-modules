@@ -126,7 +126,7 @@ def make_deriv_comp_young(x, mu):
         
     EXAMPLES::
         sage: P = DiagonalPolynomialRing(QQ,3,3)
-        sage: X = P.derivative_variables()
+        sage: X = P.multivar_pol_ring_variables()
         sage: [make_deriv_comp_young(x,mu) for x in X[0] for mu in Partitions(3)] 
         [<function f at ...>,
          <function f at ...>,
