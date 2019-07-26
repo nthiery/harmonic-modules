@@ -92,45 +92,45 @@ class Diagram():
         Print the diagram. 
         
         EXAMPLES ::
-            sage: Diagram([(0,0),(1,1),(2,2)]).print()
+            sage: Diagram([(0,0),(1,1),(2,2)]).draw()
                  _
                _|_|
              _|_| 
             |_|   
-            sage: Diagram([(0,0), (1,0), (2,0), (0,1), (2,1)]).print_diagram()
+            sage: Diagram([(0,0), (1,0), (2,0), (0,1), (2,1)]).draw()
              _   _
             |_|_|_|
             |_|_|_|
-            sage: Diagram([(0,2),(1,1),(2,0)]).print_diagram()
+            sage: Diagram([(0,2),(1,1),(2,0)]).draw()
              _
             |_|_   
               |_|_ 
                 |_|
-            sage: Diagram([(0,0),(1,1)]).print_diagram() 
+            sage: Diagram([(0,0),(1,1)]).draw() 
                _
              _|_|
             |_| 
-            sage: Diagram([(0,1),(1,0),(1,1)]).print_diagram()  
+            sage: Diagram([(0,1),(1,0),(1,1)]).draw()  
              _ _
             |_|_|
               |_|
-            sage: Diagram([(0,1),(2,2)]).print_diagram()
+            sage: Diagram([(0,1),(2,2)]).draw()
                  _
              _  |_|
             |_|   
                   
-            sage: Diagram([(0,1),(2,3)]).print_diagram()
+            sage: Diagram([(0,1),(2,3)]).draw()
                  _
                 |_|
              _    
             |_|         
-            sage: Diagram([(0,1),(3,2),(3,3)]).print_diagram()
+            sage: Diagram([(0,1),(3,2),(3,3)]).draw()
                    _
                   |_|
              _    |_|
             |_|     
                     
-            sage: Diagram([(0,1),(3,2),(2,3)]).print_diagram()
+            sage: Diagram([(0,1),(3,2),(2,3)]).draw()
                  _  
                 |_|_ 
              _    |_|
