@@ -1,11 +1,9 @@
-from sage.structure.parent cimport Parent
 from sage.structure.element cimport Element
 from sage.rings.polynomial.polydict cimport ETuple
 from sage.groups.perm_gps.permgroup_element cimport PermutationGroupElement
 
 import sage.combinat.tableau
 from sage.combinat.words.word import Word
-
 from sage.combinat.free_module import CombinatorialFreeModule
 
 cpdef items_of_vector(Element v):
