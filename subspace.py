@@ -13,8 +13,6 @@ from sage.combinat.free_module import CombinatorialFreeModule
 
 from matrix_of_vectors import *
 
-
-
 class Subspace(object):
     """
     Construct a subspace from generators and linear operators

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from sage.combinat.composition import Composition
 from sage.rings.integer import Integer
 
 
