@@ -108,9 +108,15 @@ class MatrixOfVectors:
         return R.sum(v[i]* R.monomial(*unrank(i)) for i in range(len(v)))
 
     def vectors(self):
+        """
+        TODO :: Add Documentation Nicolas
+        """
         return tuple(self.vector(v) for v in self._matrix)
 
     def _add_vector_to_matrix(self, m, v): # append?
+        """
+        TODO :: Add Documentation Nicolas
+        """
         r = self.plain_vector(v)
         if len(r) > m.ncols():
             m = m.augment(matrix(self._base_ring, m.nrows(), len(r)-m.ncols()))
@@ -149,6 +155,9 @@ class EchelonMatrixOfVectors(MatrixOfVectors):
         return "A %sx%s echelon matrix of vectors in %s"%(m.nrows(), m.ncols(), self.ambient())
 
     def extend(self, v, word=None):
+        """
+        TODO :: Add Documentation Nicolas
+        """
         self._stats["extend"] += 1
         if not v:
             self._stats["zero"] += 1
