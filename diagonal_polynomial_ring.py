@@ -202,7 +202,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             print "No inert variables"
             return None
 
-    def derivative_variables(self):
+    def multivar_pol_ring_variables(self):
         """
         Return only the classic variables as variables of a multivariate polynomial ring.
         
@@ -216,11 +216,11 @@ class DiagonalPolynomialRing(IsomorphicObject):
             sage: DP.variables()[0,0].parent()
             Diagonal Polynomial Ring with 3 rows of 3 variables and inert variables over Rational Field
 
-            sage: DP.derivative_variables()
+            sage: DP.multivar_pol_ring_variables()
             [x00 x01 x02]
             [x10 x11 x12]
             [x20 x21 x22]
-            sage: DP.derivative_variables()[0,0].parent()
+            sage: DP.multivar_pol_ring_variables()[0,0].parent()
             Multivariate Polynomial Ring in x00, x01, x02, x10, x11, x12, x20, x21, x22, theta00, theta01, theta02 over Rational Field
 
         """
@@ -330,7 +330,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
         # TODO NICOLAS add documentation
         """
         r = self._r
-        X = self.derivative_variables()
+        X = self.multivar_pol_ring_variables()
         res = []
         for i in range(r):
             res.extend([X[i,j],D[i]])
@@ -345,18 +345,22 @@ class DiagonalPolynomialRing(IsomorphicObject):
 
                 sage: P = DiagonalPolynomialRing(QQ, 3, 2)
                 sage: X = P.algebra_generators()
-                sage: p = X[0,0]*X[0,1]^2 * X[1,0]^2*X[1,1]^3
+                sage: p = X[0,0]*X[1,1]^2 + X[1,0]^2*X[0,1]
                 sage: p.multidegree()
-                (3, 5)
+                (1, 2)
                 sage: P.zero().multidegree()
                 -1
-                sage: P = DiagonalPolynomialRing(QQ, 3, 2, inert=1)
-                sage: X = P.algebra_generators()
-                sage: p = X[0,0]*X[0,1] * X[1,1]^3 * X[2,0]*X[2,1]^2 
-                sage: p.multidegree()
-                (2, 3)
                 
-            TODO : Add examples with inert variables
+                sage: P = DiagonalPolynomialRing(QQ, 3, 2, inert=1)
+                sage: X = P.variables()
+                sage: T = P.inert_variables()
+                sage: p = -X[0,1]*T[0,0] + X[0,2]*T[0,0] + X[0,0]*T[0,1] - X[0,2]*T[0,1] - X[0,0]*T[0,2] + X[0,1]*T[0,2]
+                sage: p.multidegree()
+                (1, 0)
+                
+                sage: q = T[0,0] - T[0,1]
+                sage: q.multidegree()
+                (0, 0)
 
             """
             if not self:
@@ -368,22 +372,118 @@ class DiagonalPolynomialRing(IsomorphicObject):
                                       for i in range(r)])
                                       
         def degree(self):
+            """
+            Return the total degree of a multihomogeneous polynomial.
+            
+            EXAMPLES::
+
+                sage: P = DiagonalPolynomialRing(QQ, 3, 2)
+                sage: X = P.algebra_generators()
+                sage: p = X[0,0]*X[1,1]^2 + X[1,0]^2*X[0,1]
+                sage: p.degree()
+                3
+                
+                sage: P = DiagonalPolynomialRing(QQ, 3, 2, inert=1)
+                sage: X = P.variables()
+                sage: T = P.inert_variables()
+                sage: p = -X[0,1]*T[0,0] + X[0,2]*T[0,0] + X[0,0]*T[0,1] - X[0,2]*T[0,1] - X[0,0]*T[0,2] + X[0,1]*T[0,2]
+                sage: p.degree()
+                1
+                
+                sage: q = T[0,0] - T[0,1]
+                sage: q.degree()
+                0
+            """
             return sum(self.multidegree())
         
         def subs(self, *args):
+            """
+            Substitute some variables of the polynomial by a specified value or variable.
+            This method uses the method func:`subs` that can be called on  element of a
+            multivariate polynomial ring.
+            
+            EXAMPLES:: 
+            
+                sage: P = DiagonalPolynomialRing(QQ, 3, 2, inert=1)
+                sage: P.inject_variables()
+                Defining x00, x01, x02, x10, x11, x12, theta00, theta01, theta02
+                sage: p = -x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2
+                sage: x = P.multivar_pol_ring_variables()
+                sage: p.subs({x[0,0]:1})
+                -x01^2*x02 + x01*x02^2 + x01^2 - x02^2 - x01 + x02
+
+            """
             p = self.lift()
             return self.parent(p.subs(*args))
             
         def factor(self, *args):
+            """
+            Return the factorization of the polynomial self. 
+            See method func:`factor` of multivariate polynomial ring. 
+            
+            EXAMPLES ::
+            
+                sage: P = DiagonalPolynomialRing(QQ, 3, 2, inert=1)
+                sage: P.inject_variables()
+                Defining x00, x01, x02, x10, x11, x12, theta00, theta01, theta02
+                sage: p = -x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2
+                sage: p.factor()
+                (x01 - x02) * (-x00 + x01) * (x00 - x02)
+                
+                sage: P = DiagonalPolynomialRing(QQ, 4, 3)
+                sage: P.inject_variables()
+                Defining x00, x01, x02, x03, x10, x11, x12, x13, x20, x21, x22, x23
+                sage: p = x00^3*x01^2*x02 - x00^2*x01^3*x02 - x00^3*x01*x02^2 + x00*x01^3*x02^2 + x00^2*x01*x02^3 - x00*x01^2*x02^3 - x00^3*x01^2*x03 + x00^2*x01^3*x03 + x00^3*x02^2*x03 - x01^3*x02^2*x03 - x00^2*x02^3*x03 + x01^2*x02^3*x03 + x00^3*x01*x03^2 - x00*x01^3*x03^2 - x00^3*x02*x03^2 + x01^3*x02*x03^2 + x00*x02^3*x03^2 - x01*x02^3*x03^2 - x00^2*x01*x03^3 + x00*x01^2*x03^3 + x00^2*x02*x03^3  - x01^2*x02*x03^3 - x00*x02^2*x03^3 + x01*x02^2*x03^3
+                sage: p.factor()
+                (-1) * (x02 - x03) * (-x01 + x02) * (x01 - x03) * (-x00 + x02) * (-x00 + x01) * (x00 - x03)
+
+            """
             p = self.lift()
             return p.factor(*args)
                                       
         def derivative(self, *args):
+            """
+            Return the derivative of self w.r.t the given arguments. 
+            
+            EXAMPLES::
+            
+                sage: P = DiagonalPolynomialRing(QQ, 3, 2, inert=1)
+                sage: P.inject_variables()
+                Defining x00, x01, x02, x10, x11, x12, theta00, theta01, theta02
+                sage: p = -x01*theta00 + x02*theta00 + x00*theta01 - x02*theta01 - x00*theta02 + x01*theta02
+                sage: x = P.multivar_pol_ring_variables()
+                sage: p.derivative(x[0,0])
+                theta01 - theta02
+        
+                sage: q = -x00^2*x01 + x00*x01^2 + x00^2*x02 - x01^2*x02 - x00*x02^2 + x01*x02^2
+                sage: q.derivative(x[0,1])
+                -x00^2 + 2*x00*x01 - 2*x01*x02 + x02^2
+                sage: q.derivative(x[0,1],2)
+                2*x00 - 2*x02
+            """
             p = self.parent()._P(self)
             return self.parent()(p.derivative(*args))
         
         @cached_method
         def apply_permutation(self):
+            """
+            Strainghten the polynomial self by applying the right permutation
+            to obtain the equivalent polynomial of decreasing multidegree. 
+            
+            EXAMPLES::
+            
+                sage: P = DiagonalPolynomialRing(QQ, 3, 3, inert=1)
+                sage: P.inject_variables()
+                Defining x00, x01, x02, x10, x11, x12, x20, x21, x22, theta00, theta01, theta02
+                sage: p = x00*x11^3*x22^2 + x01*x12^3+x20^2
+                sage: p.multidegree()
+                (1, 3, 2)
+                sage: p.apply_permutation()
+                x01^3*x12^2*x20 + x02^3*x21 + x10^2
+                sage: p.apply_permutation().multidegree()
+                (3, 2, 1)
+        
+            """
             d = self.multidegree()
             d = tuple(d) + tuple(0 for i in range(self.parent().ninert()))
             result = self.lift()
@@ -423,7 +523,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             """
             n = self.parent().ncols()
             r = self.parent().nrows()
-            X = self.parent().derivative_variables()
+            X = self.parent().multivar_pol_ring_variables()
             if i1>=r or i2 >=r:
                 print "Row number out of range"
                 return None
@@ -455,7 +555,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
 
             """
             n = self.parent().ncols()
-            X = self.parent().derivative_variables()
+            X = self.parent().multivar_pol_ring_variables()
             if i1>=self.parent().nrows() or i2 >=self.parent().nrows():
                 print "Row number out of range."
                 return None 
@@ -501,7 +601,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             """
             n = self.parent().ncols()
             r = self.parent().nrows()
-            X = self.parent().derivative_variables()
+            X = self.parent().multivar_pol_ring_variables()
             result = 0
             if not isinstance(d, (tuple, list)):
                 d = [d]
@@ -538,7 +638,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
                             
             """
             n = self.parent().ncols()
-            X = self.parent().derivative_variables()
+            X = self.parent().multivar_pol_ring_variables()
             result = sum(X[i,j]*self.derivative(X[i,j], k) for j in range(0, n))
             if row_symmetry=="permutation" and result:
                 result = result.apply_permutation()
@@ -578,7 +678,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             """
             n = self.parent().ncols()
             r = self.parent().nrows()
-            X = self.parent().derivative_variables()
+            X = self.parent().multivar_pol_ring_variables()
             D = tuple(D)
             if i2>=r:
                 return None
@@ -948,6 +1048,9 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
         return self._antisymmetries
         
     def set_antisymmetries(self, antisymmetries):
+        """
+        Set the antisymmetries of self to be the given ones. 
+        """
         self._antisymmetries = antisymmetries
         
     class Element(DiagonalPolynomialRing.Element):
@@ -958,6 +1061,9 @@ class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
             return self.parent().antisymmetries()
             
         def set_antisymmetries(self, antisymmetries):
+            """
+            Set the antisymmetries of the parent of self to be the given ones. 
+            """
             self.parent().set_antisymmetries(antisymmetries)
         
         def polarization(self, i1, i2, d, row_symmetry=None):
