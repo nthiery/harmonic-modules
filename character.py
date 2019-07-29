@@ -12,7 +12,6 @@ from add_degree import*
 from diagram import*
 
 from sage.combinat.sf.sf import SymmetricFunctions
-SymmetricFunctions(QQ).inject_shorthands(verbose=False)
 m = SymmetricFunctions(QQ).m()
 s = SymmetricFunctions(QQ).s()
 # Workaround #25491 which prevents early unpickling of tensor products
@@ -34,7 +33,7 @@ def vandermonde(gamma, r=0):
     INPUT: 
     - ``gamma`` -- A Partition or a Diagram
     
-    OUtPUT:
+    OUTPUT:
     - An element of a Diagonal Polynomial Ring in `r` rows of `n` variables
 
     EXAMPLES::
@@ -106,6 +105,12 @@ def polarization_operators(r, max_deg=1, side=None, row_symmetry=None):
     """
     Return the polarization operator functions in `r` sets of variables with
     maximum degree `max_deg`.
+    The polarization operator $P_{x,y}^k$ in defined by 
+    $$P_{x,y}^k := \sum_i y_i \partial_{x_i}^k$$
+    where X and y are two sets of variables and $\partial_{x_i}^k$ stand for 
+    the $k$-th partial derivative in $x_i$.
+    The option `side` allows to specify keywork "down" to return only polarization
+    operators $P_{x_i,x_j}^k$ such that $i<j$. 
     
     INPUT:
     - `r` -- an integer
@@ -151,6 +156,10 @@ def steenrod_operators(r, degree=1, row_symmetry=None):
     """
     Return the Steenrod operator functions in `r` sets of variables of 
     degree `degree`.
+    The Steenrod operator $S_{x}^k$ in defined for $k>1$ by 
+    $$S_{x}^k := \sum_i x_i \partial_{x_i}^k$$
+    where X and y are two sets of variables and $\partial_{x_i}^k$ stand for 
+    the $k$-th partial derivative in $x_i$.
     
     INPUT:
     - `r` -- a integer
@@ -175,6 +184,8 @@ def steenrod_operators(r, degree=1, row_symmetry=None):
          (4,): (-x00^3*x01 + x00*x01^3 + x00^3*x02 - x01^3*x02 - x00*x02^3 + x01*x02^3,)}
 
     """
+    if degree < 1:
+        degree = 1
     D = cartesian_product([ZZ for i in range(r)])
     op = {}
     for i in range(r):
@@ -212,7 +223,7 @@ def symmetric_derivatives(list_deg, row_symmetry=None):
             for d in list_deg}
  
 ##############################################################################
-# Utilities
+# Merge dictionnaries
 ##############################################################################
 
 def merge(dict1, dict2):
@@ -236,26 +247,6 @@ def merge(dict1, dict2):
         else:
             result[key] = value
     return result
-
-def antisymmetries(mu):
-    """
-    Return the antisymmetries associated to the canonical stantard tableau
-    of the given partition. 
-    
-    INPUT:
-    - ``mu`` -- a Partition
-    
-    EXAMPLES ::
-        sage: antisymmetries(Partition([2,1]))
-        ((0, 2), (1,))
-        sage: antisymmetries(Partition([3]))
-        ((0,), (1,), (2,))
-        sage: antisymmetries(Partition([4,2,1,1]))
-        ((0, 4, 6, 7), (1, 5), (2,), (3,))
-
-    """
-    mu = Partition(mu)
-    return antisymmetries_of_tableau(mu.initial_tableau())
     
 ##############################################################################
 # Projection on isotypic components
@@ -442,7 +433,7 @@ def PolarizedSpace(S, operators, add_degrees=add_degrees_isotypic):
 
 def Range(S, operators, add_degrees=add_degrees_isotypic):
     """
-    Return the image of the basis of the subspace S by the given operators. 
+    Return the basis of the image of the subspace S by the given operators. 
     
     INPUT:
     - ``S`` -- a subspace
@@ -645,10 +636,6 @@ def factorize(f, n=0):
             if b == mu :
                 result[mu] += [(a,c)]
     result2 = [(tuple(mu),sum(c*s(nu) for (nu,c) in result[mu])) for mu in result.keys()]
-    #for a, b in result2:
-        #if b!=0:
-            #print a
-            #show(b)
     return result2
     
 def latex_output_character(f):
