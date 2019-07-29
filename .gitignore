@@ -15,3 +15,5 @@
 build/*
 .eggs/*
 *.egg-info/*
+article.out
+resultat/*
