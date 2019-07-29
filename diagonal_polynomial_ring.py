@@ -644,7 +644,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
                 result = result.apply_permutation()
             return result
             
-        def multi_polarization(self, D, i2):
+        def multi_polarization(self, D, i2, row_symmetry=None):
             """
             Return the multi polarization `P_{D,i_2}. p` of `p`.
 
