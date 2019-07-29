@@ -221,6 +221,16 @@ def symmetric_derivatives(list_deg, row_symmetry=None):
     D = cartesian_product([ZZ for i in range(r)])
     return {D(-i for i in d) : [attrcall("symmetric_derivative", d=d, row_symmetry=row_symmetry)] 
             for d in list_deg}
+
+def multipolarization(r, list_deg, i2, row_symmetry=None):
+    """
+    """
+    D = cartesian_product([ZZ for i in range(r)])
+    op = {}
+    for deg in list_deg:
+        op[D(-deg[i]+1 if i==i2 else -deg[i] for i in range(len(deg)))] = [
+            attrcall("multi_polarization", D=deg, i2=i2, row_symmetry=row_symmetry)]
+    return op
  
 ##############################################################################
 # Merge dictionnaries
