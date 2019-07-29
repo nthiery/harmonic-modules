@@ -55,8 +55,6 @@ def add_degrees_isotypic(gen_deg, op_deg):
     """
     D = cartesian_product([ZZ for i in range(len(gen_deg[0]))])
     d = D(gen_deg[0])+D(op_deg)
-    if not all(i>=0 for i in d):
-        raise ValueError("invalid degree")
     return d, gen_deg[1]
     
 def add_degrees_symmetric(gen_deg, op_deg):
