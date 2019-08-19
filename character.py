@@ -463,7 +463,7 @@ def Range(S, operators, add_degrees=add_degrees_isotypic):
                                      [op(p) for p in b for op in op_list if op(p)!=0] 
                                      for deg, op_list in operators.iteritems()})    
     if result != {} :
-        return Subspace(result, {}, add_degrees) #{} <-> operators
+        return Subspace(result, operators, add_degrees) #{} <-> operators
     else :
         return None
         
@@ -715,9 +715,9 @@ def dimension(f, n):
 # Main function
 ############################################################################## 
 
-@persist(hash=lambda k: 'character_%s_%s' % (k[0][1].size(),''.join(str(i) for i in k[0][1])),
-        funcname='character')
-def E_mu(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=False):
+#@persist(hash=lambda k: 'character_%s_%s' % (k[0][1].size(),''.join(str(i) for i in k[0][1])),
+ #       funcname='character')
+def E_mu(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=False, r=0):
     """
     Given a diagram `mu`, compute the character associated to this diagram.
     Compute the subspace span by the Vandermonde determinant associated to `mu`
@@ -750,7 +750,8 @@ def E_mu(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=False):
     # Projection on isotypic components
     V_iso = IsotypicComponent(V, n, use_antisymmetry=use_antisymmetry)
     # Polarization
-    r = max(n-1, 1)
+    if r == 0 :
+        r = max(n-1, 1)
     deg = v.degree()
     if deg == 0:
         deg = 1
