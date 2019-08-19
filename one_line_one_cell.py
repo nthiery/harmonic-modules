@@ -1,4 +1,4 @@
-%runfile character.py
+from character.py import *
 
 def frob_add_one_cell(i,n) :
     diagram = Diagram([(k,0) for k in range(0,n-1)]+[(i,1)])
