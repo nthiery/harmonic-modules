@@ -4,6 +4,8 @@
 from pypersist import persist
 from sage.misc.misc import attrcall
 from sage.categories.tensor import tensor
+from sage.misc.latex import latex
+
 
 from diagonal_polynomial_ring import*
 from subspace import*
