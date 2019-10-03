@@ -14,8 +14,8 @@ def compare(i,n):
     return E_mu(diagram1, parallel=True, r=n-2) == E_mu(diagram2, parallel=True, r=n-2)
 
 n = 6
-for i in range(1,n):
-    res = frob_add_one_cell(i,n+1)
+for i in range(2,n):
+    res = frob_add_one_cell(n-i,n+1)
     print res
     print
     print latex_output_character(res)
