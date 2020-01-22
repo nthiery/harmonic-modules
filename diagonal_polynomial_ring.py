@@ -14,6 +14,7 @@ from sage.categories.algebras import Algebras
 from sage.categories.cartesian_product import cartesian_product
 from sage.combinat.words.word import Word
 from sage.matrix.constructor import matrix
+from sage.misc.misc import attrcall
 
 from utilities import *
 from antisymmetric_utilities import *
