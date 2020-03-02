@@ -16,6 +16,7 @@ from diagram import*
 from sage.combinat.sf.sf import SymmetricFunctions
 m = SymmetricFunctions(QQ).m()
 s = SymmetricFunctions(QQ).s()
+SymmetricFunctions(QQ).inject_shorthands(verbose=False)
 # Workaround #25491 which prevents early unpickling of tensor products
 # of symmetric functions
 from sage.categories.hopf_algebras_with_basis import HopfAlgebrasWithBasis
