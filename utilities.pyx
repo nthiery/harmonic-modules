@@ -40,13 +40,13 @@ cpdef items_of_vector(Element v):
         sage: x,y,z = P.gens()
         sage: p = (x+y+1)^2; p
         x^2 + 2*x*y + y^2 + 2*x + 2*y + 1
-        sage: list(items_of_vector(p))
-        [((1, 0, 0), 2),
-         ((1, 1, 0), 2),
-         ((0, 0, 0), 1),
-         ((2, 0, 0), 1),
+        sage: sorted(items_of_vector(p))
+        [((0, 0, 0), 1),
          ((0, 1, 0), 2),
-         ((0, 2, 0), 1)]
+         ((0, 2, 0), 1),
+         ((1, 0, 0), 2),
+         ((1, 1, 0), 2),
+         ((2, 0, 0), 1)]
 
     univariate polynomials::
 
