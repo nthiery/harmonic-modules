@@ -3,7 +3,7 @@ from sage.structure.element cimport Element
 from sage.rings.polynomial.polydict cimport ETuple
 
 from sage.combinat.partition import Partition
-from sage.groups.perm_gps.permgroup_element import PermutationGroupElement
+from sage.groups.perm_gps.constructor import PermutationGroupElement
 from sage.combinat.tableau import StandardTableau
 
 import utilities
