@@ -27,7 +27,7 @@ from polynomial_derivative import *
 ##############################################################################
 
 class DiagonalPolynomialRing(IsomorphicObject):
-    """
+    r"""
     The ring of diagonal polynomials in $n \times r$ variables and $n \times k$ inert variables.
     In order to distinguish the inert variables among the others, they are named `theta_{i,j}`
 
@@ -232,7 +232,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
         return matrix([[vars[i*n+j] for j in range(n)] for i in range(r)])
         
     def multipower(self, d):
-        """
+        r"""
         Return the product of the terms $q_i^{d_i}$ for all $d_i \in d$ .
         
         INPUT:
@@ -305,7 +305,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
                    
     @cached_method            
     def row_permutation(self, sigma):
-        """
+        r"""
         Return the permutation of the variables induced by a permutation of the rows.
 
         INPUT:
@@ -495,7 +495,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             return self.parent()(result)
                                       
         def polarization(self, i1, i2, d, row_symmetry=None):
-            """
+            r"""
             Return the polarization `P_{d,i_1,i_2}. p` of `p`.
 
             Recall that the polarization operator is defined by
@@ -535,7 +535,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
                 return result
                 
         def higher_polarization(self, i1, i2, d1, d2, row_symmetry=None):
-            """
+            r"""
             Return the polarization `P_{d1,d2,i_1,i_2}. p` of `p`.
 
             Recall that the polarization operator is defined by
@@ -617,7 +617,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             return result
             
         def steenrod_op(self, i, k, row_symmetry=None):
-            """
+            r"""
             Apply the Steenrod operator of degree `k` for the `i`th set of variables
             to `p`. 
             The Steenrod operator for a set of variables $x_1, x_2, dots, x_n$ is 
@@ -646,7 +646,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             return result
             
         def multi_polarization(self, D, i2, row_symmetry=None):
-            """
+            r"""
             Return the multi polarization `P_{D,i_2}. p` of `p`.
 
             The multi polarization operator is defined by
@@ -708,7 +708,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             self.is_highest_weight_vector(_assert=True)
 
         def highest_weight_vectors(self, i1=None, i2=None):
-            """
+            r"""
             Return the "unique" highest weight vectors `p_j, j\geq 0` such
             that `p = \sum e^j p_j`.
 
@@ -1000,7 +1000,7 @@ def e_polarization_degrees(D1, D2):
     return i, D
     
 class DiagonalAntisymmetricPolynomialRing(DiagonalPolynomialRing):
-    """
+    r"""
     The ring of diagonal antisymmetric polynomials in $n \times r$ variables 
     and $n \times k$ inert variables.
 
