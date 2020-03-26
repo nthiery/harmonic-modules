@@ -180,10 +180,14 @@ cpdef int diagonal_cmp(list exponents, int n, int r, int j1, int j2):
     """
     cdef int i
     cdef int c
+    cdef int a
+    cdef int b
     for i in range(r):
-        c = cmp(exponents[i*n+j1], exponents[i*n+j2])
-        if c:
-            return c
+        a = exponents[i*n+j1]
+        b = exponents[i*n+j2]
+        if a != b:
+            # Using trick from https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
+            return (a > b) - (a < b)
     return 0
 
 cpdef reverse_sorting_permutation(t): # TODO: put "stable sorting" as keyword somewhere
