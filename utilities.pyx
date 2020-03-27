@@ -40,13 +40,13 @@ cpdef items_of_vector(Element v):
         sage: x,y,z = P.gens()
         sage: p = (x+y+1)^2; p
         x^2 + 2*x*y + y^2 + 2*x + 2*y + 1
-        sage: list(items_of_vector(p))
-        [((1, 0, 0), 2),
-         ((1, 1, 0), 2),
-         ((0, 0, 0), 1),
-         ((2, 0, 0), 1),
+        sage: sorted(items_of_vector(p))
+        [((0, 0, 0), 1),
          ((0, 1, 0), 2),
-         ((0, 2, 0), 1)]
+         ((0, 2, 0), 1),
+         ((1, 0, 0), 2),
+         ((1, 1, 0), 2),
+         ((2, 0, 0), 1)]
 
     univariate polynomials::
 
@@ -180,10 +180,14 @@ cpdef int diagonal_cmp(list exponents, int n, int r, int j1, int j2):
     """
     cdef int i
     cdef int c
+    cdef int a
+    cdef int b
     for i in range(r):
-        c = cmp(exponents[i*n+j1], exponents[i*n+j2])
-        if c:
-            return c
+        a = exponents[i*n+j1]
+        b = exponents[i*n+j2]
+        if a != b:
+            # Using trick from https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
+            return (a > b) - (a < b)
     return 0
 
 cpdef reverse_sorting_permutation(t): # TODO: put "stable sorting" as keyword somewhere
