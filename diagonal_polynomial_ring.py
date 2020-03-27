@@ -200,7 +200,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
         if inert!= 0:
             return matrix([[vars[i*n+j] for j in range(n)] for i in range(r,r+inert)])
         else:
-            print "No inert variables"
+            print("No inert variables")
             return None
 
     def multivar_pol_ring_variables(self):
@@ -526,7 +526,7 @@ class DiagonalPolynomialRing(IsomorphicObject):
             r = self.parent().nrows()
             X = self.parent().multivar_pol_ring_variables()
             if i1>=r or i2 >=r:
-                print "Row number out of range"
+                print("Row number out of range")
                 return None
             else:
                 result = sum(X[i2,j]*self.derivative(X[i1,j],d) for j in range(n))
@@ -558,10 +558,10 @@ class DiagonalPolynomialRing(IsomorphicObject):
             n = self.parent().ncols()
             X = self.parent().multivar_pol_ring_variables()
             if i1>=self.parent().nrows() or i2 >=self.parent().nrows():
-                print "Row number out of range."
+                print("Row number out of range.")
                 return None 
             elif d2<1 :
-                print "Degree for second variable should be at least 1."
+                print("Degree for second variable should be at least 1.")
             else:
                 result = sum((X[i2,j]**d2)*self.derivative(X[i1,j],d1)
                                   for j in range(n))
