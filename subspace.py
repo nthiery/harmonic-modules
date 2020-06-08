@@ -238,7 +238,7 @@ class Subspace(object):
     def basis(self):
         self.finalize()
         basis = {}
-        for i, val in self._bases.iteritems() : 
+        for i, val in self._bases.items() : 
             if val.vectors() != () :
                 basis[i] = val.vectors()
         #return sum((basis.vectors() for basis in self._bases.values()), ())
@@ -249,7 +249,7 @@ class Subspace(object):
 
     def dimensions(self):
         self.finalize()
-        return {d: basis.cardinality() for d, basis in self._bases.iteritems()}
+        return {d: basis.cardinality() for d, basis in self._bases.items()}
 
     def matrix(self):
         self.finalize()
