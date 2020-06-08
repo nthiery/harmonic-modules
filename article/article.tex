@@ -1,3 +1,4 @@
+% !TeX spellcheck = en_US
 \documentclass[letter,12pt]{article}
 \usepackage[T1]{fontenc}
 \usepackage[tc]{titlepic}
@@ -44,6 +45,8 @@
 \newcommand{\ZZ}{\mathbb{Z}}
 \newcommand{\QQ}{\mathbb{Q}}
 \newcommand{\CC}{\mathbb{C}}
+\newcommand{\x}{\bm{x}}
+\newcommand{\y}{\bm{y}}
 \newcommand{\Sym}[1]{\mathbb{S}_{#1}}
 \newcommand{\Elambda}[1]{\mathcal{E}_{#1}}
 \newcommand{\Elambdar}[2]{\mathcal{E}_{#1}^{(#2)}}	
@@ -98,7 +101,7 @@
 	
 	\section{Introduction}
 	In this article, we present a new SageMath package to compute bicharacter of some multivariate polynomials spaces. 
-	The development of this package started at the occasion of a collaboration with François Bergeron to study the character of the space $\harmonics_n^{(r)}$ of diagonal harmonic polynomials on $r$ sets of $n$ variables, as a graded bi-$\GLr \times \Sn$-module. It is then extended to compute other characters of polynomial spaces. 
+	The development of this package started at the occasion of a collaboration with François Bergeron to study the character of the space $\harmonics_n^{(r)}$ of diagonal harmonic polynomials on $r$ sets of $n$ variables, as a graded bi-$(\GLr \times \Sn$)-module. It is then extended to compute other characters of polynomial spaces. 
 	
 	The main achievement is a calculation of the character of the diagonal harmonic polynomials for $n=6$ and $r=5$ (and therefore any $r$) in 45 minutes (and ~15Gb), which led to conjectures on its general value.
 	
@@ -152,14 +155,14 @@
 	
 	The invariant ring $R^{\Sn}$ is known as the ring of multisymmetric functions, that is to say the elements of $R$ that remain unchanged under permutations of the rows of $X$. The co-invariant ring $R_{\Sn}$ is the quotient of $R$ by the ideal $\mathcal{I}_n = \langle {R^{\Sn^+}} \rangle$ of the multisymmetric functions without constant term. We recall that $R$ is graduated by the degree and since $\mathcal{I}_n$ is a homogeneous ideal of $R$, $R_{\Sn}$ inherits from R a structure of graded $\GLr \times \Sn$ bi-module. The degree of a polynomial $f$ in $R_{\Sn}$ is defined to be the maximum degree of a monome of $f$. \pauline{Définir le degré plus en détail ?} 
 		
-	The natural grading of $R$ can be refined into a multigrading by rows. The multigrading is preserved by the action of $\Sn$. The multigrading is not preserved by the action of $\GLr$, but instead carries exactly the information about the $\GLr$-character. It is thus equivalent to consider the $\GLr \times \Sn$-bicharacter or the $\Sn$ multigraded character of $R_{\Sn}$. \\
+	The natural grading of $R$ can be refined into a multigrading by rows. The multigrading is preserved by the action of $\Sn$. The multigrading is not preserved by the action of $\GLr$, but instead carries exactly the information about the $\GLr$-character. It is thus equivalent to consider the $(\GLr \times \Sn$)-bicharacter or the $\Sn$ multigraded character of $R_{\Sn}$. \\
 	
-	We recall that the irrducible characters of both $\GLr$ and $\Sn$ can be express in terms of Schur functions. Thus, the character associated to the simultaneous action of $\GLr$ and $\Sn$ on $R$ is given by a pair of Schur functions $(s_\mu(\bm{q}), s_\lambda(\bm{w})$ with $\bm{q} = (q_1, q_2, \dots, q_r)$ encoding the action of $\GLr$ and $\bm{w} = (w_1, w_2, \dots, w_n)$ encoding the action of $\Sn$. We rewrite this pair of Schur function as a formal tensor product and we obtain the following expression for the $(\GLr \times \Sn)$-character
+	We recall that the irreducible characters of both $\GLr$ and $\Sn$ can be express in terms of Schur functions. Thus, the character associated to the simultaneous action of $\GLr$ and $\Sn$ on $R$ is given by a pair of Schur functions $(s_\mu(\bm{q}), s_\lambda(\bm{w}))$ with $\bm{q} = (q_1, q_2, \dots, q_r)$ encoding the action of $\GLr$ and $\bm{w} = (w_1, w_2, \dots, w_n)$ encoding the action of $\Sn$. We rewrite this pair of Schur function as a formal tensor product and we obtain the following expression for the $(\GLr \times \Sn)$-character
 	\begin{equation}
 	\sum_{\lambda \vdash n} \sum_{\mu} c_{\lambda\mu} s_\mu \otimes s_\lambda,
 	\end{equation}
 	
-	where the coefficients $c_\lambda\mu \in \NN$ correspond to the multiplicities of the irreducible representations and are to be determined. Note that, in order to simply the expression, we dropped the variables $\bm{q}$ and $\bm{w}$, since the tensor product already indicate which Schur function is associated to $\GLr$ and which one is associated to $\Sn$. \\ 
+	where the coefficients $c_{\lambda\mu}$ are positive integers corresponding to the multiplicities of the irreducible representations and are to be determined. Note that, in order to simply the expression, we dropped the variables $\bm{q}$ and $\bm{w}$, since the tensor product already indicate which Schur function is associated to $\GLr$ and which one is associated to $\Sn$. \\ 
 	
 	We can extend all those considerations to the polynomial ring $R' = \QQ[X']$ of multivariate polynomials on $r$ sets of $n$ variables plus one set of inert variables.
 	
@@ -209,35 +212,36 @@
 		$$\partial x_1^k f + \partial x_2^k f + \dots + \partial x_n^k f = 0.$$
 	\end{definition}
 
-	The space of harmonic polynomials in $n$ variables, denoted $\harmonics_{n}$, is the joint kernel of the differential operators $D_k := \partial_{x_1}^k + \cdots + \partial_{x_n}^k$. It is also a realization of the coinvariants of the symmetric group: $R\, /\, \langle Sym(X)^+ \rangle$ and a graded regular representation of $\Sn$. 
+	The space of harmonic polynomials in $n$ variables, denoted $\harmonics_{n}$, is the joint kernel of the differential operators $D_k := \partial x_1^k + \cdots + \partial x_n^k$. It is also a realization of the coinvariants of the symmetric group: $R\, /\, \langle Sym(X)^+ \rangle$ and a graded regular representation of $\Sn$. 
 	
 	\begin{example}
-	Let consider the case of $2$ variables $x_1$ and $x_2$. 
-	In this case, polynomials with only a constant term are harmonic. Moreover, $x_1-x_2$ is harmonic but $x_1^2-x_2^2$. In fact, linear combinations of constants and $x_1-x_2$ are the only harmonic polynomials in 2 variables so $\harmonics_2 = \QQ \{ 1, x_1-x_2 \}$. 
+	Let consider the case of two variables $x_1$ and $x_2$. 
+	In this case, polynomials with only a constant term are harmonic. Moreover, $x_1-x_2$ is harmonic but $x_1^2-x_2^2$ is not. In fact, linear combinations of constants and $x_1-x_2$ are the only harmonic polynomials in two variables so $\harmonics_2 = \QQ \{ 1, x_1-x_2 \}$. 
 	\end{example}
 	
 	\begin{example}
-		The Vandermonde determinant $V_n:= \prod_{i<j}(x_i-x_j) = \det(x_i^a)_{1 \leq i \leq n \atop 0 \leq a \leq n-1} $ is harmonic. Indeed, it is well-known that the Vandermonde determinant is the antisymmetric polynomial in $n$ variables with the smallest degree. Therefore, since $\sum_{i=1}^{n} \partial x_i^k V_n$ is still antisymmetric, it has to be 0. 
+		The Vandermonde determinant $V_n:= \prod_{i<j}(x_i-x_j) = \det(x_i^a)_{1 \leq i \leq n \atop 0 \leq a \leq n-1} $ is harmonic. Indeed, it is well-known that the Vandermonde determinant is the antisymmetric polynomial in $n$ variables with the smallest degree. Therefore, since $\sum_{i=1}^{n} \partial x_i^k V_n$ is still antisymmetric but of a lower degree, it has to be 0. 
 	\end{example}
 		
-	Since derivatives on polynomials commute, if $f$ is harmonic then $\partial x_i f$ is also harmonic for all $x_i \in X$. Using that, one can define $\harmonics_{n}$ directly with  partial derivatives instead of seeing them as solutions of a system of partial differential equations as stated in the following theorem. See \cite{Haiman2002} and \cite{Bergeron2009} for more details. 
+	Since derivatives on polynomials commute, if $f$ is harmonic then $\partial x_i f$ is also harmonic for all $x_i \in X$. Using that, one can define $\harmonics_{n}$ directly with  partial derivatives instead of seeing them as solutions of a system of partial differential equations as stated in the following theorem. See \cite{Haiman2002} or \cite{Bergeron2009} for more details. 
 	
 	\begin{theorem}
 		The space of harmonic polynomials $\harmonics_{n}$ is the smallest subspace containing the Vandermonde determinant $V_n$ and closed by partial derivatives : $\harmonics_{n} = \mathcal{D}(\QQ\{V_n\})$, where $\mathcal{D}$ denote the closure by partial derivatives.
 	\end{theorem}
 	
 	Going back to an arbitrary number $r$ of sets of variables, we define the \emph{differential operators} $(D_\alpha)_{\alpha\in \NN^r}$:
-	$$D_{(\alpha_1, \dots, \alpha_r)} := \partial_{x_{1,1}}^{\alpha_1}\dots\partial_{x_{r,1}}^{\alpha_r} + \dots + \partial_{x_{1,n}}^{\alpha_1}\dots\partial_{x_{r,n}}^{\alpha_r}$$
+	$$D_{(\alpha_1, \dots, \alpha_r)} := \partial x_{1,1}^{\alpha_1}\dots\partial x_{r,1}^{\alpha_r} + \dots + \partial x_{1,n}^{\alpha_1}\dots\partial x_{r,n}^{\alpha_r}$$
 	
 	\begin{example}
 		Take $r=3$ and denote $\bm{x}, \bm{y}$ and $\bm{z}$ the three sets of variables of $X$, then $D_{(3,0,4)} := \partial_{x_1}^3\partial_{z_1}^4 + \dots + \partial_{x_n}^3\partial_{z_n}^4$. 
 	\end{example}
 
 	\begin{definition}
-		The space of \emph{diagonal harmonic polynomials} $\harmonics_n^{(r)}$ is the joint kernel of the differential operators $(D_\alpha)_\alpha$. Note that $\harmonics_n^{(r)}$ contains $\harmonics_{n}^{(1)} = \harmonics_{n}$.
+		The space of \emph{diagonal harmonic polynomials} is the joint kernel of the differential operators $(D_\alpha)_\alpha$. 
 	\end{definition}
 	
-	As for harmonic polynomials, we would like an alternative and more direct way to obtain $\harmonics_n^{(r)}$ directly using operators. 
+	Note that the space of diagonal harmonic polynomials contains $\harmonics_{n}^{(1)} = \harmonics_{n}$.
+	As for harmonic polynomials, we would like an alternative and more direct way to obtain this space directly using operators. 
 	
 	\begin{definition}
 		The \emph{polarisation operator} $P_{\bm{x},\bm{y}}^k$ is given by
@@ -252,12 +256,12 @@
 	\end{theorem}
 	
 	\begin{conjecture} \label{DiagHarm}
-		Diagonal harmonic polynomials $\harmonics_n^{(r)}$ is the smallest subspace containing the Vandermonde determinant and closed by partial derivatives and polarisation operators : $\harmonics_n^{(r)} = \mathcal{P}_{\mathcal{D}}(\QQ\{V_n\})$, where $\mathcal{P}_{\mathcal{D}}$ denote the closure by partial derivatives and polarisation.
+		Denote $\harmonics_n^{(r)}$ the smallest subspace containing the Vandermonde determinant and closed by partial derivatives and polarisation operators : $\mathcal{P}_{\mathcal{D}}(\QQ\{V_n\})$, where $\mathcal{P}_{\mathcal{D}}$ denote the closure by partial derivatives and polarisation. Then, the space of diagonal harmonic polynomials and $\harmonics_n^{(r)}$ are the same space.
 	\end{conjecture}
 	
-	Conjecture \ref{DiagHarm} has been proven for two sets of variables (see for example \cite{Bergeron2009}). It is not proven yet for more than two sets of variables. \\
+	Conjecture \ref{DiagHarm} has been proven for two sets of variables (see for example \cite{Bergeron2009}), but it has not been proven yet for more than two sets of variables. From now, we work only with $\harmonics_{n}^{(r)}$ as defined in this conjecture. \\
 	
-	Let now construct a similar subspace of $R'$ using inert variables. Let $\lambda$ be a partition of $n$ and note $(a,b)$ the Cartesian coordinates of its cells. Then the determinant $V_{\lambda}$ associated to $\lambda$ is given by $$V_{\lambda} := \det (x_i^a \theta_i^b)_{1 \leq i \leq n \atop (a,b) \in \lambda} .$$
+	Let now construct a similar subspace of $R'$ using inert variables. Let $\lambda$ be a partition of $n$ and note $(a,b)$ the Cartesian coordinates of the South West corner of its cells. Then we define the determinant $V_{\lambda}$ associated to $\lambda$ by $$V_{\lambda} := \det (x_i^a \theta_i^b)_{1 \leq i \leq n \atop (a,b) \in \lambda} .$$
 	
 	\begin{example}
 		The partition $(2,1)$ contains the cells $(0,0)$ and $(1,0)$ in the first row, and the cell $(0,1)$ in the second row, and $V_{2,1} = -x_2\theta_1 + x_3\theta_1 + x_1\theta_2 - x_3\theta_2 - x_1\theta_3 + x_2\theta_3$. 
@@ -268,26 +272,25 @@
 			Like before, we consider the smallest subspace containing $V_{\lambda}$ and closed by partial derivation and polarization. We denote this space by $\Elambdar{\lambda}{r}$.
 	\end{definition}
 
-	The space of diagonal harmonics $\harmonics_n^{(r)}$ is thus a special case of $\Elambdar{\lambda}{r}$ for $\lambda = (n)$.
+	The space $\harmonics_n^{(r)}$ is thus a special case of $\Elambdar{\lambda}{r}$ for $\lambda = (n)$.
 	
-	The character of $\Elambdar{\lambda}{r}$ stabilizes for $r \geq n$ (see \cite{Bergeron2013} or \cite{Bergeron2009}). Therefore, when the precision is not necessary, we drop the exponent and simply write $\Elambda{\lambda}$ for $\Elambdar{\lambda}{r}$ with $r \geq n$. 
-	This property also gives use an upper bound for the number of sets of variables needed in the computation. \\
+	The character of $\Elambdar{\lambda}{r}$ stabilizes for $r \geq n$ (see \cite{Bergeron2009} or \cite{Bergeron2013}). This means that $r=n-1$ sets of variables are necessary to obtain all the terms of the character and adding another set or more of variables won't change the result. Therefore, when the precision is not necessary, we drop the exponent and simply write $\Elambda{\lambda}$ for $\Elambdar{\lambda}{r}$ with $r \geq n$. 
+	This property also gives us an upper bound for the number of sets of variables needed in the computation. \\
 
 	The characters of the harmonic and diagonal harmonic polynomial spaces have been studied a lot until now. For example, it is known that, when r=1, the action of $GL_1$ is trivial and $R_{\Sn}$ carries the usual graded representation of $\Sn$. Its character is given by a Hall-Littlewood polynomial.
 	The case r=2 has been studied by Garsia and Haiman (see \cite{GarsiaHaiman1993}) and the bigraded character, as a consequence of Haiman's proof of the $n!$-conjecture (see \cite{Haiman2002}), is a Macdonald polynomial.
 	Finally, some progress in the case $r=3$ had recently been made by Bergeron and Préville-Ratelle (see \cite{BergeronPreville2012}), but the general case is still unknown. Therefore, the computation of the characters of $\harmonics_{n}^{(r)}$ should lead to a better understanding of those spaces. 
      
-    Therefore, since polynomials spaces and $\Elambdar{\lambda}{r}$ are of huge dimension, they are not easy to study. Indeed, when $r=1$, $\harmonics_n = \Elambdar{n}{1}$ is of dimension $n!$, and when $r=2$, $\Elambdar{n}{2}$ is of dimension $(n+1)^{n-1}$ ($16807$ for $n=6$). Moreover, $\Elambdar{n}{r}$ contain high degree polynomials with a lot of terms. For example, when $n=6$, we work with 36 variables, with polynomial of degree up to 15 and containing up to $6! = 720$ monomes. A quick estimation of the time it would take to compute the character using brute force, gives us about 1600 years of computation.
+    Therefore, since polynomials spaces and $\Elambdar{\lambda}{r}$ are of huge dimension, they are not easy to study. Indeed, when $r=1$, $\harmonics_n = \Elambdar{n}{1}$ is of dimension $n!$, and when $r=2$, $\Elambdar{n}{2}$ is of dimension $(n+1)^{n-1}$ ($16807$ for $n=6$). Moreover, $\Elambdar{n}{r}$ contain high degree polynomials with a lot of terms. For example, when $n=6$, we have to work with 36 variables, with polynomials of degree up to 15 and containing up to $6! = 720$ monomes. A quick estimation of the time it would take to compute the character using brute force, gives us about 1600 years of computation.
     
     In order to study those spaces, we use representation theory and characters.  Intuitively, we want to decompose modules into irreducible submodules according to the group action. Those submodules are then represented by irreducible characters that encode the group action on each submodule. For $\GLr$ and $\Sn$, irreducible characters can be indexed by partitions and encoded by Schur functions. Knowing the irreducible characters gives information on the studied module such as the dimension. 
-   	
    	
 	In the next section, we expose strategies used to go further in the computation of those characters. Those strategies are not limited to the diagonal harmonic polynomials. They can be used in other generalizations. We introduced some of these generalizations in the last section and discuss some applications of these computations.
 	 
 	
 	\section{Strategies}
 	
-	\subsection{Computing in the space of harmonic polynomials using polarization}
+	\subsection{Computing in $\Elambdar{n}{r}$ using polarization}
 	
 	We first need to compute in a quotient by an ideal, $R / \mathcal{J}_n$ where $\mathcal{J}_n = \langle Sym(X)^+ \rangle$ is the ideal of diagonal symmetric polynomials on $r$ sets of $n$ variables.
 	A standard approach would be to compute a Gröbner basis of this ideal.
@@ -296,7 +299,7 @@
 	So we take the classical route of realizing the coinvariant ring as the space $\harmonics_n^{(r)}$ of diagonal harmonic polynomials.
 	This is the space of those polynomials that satisfy the equations given by the multisymmetric functions seen as differential operators.
 	
-	Solving those differential equations would not be tractable either. So instead we use partial derivatives and polarization operators defined in the previous section. \\
+	Solving those differential equations would not be tractable either. So instead, based on conjecture \ref{DiagHarm}, we use partial derivatives and polarization operators defined in the previous section. \pauline{Reformulation nécessaire, pas la preuve que ce sont les mêmes espaces alors raccourcis pas très rigoureux présenté ainsi.}\\
 	
 	In practice, we implemented a general purpose utility in Sage, \texttt{Subspace(vectors, operators)} that computes the smallest subspace of a vector space which contains the given vectors and is stable under the action of the given linear operators.
 	
@@ -309,11 +312,24 @@
 			sage: M = matrix.vandermonde(R.gens(), R)
 			sage: M
 			sage: derivatives = [attrcall('derivative', x) for x in R.gens()]
-			sage: H_3 = Subspace([M.determinant()], derivatives)
-			sage: H_3.basis()
-			sage: H_3.dimension()
-		\end{sagecommandline}	
-	\end{example}
+			sage: H3 = Subspace([M.determinant()], derivatives)
+			sage: H3.basis()
+			sage: H3.dimension()
+		\end{sagecommandline}
+	
+	With two rows of variables. 
+		\begin{sagesilent}
+			load("../character.py")
+		\end{sagesilent}
+		\begin{sagecommandline}
+			sage: v = vandermonde(3,2)
+			sage: derivatives = [attrcall("derivative", x) for i in range(2) for x in v.parent().multivar_pol_ring_variables()[i] ]
+			sage: polarizators = [attrcall("polarization", i1=i1, i2=i2, d=d) for d in range(1,4) for i1 in range(0, 2) for i2 in range(0, 2) if (i1!=i2)]
+			sage: H3 = Subspace([v], derivatives+polarizators)
+			sage: H3.dimension() 	
+		\end{sagecommandline}
+	\pauline{Problème dimension, j'ai trouvé l'élément intru mais je sais pas pourquoi il apparaît}
+	\end{example} 
 	
 	We simply do linear algebra here. We maintain a matrix in row echelon form representing a basis of the space computed so far, and a ToDo list of $op(v)$, that remain to be computed and inserted in the matrix, where $op$ is an operator and $v$ an element of the subspace in construction.
 	
@@ -324,6 +340,58 @@
 	At this stage, we have an algorithm, but are still doing linear algebra in a huge space. The cost is $N^2 M$, where $N$ is the dimension of the result and $M$ the dimension of the ambient space.
 	
 	\subsection{Quasi-commutativity of derivatives and polarisation operators}
+	
+	At this stage, we are interested in reducing the number of operations computed by our \texttt{Subspace} utility. One way to do that would be to need less operators to obtain the same basis. This can be done by considering the quasi-commutativity of the partial derivatives and the polarisation operators. 
+	
+	\begin{prop}\label{prop_commutativite}
+		For all subspace $\mathcal{W}$ of $R'$,
+		$$\mathcal{P}_\mathcal{D}(\mathcal{W}) = \mathcal{D} \circ \mathcal{P}(\mathcal{W}) = \mathcal{P} \circ \mathcal{D}(\mathcal{W}),$$
+		where $\mathcal{P}$ is the closure by polarisation operators.
+	\end{prop}
+
+	\begin{proof}
+		If we apply a partial derivative and a polarisation operator with no variable in common on an element of $R'$, applying them on any order does not change the result. But let now look at what happen if those operators do have variables on common. 
+		
+		\begin{equation}\label{polpartial}
+		\partial y_i^l P^k_{\x,\y}f - P^k_{\x,\y} \partial y_i ^l f 
+		= \partial y_i ^l \sum_{j=1}^{n} y_j \partial x_j ^kf - \sum_{j=1}^{n} y_j \partial x_j ^k \partial y_i ^l f
+		\end{equation}
+		
+		For $i=j$, we temporarily removed indices and we obtain, 
+		$\partial y^ly \partial x^k f - y \partial x^k \partial y^l = l\partial y^{l-1} \partial x^kf + y\partial y^{l} \partial x^kf - y\partial x^k \partial y^{l} f = l\partial y^{l-1} \partial x^kf$.
+		Using this result in equation \ref{polpartial}, we have 
+		\begin{equation}\label{polpartiali}
+		\partial y_i^l P^k_{\x,\y}f - P^k_{\x,\y} \partial y_i^l f  =  l\sum_{i=1}^{n} \partial y_i^{l-1} \partial x_i^k f.
+		\end{equation}
+		
+		Thus we obtain a sum of composed partial derivatives. Since the spaces we study are closed by derivation, the commutation of partial derivatives and polarisation operators gives operators we are already using to build the subspace. Therefore, we don't obtain new linear independent elements by commuting those operators.  
+	\end{proof}
+
+	This phenomena is due to the commutativity of the action of $\GLr$ represented by the polarisation operators and the action of $\Sn$ of $V_\gamma$  and its partial derivatives. 
+	
+	In our case, $\mathcal{W} = \QQ\{V_\lambda\}$ and we want to compute $\Elambdar{\lambda}{r} = \mathcal{P}_{\mathcal{D}}(\QQ\{V_\lambda\})$. Proposition \ref{prop_commutativite} implies that we can first compute a basis $\mathbb{B}_\lambda^{(1)}$ of the space $\Elambdar{\lambda}{1} = \mathcal{D}(\QQ\{V_\lambda\})$. Then, we can obtain a basis of $\Elambdar{\lambda}{r}$ from $\mathcal{P}(\mathcal{B}_\gamma^{(1)})$. 
+	
+	This way, we use only the partial derivatives on the first set of variables of $X'$ and we reduce the amount of compositions of operators to compute.  
+	
+	\begin{example}
+		\begin{sagesilent}
+			load("../character.py")
+		\end{sagesilent}
+		\begin{sagecommandline}
+			sage: v = vandermonde(3)
+			sage: v
+			sage: derivatives = partial_derivatives(v.parent())
+			sage: derivatives
+			sage: E3 = Subspace({v.multidegree() : [v]}, derivatives)
+			sage: E3.basis()
+			sage: E3.dimension()
+			sage: polarizators = polarization_operators(2)
+			sage: polarizators
+			sage: E3 = PolarizedSpace(E3, polarizators)
+			sage: E3.dimension()
+			sage: E3.dimensions()
+		\end{sagecommandline}
+	\end{example}
 
 	\subsection{Exploiting the multigrading}
 	
@@ -530,7 +598,7 @@
 		\end{sagecommandline}
 		We see that the parent of the polynomials carries the information about the antisymmetries to keep polynomials in normal reduced form.
 		\begin{sagecommandline}
-			sage: p = H_3[Partition([2,1])].basis().values()[0][0]
+			sage: p = list(H_3[Partition([2,1])].basis().values())[0][0]
 			sage: p
 			sage: p.parent()
 		\end{sagecommandline}
@@ -627,7 +695,7 @@
 	Thanks to our computations, we are able to show the following proposition. 
 	
 	\begin{prop}
-		Let $\alpha$ be a composition of $n$ and denote $\lambda(\alpha)$ the partition obtained by reordering the parts of $\alpha$. And denote by $\Elambdar{\alpha}{r}$ the character of the smallest $\GLr \times \Sn$-submodule containing $V_\alpha$ and closed by partial derivation and polarization. Then we have 
+		Let $\alpha$ be a composition of $n$ and denote $\lambda(\alpha)$ the partition obtained by reordering the parts of $\alpha$. And denote by $\Elambdar{\alpha}{r}$ the character of the smallest $(\GLr \times \Sn$)-submodule containing $V_\alpha$ and closed by partial derivation and polarization. Then we have 
 		$$\Elambdar{\alpha}{r} = \Elambdar{\lambda(\alpha)}{r}.$$
 	\end{prop} 
 	
@@ -639,7 +707,7 @@
 
 	Following the same idea, let $\gamma$ by any set of cells of $\NN^2$ given by the cartesian coordinates of their bottom left corner. The determinant associated to $\gamma$ still have the same definition. $$V_{\gamma} := \det (x_i^a \theta_i^b)_{1 \leq i \leq n \atop (a,b) \in \lambda} .$$
 	
-	We define $\mathcal{M}_{\gamma}^{(r)}$ to be the smallest $\GLr \times \Sn$-submodule containing $V_\gamma$ and closed by partial derivation and polarization and we use the same notation for the character. \pauline{motivate introduction of the quotient and Steenrod operators.}
+	We define $\mathcal{M}_{\gamma}^{(r)}$ to be the smallest $(\GLr \times \Sn$)-submodule containing $V_\gamma$ and closed by partial derivation and polarization and we use the same notation for the character. \pauline{motivate introduction of the quotient and Steenrod operators.}
 	
 	Let $f \in \QQ[X]$, we define $f(\partial X)$ to be the function $f$ in which we replaced $x_{i,j}^k$ by $\partial_{x_{i,j}}^k$. If $f$ is invariant under the diagonal action of $\Sn$ on $X$, $f(\partial X)$ is called a symmetric derivative. 
 	
