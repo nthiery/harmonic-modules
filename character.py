@@ -254,7 +254,7 @@ def merge(dict1, dict2):
 
     """
     result = dict1
-    for key, value in dict2.iteritems():
+    for key, value in dict2.items():
         if key in result:
             result[key] += value
         else:
@@ -314,14 +314,14 @@ def IsotypicComponent(S, arg, use_antisymmetry=False):
     
     basis = S.basis()
     result = {}
-    P1 = basis.values().pop()[0].parent()
+    P1 = list(basis.values()).pop()[0].parent()
     for nu in list_partitions:
         result_nu = {}
         if use_antisymmetry == True:
             antisymmetries = antisymmetries_of_tableau(nu.initial_tableau())
             P2 = DiagonalAntisymmetricPolynomialRing(P1._R, P1.ncols(), P1.nrows(), 
                                                  P1.ninert(), antisymmetries)
-        for deg, value in basis.iteritems():
+        for deg, value in basis.items():
             if use_antisymmetry:
                 gen = []
                 for p in value:
@@ -340,7 +340,7 @@ def IsotypicComponent(S, arg, use_antisymmetry=False):
             result[nu] = Subspace(result_nu, operators={})
                 
     if len(result.keys()) == 1:
-        key = result.keys()[0]
+        key = list(result.keys())[0]
         return result[key]
     else:
         return result
@@ -405,14 +405,14 @@ def PolarizedSpace(S, operators, add_degrees=add_degrees_isotypic):
     """
     if isinstance(S, dict):
         return {key : PolarizedSpace(value, operators, add_degrees=add_degrees)
-                for key, value in S.iteritems()}
+                for key, value in S.items()}
     else:
         basis = S.basis()
-        basis_element = basis.values().pop()[0]
+        basis_element = list(basis.values()).pop()[0]
         P1 = basis_element.parent()
         if operators != {}:
-            r = len(operators.keys().pop())
-            row_symmetry = operators.values().pop()[0].kwds['row_symmetry']
+            r = len(list(operators.keys()).pop())
+            row_symmetry = list(operators.values()).pop()[0].kwds['row_symmetry']
         else:
             r=1
             row_symmetry = None
@@ -423,7 +423,7 @@ def PolarizedSpace(S, operators, add_degrees=add_degrees_isotypic):
 
         if isinstance(P1, DiagonalAntisymmetricPolynomialRing):
             P2 = DiagonalAntisymmetricPolynomialRing(P1._R, P1.ncols(), r , P1.ninert(), P1.antisymmetries())
-            for key, value in basis.iteritems():
+            for key, value in basis.items():
                 d = (D((key[0][0] if i==0 else 0 for i in range(0,r))), key[1])
                 generators[d] = tuple(reduce_antisymmetric_normal(P2(b), 
                                                       b.parent().ncols(), 
@@ -431,7 +431,7 @@ def PolarizedSpace(S, operators, add_degrees=add_degrees_isotypic):
                                                       b.antisymmetries()) for b in value)
         else :
             P2 = DiagonalPolynomialRing(P1._R, P1.ncols(), r , P1.ninert())
-            for key, value in basis.iteritems():
+            for key, value in basis.items():
                 if isinstance(key[0], Integer):
                     d = (D((key[0] if i==0 else 0 for i in range(0,r))))
                     add_degrees = add_degree
@@ -457,14 +457,14 @@ def Range(S, operators, add_degrees=add_degrees_isotypic):
     """
     if isinstance(S, dict):
         return {key : Range(value, operators, add_degrees=add_degrees)
-                for key, value in S.iteritems()}
+                for key, value in S.items()}
 
     result = {}
     basis = S.basis()
-    for key, b in basis.iteritems():
+    for key, b in basis.items():
         result = merge(result, {add_degrees(key, deg): 
                                      [op(p) for p in b for op in op_list if op(p)!=0] 
-                                     for deg, op_list in operators.iteritems()})    
+                                     for deg, op_list in operators.items()})    
     if result != {} :
         return Subspace(result, operators, add_degrees) #{} <-> operators
     else :
@@ -510,7 +510,7 @@ def character(S, left_basis=s, right_basis=s, row_symmetry=None):
                    for V in S.values())
     else:
         basis = S.basis()
-        basis_element = basis.values().pop()[0]
+        basis_element = list(basis.values()).pop()[0]
         P = basis_element.parent()
         n = P.ncols()
         r = P.nrows()
@@ -524,13 +524,13 @@ def character(S, left_basis=s, right_basis=s, row_symmetry=None):
             basis_nu = {}
             charac_nu = 0
             # Get the nu_isotypic part of the basis
-            for key, value in basis.iteritems():
+            for key, value in basis.items():
                 if Partition(key[1]) == nu:
                     basis_nu[key[0]] = value
 
             # Use monomials to compute the character
             if row_symmetry == "permutation":
-                for deg, b in basis_nu.iteritems():
+                for deg, b in basis_nu.items():
                     charac_nu += sum(m(Partition(deg)) for p in b)
                 if charac_nu != 0 :
                     if left_basis == s :
@@ -540,7 +540,7 @@ def character(S, left_basis=s, right_basis=s, row_symmetry=None):
 
             # Or use directly the degrees
             else:
-                for deg, b in basis_nu.iteritems():
+                for deg, b in basis_nu.items():
                     charac_nu += sum(prod(q[i]**deg[i] for i in range(0,len(deg))) for p in b)
                 if charac_nu != 0 :
                     if left_basis == s :
@@ -591,17 +591,17 @@ def character_quotient(M, N, n, r, left_basis=s, right_basis=s):
         basis_nu_ideal = {}
         charac_nu = 0
         # Get the nu_isotypic part of the bases
-        for key, value in b_tot.iteritems():
+        for key, value in b_tot.items():
             if Partition(key[1]) == nu:
                 basis_nu_tot[key[0]] = value
-        for key, value in b_ideal.iteritems():
+        for key, value in b_ideal.items():
             if Partition(key[1]) == nu:
                 basis_nu_ideal[key[0]] = value
                 
         # Use the degrees to compute the character
-        for deg, b in basis_nu_tot.iteritems():
+        for deg, b in basis_nu_tot.items():
             charac_nu += sum(prod(q[i]**deg[i] for i in range(0,len(deg))) for p in b)
-        for deg, b in basis_nu_ideal.iteritems():
+        for deg, b in basis_nu_ideal.items():
             charac_nu -= sum(prod(q[i]**deg[i] for i in range(0,len(deg))) for p in b)
         if charac_nu != 0 :
             if left_basis == s :
@@ -762,7 +762,7 @@ def E_mu(mu, use_antisymmetry=True, row_symmetry="permutation", parallel=False, 
     if parallel:
         charac = 0
         for (((_,_),_), V_pol) in parallel_character([(subspace, op_pol) for subspace in V_iso.values()]):
-            for key, coeff in V_pol.iteritems():
+            for key, coeff in V_pol.items():
                 charac += coeff*tensor([s(key[0]), s(key[1])])
         return charac
     else:
