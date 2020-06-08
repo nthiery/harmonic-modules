@@ -193,7 +193,7 @@ class Subspace(object):
         self._base_ring = ambient.base_ring()
 
         if hilbert_parent is None:
-            if generators.keys()[0] in NN:
+            if list(generators.keys())[0] in NN:
                 hilbert_parent = QQ['q']
         self._hilbert_parent = hilbert_parent
 
@@ -205,7 +205,7 @@ class Subspace(object):
         self._todo = []
         self._add_degrees = add_degrees
         self._extend_word = extend_word
-        for d, gens in generators.iteritems():
+        for d, gens in generators.items():
             basis = EchelonMatrixOfVectors(ambient=self._ambient, stats=self._stats)
             for g in gens:
                 if basis.extend(g):
@@ -218,7 +218,7 @@ class Subspace(object):
     
     def todo(self, vector, d1, word):
         todo = self._todo
-        for d2, ops in self._operators.iteritems():
+        for d2, ops in self._operators.items():
             try:
                 d3 = self._add_degrees(d1, d2)
             except ValueError:
